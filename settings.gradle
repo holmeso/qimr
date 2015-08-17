@@ -1,2 +1,6 @@
 include "q3clinvar"
 include "q3tiledaligner"
+include "qcommon"
+include "qio"
+include "qpicard"
+include "qlib"

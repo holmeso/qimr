@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER" exported="true"/>
+	<classpathentry kind="src" path="/qcommon" exported="true"/>
+	<classpathentry kind="lib" path="/Users/christix/Documents/Eclipse/genomeinfo/genomeinfo/production/java/trunk/lib/picard-1.110.jar" exported="true"/>
+	<classpathentry kind="lib" path="/Users/christix/Documents/Eclipse/genomeinfo/genomeinfo/production/java/trunk/lib/sam-1.110.jar" exported="true"/>
+	<classpathentry kind="lib" path="/Users/christix/Documents/Eclipse/genomeinfo/genomeinfo/production/java/trunk/unresolved dependency -  junit 4.10" exported="true"/>
+</classpath>
