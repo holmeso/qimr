@@ -30,7 +30,7 @@ public class Options {
 	public Options( final String[] args) throws Exception {		
 		parser.accepts("output", OUTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("outputfile");
 		parser.accepts("primaryInput", PRIMARY_INTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Normal BAM");
-		parser.accepts("secondaryInput", SECONDARY_INPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Tumor BAM");
+		parser.accepts("additionalInput", SECONDARY_INPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Tumor BAM");
  		
 		
 		parser.accepts("log", LOG_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("logfile");
@@ -97,8 +97,7 @@ public class Options {
 			//quit system after provide help or version info
 			if( hasHelp() || hasVersion() ){ 
 				 System.exit(0); 
-			} 		 
-	
+			} 		 	
 		
 			if (options.nonOptionArguments().size() > 0) {	
 				List<String> nonoptions = (List<String>) options.nonOptionArguments();
@@ -109,21 +108,24 @@ public class Options {
 				return false;
 			}
 
-			if(getIO("ref") == null || getIO("test") == null){
-				System.err.println("Missing ref or test option");		 
+			if(getIO("primaryInput") == null || getIO("additionalInput") == null || getIO("output") == null){
+				System.err.println("Missing primaryInput, additionalInput or output option");		 
 				return false;
 			}
-			if( getIO("ref").equals(getIO("output"))){
-				System.err.println(Messages.getMessage("SAME_FILES", "ref", "output"));		
+			if( getIO("primaryInput").equals(getIO("additionalInput"))){
+				System.err.println(Messages.getMessage("SAME_FILES", "primaryInput", "additionalInput"));		
 						return false;
 			}	
-			if(options.has("thread")){
-				int thread = Integer.parseInt((String) options.valueOf("thread"));
-				if(thread < 1){
-					System.err.println("THREAD NUMBER MUST GREATER THAN ONE: " + options.valueOf("thread") );
-				}
+
+			if( getIO("primaryInput").equals(getIO("output"))){
+				System.err.println(Messages.getMessage("SAME_FILES", "primaryInput", "output"));		
+						return false;
+			}
+			if( getIO("output").equals(getIO("additionalInput"))){
+				System.err.println(Messages.getMessage("SAME_FILES", "output", "additionalInput"));		
+						return false;
 			}
 			
-	 	return true;	
+			return true;	
 		}
 }

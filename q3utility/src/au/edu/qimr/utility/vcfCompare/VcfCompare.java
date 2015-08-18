@@ -78,8 +78,7 @@ public class VcfCompare {
 	void VcfMerge( File output) throws IOException{
 		//rehead
 		//merge
-		
-		
+
 		final List<ChrPosition> orderedList = new ArrayList<ChrPosition>(positionRecordMap.keySet());
 		Collections.sort(orderedList);
 		

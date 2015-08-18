@@ -1,7 +1,7 @@
 /**
  * © Copyright The University of Queensland 2010-2014.  This code is released under the terms outlined in the included LICENSE file.
  */
-package org.qcmg.qmule;
+package au.edu.qimr.utility.vcfCompare;
 
 import java.text.MessageFormat;
 import java.util.ResourceBundle;
@@ -13,7 +13,7 @@ public final class Messages {
 	
 	/** The Constant messages. */
 	static final ResourceBundle messages = ResourceBundle
-			.getBundle("org.qcmg.qmule.messages");
+			.getBundle("au.edu.qimr.utility.vcfCompare.messages");
 
 	/** The Constant ERROR_PREFIX. */
 	static final String ERROR_PREFIX = getProgramName() + ": ";
