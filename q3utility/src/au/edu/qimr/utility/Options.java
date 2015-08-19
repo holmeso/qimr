@@ -1,13 +1,12 @@
-package au.edu.qimr.utility.vcfCompare;
+package au.edu.qimr.utility;
 
 
-import java.io.File;
 import java.util.List;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
-import au.edu.qimr.utility.*;   
+//import au.edu.qimr.utility.*;   
 import org.qcmg.common.log.*;	
 
 public class Options {
@@ -18,25 +17,26 @@ public class Options {
 	
 	private static final String OUTPUT_DESCRIPTION = Messages.getMessage("OUTPUT_OPTION_DESCRIPTION");
 	private static final String PRIMARY_INTPUT_DESCRIPTION = Messages.getMessage("PRIMARY_INPUT_OPTION_DESCRIPTION");
-	private static final String SECONDARY_INPUT_DESCRIPTION = Messages.getMessage("SECONDARY_INPUT_OPTION_DESCRIPTION");
+	private static final String ADDITION_INPUT_DESCRIPTION = Messages.getMessage("ADDITION_INPUT_OPTION_DESCRIPTION");
 	private final OptionParser parser = new OptionParser();  
 	private final OptionSet options;	
 	
 	final static int DEFAULT_THREAD = 2;
 	final String commandLine;	
-	final String USAGE = Messages.getMessage("USAGE_QCNV");
-	final String version = au.edu.qimr.utility.vcfCompare.VcfCompare.class.getPackage().getImplementationVersion();	
+	final String USAGE = Messages.getMessage("USAGE");
+	final String version = au.edu.qimr.utility.VcfCompare.class.getPackage().getImplementationVersion();	
 	
-	public Options( final String[] args) throws Exception {		
-		parser.accepts("output", OUTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("outputfile");
-		parser.accepts("primaryInput", PRIMARY_INTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Normal BAM");
-		parser.accepts("additionalInput", SECONDARY_INPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Tumor BAM");
- 		
-		
+	public Options( final String[] args) throws Exception {	
 		parser.accepts("log", LOG_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("logfile");
 		parser.accepts("loglevel", LOGLEVEL_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("loglevel");
 		parser.accepts("version", VERSION_DESCRIPTION);
 		parser.accepts("help", HELP_DESCRIPTION);
+
+		System.out.println("current program " + Messages.getProgramName()  );
+		parser.accepts("output", OUTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("outputfile");
+		parser.accepts("primaryInput", PRIMARY_INTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Normal BAM");
+		parser.accepts("additionInput", ADDITION_INPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Normal BAM");
+
 
 		options = parser.parse(args);	
 		commandLine = Messages.reconstructCommandLine(args);

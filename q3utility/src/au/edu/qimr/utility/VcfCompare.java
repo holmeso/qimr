@@ -1,29 +1,22 @@
-package au.edu.qimr.utility.vcfCompare;
-
-
-
-import htsjdk.tribble.readers.TabixReader;
+package au.edu.qimr.utility;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.qcmg.common.log.*;
 import org.qcmg.common.model.ChrPosition;
-import org.qcmg.common.vcf.VcfRecord;
-import org.qcmg.common.vcf.header.VcfHeader;
-import org.qcmg.vcf.VCFFileReader;
-import org.qcmg.vcf.VCFFileWriter;
+import org.qcmg.common.vcf.*;
 import org.qcmg.common.vcf.header.*;
+import org.qcmg.vcf.*;
+
+//import htsjdk.tribble.readers.TabixReader;
+
 public class VcfCompare {
 	
-	protected final Map<ChrPosition,VcfRecord> positionRecordMap = new HashMap<ChrPosition,VcfRecord>();
+	final Map<ChrPosition,VcfRecord> positionRecordMap = new HashMap<ChrPosition,VcfRecord>();
 //	protected final Map<ChrPosition, Integer> positionRecordMap = new HashMap<ChrPosition,Integer>();
-	protected VcfHeader header  = null;
+	VcfHeader header  = null;
 //	protected VcfHeader header2 = null;
 	
 	VcfCompare(File primary, File secondary) throws Exception {
@@ -71,14 +64,13 @@ public class VcfCompare {
         		}	
         	}         	
 		} 
-//        	TabixReader  t1 = new TabixReader( primary.getAbsolutePath() );
-//			TabixReader  t2 = new TabixReader( secondary.getAbsolutePath()) ; 
+//      TabixReader  t1 = new TabixReader( primary.getAbsolutePath() );
+//		TabixReader  t2 = new TabixReader( secondary.getAbsolutePath()) ; 
 	}
 	
 	void VcfMerge( File output) throws IOException{
 		//rehead
 		//merge
-
 		final List<ChrPosition> orderedList = new ArrayList<ChrPosition>(positionRecordMap.keySet());
 		Collections.sort(orderedList);
 		
@@ -95,8 +87,8 @@ public class VcfCompare {
 		}  
 	}
 	
-			
-	public static void main(String[] args) throws Exception{
+	public static void main(final String[] args) throws Exception {		
+	
 		//check arguments
 		Options options = new Options( args);	
 		if(! options.commandCheck()){ 	System.exit(1);	}		
