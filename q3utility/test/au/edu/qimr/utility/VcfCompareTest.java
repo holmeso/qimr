@@ -30,7 +30,6 @@ public class VcfCompareTest {
 	public static String inputPrimaryName = "primary.vcf";
 	public static String inputAdditionalName = "additional.vcf";
 	public static String args[] = "--primaryInput primary.vcf --additionalInput additional.vcf --output merge.vcf --log output.log".split(" ");			
-
 	
 	@BeforeClass
 	public static void createInput() throws Exception{	
@@ -48,8 +47,6 @@ public class VcfCompareTest {
         try(BufferedWriter out = new BufferedWriter(new FileWriter(inputAdditionalName,true));) {          
             for (final String line : data)   out.write(line +"\n");                  
          } 
-        
- 
 	}	
 	
 	 @AfterClass
@@ -128,17 +125,17 @@ public class VcfCompareTest {
 	
 
 	public static void createVcf(String file) throws IOException{
-        final List<String> data = new ArrayList<String>();
-        data.add(VcfHeaderUtils.STANDARD_FILE_VERSION + "=VCFv4.0");
-        data.add(VcfHeaderUtils.STANDARD_FILE_DATE  + "=20150819");
-        data.add(VcfHeaderUtils.STANDARD_UUID_LINE + "=abcd_12345678_xzy_999666333");
-        data.add("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tEXTERN-MELA-20140526-102\tEXTERN-MELA-20140526-07");       
-        data.add("chr1\t248845\trs2000390\tC\tT\t2370.26\tPASS\t.\tGT:AD:NNS\t1/1:0,66:52\t1/1:1,74:61");
-        data.add("chr1\t248945\trs11485825\tG\tA\t1469.90\tPASS\t.\tGT:AD:NNS\t1/1:0,38:36\t1/1:0,60:47");
-        data.add("chr1\t249065\t.\tG\tA\t309.32\tCOVN12\tSOMATIC\tGT:AD:NNS\t.:.:0\t0/1:3,10:8");
-          
-        try(BufferedWriter out = new BufferedWriter(new FileWriter(file));) {          
-            for (final String line : data)   out.write(line +"\n");                  
-         }  
+		final List<String> data = new ArrayList<String>();
+		data.add(VcfHeaderUtils.STANDARD_FILE_VERSION + "=VCFv4.0");
+		data.add(VcfHeaderUtils.STANDARD_FILE_DATE  + "=20150819");
+		data.add(VcfHeaderUtils.STANDARD_UUID_LINE + "=abcd_12345678_xzy_999666333");
+		data.add("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tEXTERN-MELA-20140526-102\tEXTERN-MELA-20140526-07");       
+		data.add("chr1\t248845\trs2000390\tC\tT\t2370.26\tPASS\t.\tGT:AD:NNS\t1/1:0,66:52\t1/1:1,74:61");
+		data.add("chr1\t248945\trs11485825\tG\tA\t1469.90\tPASS\t.\tGT:AD:NNS\t1/1:0,38:36\t1/1:0,60:47");
+		data.add("chr1\t249065\t.\tG\tA\t309.32\tCOVN12\tSOMATIC\tGT:AD:NNS\t.:.:0\t0/1:3,10:8");
+		  
+		try(BufferedWriter out = new BufferedWriter(new FileWriter(file));) {          
+			for (final String line : data)   out.write(line +"\n");                  
+		}  
 	}
 }
