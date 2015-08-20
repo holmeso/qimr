@@ -40,10 +40,9 @@ public class Options {
 		parser.accepts("version", VERSION_DESCRIPTION);
 		parser.accepts("help", HELP_DESCRIPTION);
 
-		System.out.println("current program " + Messages.getProgramName()  );
 		parser.accepts(output, OUTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("outputfile");
-		parser.accepts(primaryInput, PRIMARY_INTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Normal BAM");
-		parser.accepts(additionalInput, ADDITION_INPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Normal BAM");
+		parser.accepts(primaryInput, PRIMARY_INTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("primary input vcf");
+		parser.accepts(additionalInput, ADDITION_INPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("additional input vcf");
 
 
 		options = parser.parse(args);	

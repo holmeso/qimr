@@ -25,13 +25,12 @@ public class VcfCompare {
 	private long noOutput = 0;
 	 
 	
-	VcfCompare(File primary, File secondary) throws Exception {		
-		
+	public VcfCompare(File primary, File secondary) throws IOException,RuntimeException  {		
 		//read record into RAM, meanwhile wipe off the ID field value;
         try ( VCFFileReader reader1 = new VCFFileReader(primary);
         		VCFFileReader reader2 = new VCFFileReader(secondary)) {
         	String[] firstSamples = new String[] {null}; 
-        	String[] secondSamples = new String[] {null}; 
+        	String[] secondSamples = new String[] {null};         	
        	
         	if(reader1.getHeader().getSampleId() != null)
         		firstSamples = reader1.getHeader().getSampleId();
@@ -40,12 +39,12 @@ public class VcfCompare {
         		secondSamples = reader2.getHeader().getSampleId();
           	          	
     		if(firstSamples.length != secondSamples.length)
-    			throw new Exception(firstSamples.length + " != "  + secondSamples.length);
+    			throw new RuntimeException(firstSamples.length + " != "  + secondSamples.length);
     		        		       		
 			for(int i = 0; i < firstSamples.length; i ++)
 				if( firstSamples[i] != null &&  secondSamples[i] != null 
 					&& ! firstSamples[i].toLowerCase().equals(secondSamples[i].toLowerCase()))
-					throw new Exception(firstSamples[i] + "!=" + secondSamples[i]);
+					throw new RuntimeException(firstSamples[i] + "!=" + secondSamples[i]);
         		        	
          	//load first file
         	for (final VcfRecord re : reader1){     
@@ -71,12 +70,12 @@ public class VcfCompare {
 		} 
 	}
 	
-	void reheader( String cmd, Options options) throws Exception {	
+	public void reheader( String cmd, Options options) throws Exception {	
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		String version = VcfCompare.class.getPackage().getImplementationVersion();
 		String pg = VcfCompare.class.getPackage().getImplementationTitle();
 		final String fileDate = df.format(Calendar.getInstance().getTime());
-		final String uuid = QExec.createUUid();				
+		final String uuid = QExec.createUUid();		
 
 		try ( VCFFileReader reader1 = new VCFFileReader(options.getIO(Options.primaryInput));
 				VCFFileReader reader2 = new VCFFileReader(options.getIO(Options.additionalInput))) {
@@ -103,7 +102,7 @@ public class VcfCompare {
 	
 	}
 	
-	void VcfMerge( File output) throws IOException{
+	public void VcfMerge( File output) throws IOException{
 		final List<ChrPosition> orderedList = new ArrayList<ChrPosition>(positionRecordMap.keySet());
 		Collections.sort(orderedList);
 		
@@ -120,10 +119,10 @@ public class VcfCompare {
 		}  
 	}
 	
-	long getCountPrimaryOnly() {return noPrimary - noBoth; }
-	long getCountAddtionalOnly(){return noAdditional - noBoth; }
-	long getCountBoth(){return noBoth; }
-	long getCountOutput(){return noOutput;}
+	public long getCountPrimaryOnly() {return noPrimary - noBoth; }
+	public long getCountAddtionalOnly(){return noAdditional - noBoth; }
+	public long getCountBoth(){return noBoth; }
+	public long getCountOutput(){return noOutput;}
 	
 	public static void main(final String[] args) throws Exception {		
 	
