@@ -2,75 +2,108 @@ package au.edu.qimr.utility;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.qcmg.common.log.*;
+import org.qcmg.common.meta.QExec;
 import org.qcmg.common.model.ChrPosition;
+import org.qcmg.common.util.Constants;
 import org.qcmg.common.vcf.*;
 import org.qcmg.common.vcf.header.*;
 import org.qcmg.vcf.*;
 
-//import htsjdk.tribble.readers.TabixReader;
-
 public class VcfCompare {
 	
 	final Map<ChrPosition,VcfRecord> positionRecordMap = new HashMap<ChrPosition,VcfRecord>();
-//	protected final Map<ChrPosition, Integer> positionRecordMap = new HashMap<ChrPosition,Integer>();
 	VcfHeader header  = null;
-//	protected VcfHeader header2 = null;
 	
-	VcfCompare(File primary, File secondary) throws Exception {
+	private long noPrimary = 0;
+	private long noAdditional = 0;
+	private long noBoth = 0; 
+	private long noOutput = 0;
+	 
+	
+	VcfCompare(File primary, File secondary) throws Exception {		
 		
 		//read record into RAM, meanwhile wipe off the ID field value;
         try ( VCFFileReader reader1 = new VCFFileReader(primary);
         		VCFFileReader reader2 = new VCFFileReader(secondary)) {
         	String[] firstSamples = new String[] {null}; 
         	String[] secondSamples = new String[] {null}; 
-        	
-        	if(reader1.getHeader().getSampleId() == null)
+       	
+        	if(reader1.getHeader().getSampleId() != null)
         		firstSamples = reader1.getHeader().getSampleId();
         	
-           	if(reader2.getHeader().getSampleId() == null)
+           	if(reader2.getHeader().getSampleId() != null)
         		secondSamples = reader2.getHeader().getSampleId();
-           	          	
+          	          	
     		if(firstSamples.length != secondSamples.length)
-    			throw new Exception();
-        		       		
+    			throw new Exception(firstSamples.length + " != "  + secondSamples.length);
+    		        		       		
 			for(int i = 0; i < firstSamples.length; i ++)
-				if(! firstSamples[i].toLowerCase().equals(secondSamples[i].toLowerCase()))
-					throw new Exception();
+				if( firstSamples[i] != null &&  secondSamples[i] != null 
+					&& ! firstSamples[i].toLowerCase().equals(secondSamples[i].toLowerCase()))
+					throw new Exception(firstSamples[i] + "!=" + secondSamples[i]);
         		        	
-        	//merge header
-        	header = VcfHeaderUtils.mergeHeaders(reader1.getHeader(), reader2.getHeader(), false);
-        	
-        	//load first file
-        	for (final VcfRecord re : reader1){         		
+         	//load first file
+        	for (final VcfRecord re : reader1){     
+        		noPrimary ++; 
         		ChrPosition pos = re.getChrPosition();
-        		re.appendInfo("vcfFrom=f1");
+        		re.appendInfo(Options.Info_From + "=1");        		
         		positionRecordMap.put(new ChrPosition(pos.getChromosome(), pos.getPosition(), pos.getEndPosition(), re.getAlt()), re);	 
         	}
         	
         	//compare to second file
         	for (final VcfRecord re : reader2){
+        		noAdditional ++;
         		ChrPosition pos = re.getChrPosition();
         		pos = new ChrPosition(pos.getChromosome(), pos.getPosition(), pos.getEndPosition(), re.getAlt());        		
-        		if(positionRecordMap.get(pos) == null){  
-        			re.appendInfo("vcfFrom=");
-        			re.setInfo(re.getInfo() + "vcfFrom=f2");
-        			positionRecordMap.put(pos, re); //second file
-        		}else{ 
-        			re.setInfo(re.getInfo() + "vcfFrom=both");
-        			positionRecordMap.put(pos, re); //both file       	
-        		}	
+        		if(positionRecordMap.get(pos) == null)  //second file
+        			re.appendInfo(Options.Info_From + "=2"); 
+        		else{ //both file
+        			noBoth ++; 
+        			re.appendInfo(Options.Info_From + "=0"); 
+        		}
+        		positionRecordMap.put(pos, re); //replace
         	}         	
 		} 
-//      TabixReader  t1 = new TabixReader( primary.getAbsolutePath() );
-//		TabixReader  t2 = new TabixReader( secondary.getAbsolutePath()) ; 
+	}
+	
+	void reheader( String cmd, Options options) throws Exception {	
+		DateFormat df = new SimpleDateFormat("yyyyMMdd");
+		String version = VcfCompare.class.getPackage().getImplementationVersion();
+		String pg = VcfCompare.class.getPackage().getImplementationTitle();
+		final String fileDate = df.format(Calendar.getInstance().getTime());
+		final String uuid = QExec.createUUid();				
+
+		try ( VCFFileReader reader1 = new VCFFileReader(options.getIO(Options.primaryInput));
+				VCFFileReader reader2 = new VCFFileReader(options.getIO(Options.additionalInput))) {
+		   
+			VcfHeader h2 = reader2.getHeader();
+			String inputUuid = (h2.getUUID() == null)? null: new VcfHeaderUtils.SplitMetaRecord(h2.getUUID()).getValue();   
+			h2.replace("##" + Options.additionalInput + "=" + inputUuid + ":" + options.getIO(Options.additionalInput));
+			   
+			VcfHeader h1 = reader1.getHeader();	    	   
+			inputUuid = (h1.getUUID() == null)? null: new VcfHeaderUtils.SplitMetaRecord(h1.getUUID()).getValue();   
+			h1.replace("##" + Options.primaryInput + "=" + inputUuid + ":"+ options.getIO(Options.primaryInput));
+			h1.parseHeaderLine(VcfHeaderUtils.STANDARD_FILE_DATE + "=" + fileDate);
+			h1.parseHeaderLine(VcfHeaderUtils.STANDARD_UUID_LINE + "=" + uuid);
+			h1.parseHeaderLine(VcfHeaderUtils.STANDARD_SOURCE_LINE + "=" + pg+"-"+version);	
+			
+			header = VcfHeaderUtils.mergeHeaders(reader1.getHeader(), reader2.getHeader(), false);
+		}
+	 		
+		if(version == null) version = Constants.NULL_STRING;
+	    if(pg == null ) pg = Constants.NULL_STRING;
+	    if(cmd == null) cmd = Constants.NULL_STRING;
+		VcfHeaderUtils.addQPGLineToHeader(header, pg, version, cmd);
+		header.addInfoLine(Options.Info_From, "1", "Integer", Options.Info_From_Description);
+	
 	}
 	
 	void VcfMerge( File output) throws IOException{
-		//rehead
-		//merge
 		final List<ChrPosition> orderedList = new ArrayList<ChrPosition>(positionRecordMap.keySet());
 		Collections.sort(orderedList);
 		
@@ -78,32 +111,46 @@ public class VcfCompare {
 			for(final VcfHeader.Record record: header)  {
 				writer.addHeader(record.toString());
 			}
-			long count = 0; 
+		
 			for (final ChrPosition position : orderedList) {				
 				VcfRecord record = positionRecordMap.get(position); 
 				writer.add( record );	
-				count ++;
+				noOutput ++; 
 			}
 		}  
 	}
+	
+	long getCountPrimaryOnly() {return noPrimary - noBoth; }
+	long getCountAddtionalOnly(){return noAdditional - noBoth; }
+	long getCountBoth(){return noBoth; }
+	long getCountOutput(){return noOutput;}
 	
 	public static void main(final String[] args) throws Exception {		
 	
 		//check arguments
 		Options options = new Options( args);	
-		if(! options.commandCheck()){ 	System.exit(1);	}		
+		if(! options.commandCheck()){ System.out.println("command check failed! ");	System.exit(1);	}		
 		
 		QLogger logger =  options.getLogger(args);		
 		try{     	
-			File foutput = new File(options.getIO("output"));
-			File primary = new File(options.getIO("primaryVcf"));			
-			File addition = new File(options.getIO("additionalVcf"));			 
-			
+			File foutput = new File(options.getIO(Options.output));
+			File primary = new File(options.getIO("primaryInput"));			
+			File addition = new File(options.getIO("additionalInput"));		
+						
 			VcfCompare compare = new VcfCompare( primary, addition);
-			logger.info("Merging VCF ...");	 		
+			logger.info("Merging VCF ...");	 	
+			compare.reheader( Messages.reconstructCommandLine(args), options);
 			compare.VcfMerge( foutput);
 			
-			logger.info("outputed VCF   " );
+			logger.info("Total outputed variant record is " + compare.getCountOutput() );
+			logger.info("Including variant record appeared from both input: " + compare.getCountBoth() );
+			logger.info("Including variant record appeared from primary input: " + compare.getCountPrimaryOnly() );
+			logger.info("Including variant record appeared from additional input: " + compare.getCountAddtionalOnly() );
+			
+			if(compare.getCountOutput() != 
+					(compare.getCountBoth() + compare.getCountPrimaryOnly() + compare.getCountAddtionalOnly()) )
+				logger.warn("The total output variants number is not same as total number from both inputs! ");			 
+			
 			//count reads number in each window and output  
         	logger.logFinalExecutionStats(0);
         	System.exit(0);

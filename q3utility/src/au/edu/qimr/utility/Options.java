@@ -10,6 +10,14 @@ import joptsimple.OptionSet;
 import org.qcmg.common.log.*;	
 
 public class Options {
+	protected static final String primaryInput = "primaryInput";
+	protected static final String additionalInput = "additionalInput";
+	protected static final String output = "output";
+	protected static final String Info_From = "FR" ;
+	protected static final String Info_From_Description = "1:indicates this variants is from " + primaryInput
+			+ "; 2: indicates this variants is from "  + additionalInput
+			+ "; 0: indicates this variants is from both input file but the annotation information is only from " + primaryInput + " .";
+	
 	private static final String HELP_DESCRIPTION = Messages.getMessage("HELP_OPTION_DESCRIPTION");
 	private static final String VERSION_DESCRIPTION = Messages.getMessage("VERSION_OPTION_DESCRIPTION");	
 	private static final String LOG_DESCRIPTION = Messages.getMessage("LOG_OPTION_DESCRIPTION");	
@@ -33,9 +41,9 @@ public class Options {
 		parser.accepts("help", HELP_DESCRIPTION);
 
 		System.out.println("current program " + Messages.getProgramName()  );
-		parser.accepts("output", OUTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("outputfile");
-		parser.accepts("primaryInput", PRIMARY_INTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Normal BAM");
-		parser.accepts("additionInput", ADDITION_INPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Normal BAM");
+		parser.accepts(output, OUTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("outputfile");
+		parser.accepts(primaryInput, PRIMARY_INTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Normal BAM");
+		parser.accepts(additionalInput, ADDITION_INPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("Normal BAM");
 
 
 		options = parser.parse(args);	
@@ -66,7 +74,7 @@ public class Options {
 		if(options.has("log")){
 			logFile = options.valueOf("log").toString();			 
 		}else{
-			logFile = options.valueOf("output") + ".log";			 
+			logFile = options.valueOf(output) + ".log";			 
 		}		
 		
 		logger = QLoggerFactory.getLogger( VcfCompare.class, logFile,logLevel);
@@ -108,21 +116,21 @@ public class Options {
 				return false;
 			}
 
-			if(getIO("primaryInput") == null || getIO("additionalInput") == null || getIO("output") == null){
+			if(getIO(primaryInput) == null || getIO(additionalInput) == null || getIO(output) == null){
 				System.err.println("Missing primaryInput, additionalInput or output option");		 
 				return false;
 			}
-			if( getIO("primaryInput").equals(getIO("additionalInput"))){
-				System.err.println(Messages.getMessage("SAME_FILES", "primaryInput", "additionalInput"));		
+			if( getIO(primaryInput).equals(getIO(additionalInput))){
+				System.err.println(Messages.getMessage("SAME_FILES", primaryInput, additionalInput));		
 						return false;
 			}	
 
-			if( getIO("primaryInput").equals(getIO("output"))){
-				System.err.println(Messages.getMessage("SAME_FILES", "primaryInput", "output"));		
+			if( getIO(primaryInput).equals(getIO(output))){
+				System.err.println(Messages.getMessage("SAME_FILES", primaryInput, output));		
 						return false;
 			}
-			if( getIO("output").equals(getIO("additionalInput"))){
-				System.err.println(Messages.getMessage("SAME_FILES", "output", "additionalInput"));		
+			if( getIO(output).equals(getIO(additionalInput))){
+				System.err.println(Messages.getMessage("SAME_FILES", output, additionalInput));		
 						return false;
 			}
 			
