@@ -1,29 +1,25 @@
 package au.edu.qimr.utility;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.qcmg.common.model.ChrPosition;
 import org.qcmg.common.vcf.VcfRecord;
 import org.qcmg.common.vcf.header.VcfHeader;
 import org.qcmg.common.vcf.header.VcfHeaderUtils;
 import org.qcmg.vcf.VCFFileReader;
-
-import au.edu.qimr.utility.Messages;
-import au.edu.qimr.utility.Options;
-import au.edu.qimr.utility.VcfCompare;
  
 public class VcfCompareTest {
 	public static String outputName = "output.vcf";
@@ -31,8 +27,8 @@ public class VcfCompareTest {
 	public static String inputAdditionalName = "additional.vcf";
 	public static String args[] = "--primaryInput primary.vcf --additionalInput additional.vcf --output merge.vcf --log output.log".split(" ");			
 	
-	@BeforeClass
-	public static void createInput() throws Exception{	
+	@Before
+	public void createInput() throws Exception{	
 		createVcf(inputPrimaryName);
 		createVcf(inputAdditionalName);
 		
@@ -49,8 +45,8 @@ public class VcfCompareTest {
          } 
 	}	
 	
-	 @AfterClass
-	 public static void deleteIO(){
+	 @After
+	 public void deleteIO(){
 		 new File(inputPrimaryName).delete();
 		 new File(inputAdditionalName).delete();		 
 		 new File(outputName).delete();		 
