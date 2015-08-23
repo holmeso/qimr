@@ -13,9 +13,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.qcmg.common.vcf.VcfRecord;
 import org.qcmg.common.vcf.header.VcfHeader;
 import org.qcmg.common.vcf.header.VcfHeaderUtils;
@@ -27,8 +25,8 @@ public class VcfCompareTest {
 	public static String inputAdditionalName = "additional.vcf";
 	public static String args[] = "--primaryInput primary.vcf --additionalInput additional.vcf --output merge.vcf --log output.log".split(" ");			
 	
-	@Before
-	public void createInput() throws Exception{	
+	@BeforeClass
+	public static void createInput() throws Exception{	
 		createVcf(inputPrimaryName);
 		createVcf(inputAdditionalName);
 		
@@ -45,15 +43,17 @@ public class VcfCompareTest {
          } 
 	}	
 	
-	 @After
-	 public void deleteIO(){
+ 
+	 @AfterClass
+	 public static void deleteIO(){ 
 		 new File(inputPrimaryName).delete();
 		 new File(inputAdditionalName).delete();		 
 		 new File(outputName).delete();		 
 	 }	 
 
 		@Test
-		public void checkHeader() throws IOException  {
+		public void checkHeader() throws Exception  {
+			String inputAdditionalName = "additional1.vcf";
 	        final List<String> data = new ArrayList<String>();
 	        data.add("##fileformat=VCFv4.0");
 	        data.add("##fileDate=20150819");
@@ -67,8 +67,9 @@ public class VcfCompareTest {
 			try {
 				VcfCompare compare = new VcfCompare( new File(inputPrimaryName), new File(inputAdditionalName));				
 			    fail( "My method didn't throw when I expected it to" );
-			} catch (RuntimeException expectedException) {}
-				
+			} catch (RuntimeException expectedException) {
+				new File(inputAdditionalName).delete();	
+			}
 		}	
  
 	@Test
@@ -117,7 +118,7 @@ public class VcfCompareTest {
         		}
         	}
        }
-	}
+ 	}
 	
 
 	public static void createVcf(String file) throws IOException{
