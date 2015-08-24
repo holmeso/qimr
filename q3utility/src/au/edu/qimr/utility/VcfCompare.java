@@ -168,11 +168,10 @@ public class VcfCompare {
 		Runtime runtime = Runtime.getRuntime();
 		runtime.gc();	
 		long MTotal =  runtime.totalMemory() / MEGABYTE;
-		long MUsed = MTotal - runtime.freeMemory() / MEGABYTE;
-		long MMax = runtime.maxMemory() / MEGABYTE;
-		 
+//		long MUsed = MTotal - runtime.freeMemory() / MEGABYTE;
+		long MMax = runtime.maxMemory() / MEGABYTE;		 
 		
-		return String.format("allocated mem=%dM; used mem=%dM; vmem=%dM.", MTotal,MUsed, MMax);
+		return String.format("ResourcesUsed: mem=%dM; vmem=%dM.", MTotal,MMax);
 	}
 	
 }
