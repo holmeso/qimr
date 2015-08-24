@@ -16,6 +16,7 @@ import org.qcmg.vcf.*;
 
 public class VcfCompare {
 	
+	
 	final Map<ChrPosition,VcfRecord> positionRecordMap = new HashMap<ChrPosition,VcfRecord>();
 	VcfHeader header  = null;	
 	private long noPrimary = 0;
@@ -128,8 +129,9 @@ public class VcfCompare {
 		Options options = new Options( args);	
 		if(! options.commandCheck()){ System.out.println("command check failed! ");	System.exit(1);	}		
 		
+		 
 		QLogger logger =  options.getLogger(args);		
-		try{     	
+		try{    
 			File foutput = new File(options.getIO(Options.output));
 			File primary = new File(options.getIO("primaryInput"));			
 			File addition = new File(options.getIO("additionalInput"));		
@@ -137,8 +139,8 @@ public class VcfCompare {
 			VcfCompare compare = new VcfCompare( primary, addition);
 			logger.info("Merging VCF ...");	 	
 			compare.reheader( Messages.reconstructCommandLine(args), options);
+
 			compare.VcfMerge( foutput);
-			
 			logger.info("Total outputed variant record is " + compare.getCountOutput() );
 			logger.info("Including variant record appeared from both input: " + compare.getCountBoth() );
 			logger.info("Including variant record appeared from primary input: " + compare.getCountPrimaryOnly() );
@@ -149,6 +151,7 @@ public class VcfCompare {
 				logger.warn("The total output variants number is not same as total number from both inputs! ");			 
 			
 			//count reads number in each window and output  
+			logger.info(  getUsedMemory());
         	logger.logFinalExecutionStats(0);
         	System.exit(0);
         }catch(Exception e){ 
@@ -157,6 +160,19 @@ public class VcfCompare {
         	System.err.println(e.toString());       	 
         	System.exit(1);
         }		
+	}
+	
+	static String getUsedMemory(){
+		final long MEGABYTE = 1024L * 1024L;
+
+		Runtime runtime = Runtime.getRuntime();
+		runtime.gc();	
+		long MTotal =  runtime.totalMemory() / MEGABYTE;
+		long MUsed = MTotal - runtime.freeMemory() / MEGABYTE;
+		long MMax = runtime.maxMemory() / MEGABYTE;
+		 
+		
+		return String.format("allocated mem=%dM; used mem=%dM; vmem=%dM.", MTotal,MUsed, MMax);
 	}
 	
 }
