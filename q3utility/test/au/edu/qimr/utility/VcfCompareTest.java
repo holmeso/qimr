@@ -41,8 +41,7 @@ public class VcfCompareTest {
         try(BufferedWriter out = new BufferedWriter(new FileWriter(inputAdditionalName,true));) {          
             for (final String line : data)   out.write(line +"\n");                  
          } 
-	}	
-	
+	}		
  
 	 @AfterClass
 	 public static void deleteIO(){ 

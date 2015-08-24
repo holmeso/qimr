@@ -17,14 +17,12 @@ import org.qcmg.vcf.*;
 public class VcfCompare {
 	
 	final Map<ChrPosition,VcfRecord> positionRecordMap = new HashMap<ChrPosition,VcfRecord>();
-	VcfHeader header  = null;
-	
+	VcfHeader header  = null;	
 	private long noPrimary = 0;
 	private long noAdditional = 0;
 	private long noBoth = 0; 
 	private long noOutput = 0;
-	 
-	
+	 	
 	public VcfCompare(File primary, File secondary) throws IOException,RuntimeException  {		
 		//read record into RAM, meanwhile wipe off the ID field value;
         try ( VCFFileReader reader1 = new VCFFileReader(primary);
