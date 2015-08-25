@@ -15,8 +15,8 @@ public class Options {
 	protected static final String output = "output";
 	protected static final String Info_From = "FR" ;
 	protected static final String Info_From_Description = "1:indicates this variants is from " + primaryInput
-			+ "; 2: indicates this variants is from "  + additionalInput
-			+ "; 0: indicates this variants is from both input file but the annotation information is only from " + primaryInput + " .";
+			+ "; 2: indicates this variant is from "  + additionalInput
+			+ "; 0: indicates this variant appears both input file but the annotation information from " + primaryInput + " only are kept.";
 	
 	private static final String HELP_DESCRIPTION = Messages.getMessage("HELP_OPTION_DESCRIPTION");
 	private static final String VERSION_DESCRIPTION = Messages.getMessage("VERSION_OPTION_DESCRIPTION");	
