@@ -81,11 +81,12 @@ public class VcfCompare {
 		   
 			VcfHeader h2 = reader2.getHeader();
 			String inputUuid = (h2.getUUID() == null)? null: new VcfHeaderUtils.SplitMetaRecord(h2.getUUID()).getValue();   
-			h2.replace("##" + Options.additionalInput + "=" + inputUuid + ":" + options.getIO(Options.additionalInput));
-			   
+		//	h2.replace("##" + Options.additionalInput + "=" + inputUuid + ":" + options.getIO(Options.additionalInput));
+			h2.replace( VcfHeaderUtils.STANDARD_INPUT_LINE  + "=" + inputUuid + ":" + options.getIO(Options.additionalInput));
+			
 			VcfHeader h1 = reader1.getHeader();	    	   
-			inputUuid = (h1.getUUID() == null)? null: new VcfHeaderUtils.SplitMetaRecord(h1.getUUID()).getValue();   
-			h1.replace("##" + Options.primaryInput + "=" + inputUuid + ":"+ options.getIO(Options.primaryInput));
+			inputUuid = (h1.getUUID() == null)? null: new VcfHeaderUtils.SplitMetaRecord(h1.getUUID()).getValue();  
+			h1.replace( VcfHeaderUtils.STANDARD_INPUT_LINE  + "=" + inputUuid + ":" + options.getIO(Options.primaryInput));
 			h1.parseHeaderLine(VcfHeaderUtils.STANDARD_FILE_DATE + "=" + fileDate);
 			h1.parseHeaderLine(VcfHeaderUtils.STANDARD_UUID_LINE + "=" + uuid);
 			h1.parseHeaderLine(VcfHeaderUtils.STANDARD_SOURCE_LINE + "=" + pg+"-"+version);	
