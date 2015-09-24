@@ -1,85 +1,122 @@
 package au.edu.qimr.utility;
 
+import static java.util.Arrays.asList;
 
-import java.util.List;
+import java.io.File;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
-//import au.edu.qimr.utility.*;   
-import org.qcmg.common.log.*;	
+import org.qcmg.common.log.QLogger;
+import org.qcmg.common.log.QLoggerFactory;
 
-public class Options {
-	protected static final String primaryInput = "primaryInput";
-	protected static final String additionalInput = "additionalInput";
-	protected static final String output = "output";
-	protected static final String Info_From = "FR" ;
-	protected static final String Info_From_Description = "1:indicates this variants is from " + primaryInput
-			+ "; 2: indicates this variant is from "  + additionalInput
-			+ "; 0: indicates this variant appears both input file but the annotation information from " + primaryInput + " only are kept.";
+import au.edu.qimr.utility.Messages;
+/*
+ * parse command line to options. 
+ */
+public abstract class Options {
 	
-	private static final String HELP_DESCRIPTION = Messages.getMessage("HELP_OPTION_DESCRIPTION");
-	private static final String VERSION_DESCRIPTION = Messages.getMessage("VERSION_OPTION_DESCRIPTION");	
-	private static final String LOG_DESCRIPTION = Messages.getMessage("LOG_OPTION_DESCRIPTION");	
-	private static final String LOGLEVEL_DESCRIPTION = Messages.getMessage("LOGLEVEL_OPTION_DESCRIPTION");	
-	
-	private static final String OUTPUT_DESCRIPTION = Messages.getMessage("OUTPUT_OPTION_DESCRIPTION");
-	private static final String PRIMARY_INTPUT_DESCRIPTION = Messages.getMessage("PRIMARY_INPUT_OPTION_DESCRIPTION");
-	private static final String ADDITION_INPUT_DESCRIPTION = Messages.getMessage("ADDITION_INPUT_OPTION_DESCRIPTION");
-	private final OptionParser parser = new OptionParser();  
-	private final OptionSet options;	
-	
-	final static int DEFAULT_THREAD = 2;
-	final String commandLine;	
-	final String USAGE = Messages.getMessage("USAGE");
-	final String version = au.edu.qimr.utility.VcfCompare.class.getPackage().getImplementationVersion();	
-	
-	public Options( final String[] args) throws Exception {	
-		parser.accepts("log", LOG_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("logfile");
-		parser.accepts("loglevel", LOGLEVEL_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("loglevel");
-		parser.accepts("version", VERSION_DESCRIPTION);
-		parser.accepts("help", HELP_DESCRIPTION);
+   protected static final String VERSION_DESCRIPTION = Messages.getMessage("VERSION_OPTION_DESCRIPTION");	 
+   protected static final String HELP_DESCRIPTION = Messages.getMessage("HELP_OPTION_DESCRIPTION");  
+    
+   protected static final String LOG_DESCRIPTION = Messages.getMessage("LOG_OPTION_DESCRIPTION");
+   protected static final String LOG_LEVEL_OPTION_DESCRIPTION = Messages.getMessage("LOG_LEVEL_OPTION_DESCRIPTION");
+   protected static final String USAGE = Messages.getMessage("USAGE");
 
-		parser.accepts(output, OUTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("outputfile");
-		parser.accepts(primaryInput, PRIMARY_INTPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("primary input vcf");
-		parser.accepts(additionalInput, ADDITION_INPUT_DESCRIPTION).withRequiredArg().ofType(String.class).describedAs("additional input vcf");
+   protected static final String version = au.edu.qimr.utility.Main.class.getPackage().getImplementationVersion();	
 
+   protected final String input = "input";
+   protected final String output = "output";
 
-		options = parser.parse(args);	
-		commandLine = Messages.reconstructCommandLine(args);
-	}
-	
-	//IO parameters
-	String getIO(String io) throws Exception{		
+  
+   
+//   protected static final String test = "test";
+//   protected static final String control = "control";
+   protected final OptionParser parser = new OptionParser();  
+	protected OptionSet options;	
 
-		int size = options.valuesOf(io).size();
-		if( size > 1){
-			throw new Exception("multiple "+ io + " files specified" );
-		}
-		else if( size < 1 ){
-			throw new Exception(" missing or invalid IO option specified: " + io );
-		}
+	protected  boolean commandCheck = false;
+    protected String commandLine;
+
 		
-		return options.valueOf(io).toString();		 
-	}
-	
-	
-	QLogger getLogger(String[] args) throws Exception{
-				
-		// configure logging
-		QLogger logger;
-		String logLevel = (String) options.valueOf("loglevel");
-		String logFile;
-		if(options.has("log")){
-			logFile = options.valueOf("log").toString();			 
-		}else{
-			logFile = options.valueOf(output) + ".log";			 
-		}		
-		
-		logger = QLoggerFactory.getLogger( VcfCompare.class, logFile,logLevel);
-		logger.logInitialExecutionStats(VcfCompare.class.toString(), version, args);	
-		return logger;
-	}
+	protected String outputFileName = null;
+	protected String inputFileName = null;
+    
+//	protected String logFileName = null;
+//	protected  String logLevel;  
+	protected QLogger logger = null;
+	public abstract boolean commandCheck() throws Exception;
+    
+    public void parseArgs(final String[] args, Class myclass) throws Exception{ 
+
+       	parser.allowsUnrecognizedOptions(); 
+        parser.acceptsAll( asList("h", "help"), HELP_DESCRIPTION);
+        parser.acceptsAll( asList("v", "version"), VERSION_DESCRIPTION);
+        options  = parser.parse(args);   
+        commandLine = Messages.reconstructCommandLine(args) ;
+        
+//        if(options.has("v") || options.has("version")){
+//            System.out.println( "Current version is " + getVersion());
+//            return false;
+//        }
+               
+//		logger = getLogger(args,myclass); 				         
+//        commandCheck = commandCheck(); 
+//       
+      
+	} 
+    
+    public void displayHelp() throws Exception {
+		    System.out.println(Messages.getMessage("USAGE"));  
+		    Thread.sleep(1);
+		    parser.printHelpOn(System.err);	        
+    }
+    
+    public String getVersion(){
+    	return version;
+    }
+    
+    public String getPGName(){
+        return Messages.getProgramName();
+    }
+    
+
+//    protected boolean checkUnique(String[] ios ){   
+//    	
+//    	final File[] fios = new File[ios.length];
+// //   	Path[] pios = new Path[ios.length];
+//    	
+//    	for (int i = 0; i < ios.length; i ++)
+//    		fios[i] = new File(ios[i]); 
+//    	   	
+//    	for(int  i = ios.length -1; i > 0; i --)
+//    		for (int j = i-1; j >= 0; j -- )
+//				try {
+//					//if( Files.isSameFile(pios[i], pios[j]))
+//					if(fios[i].getCanonicalFile().equals(fios[j].getCanonicalFile()))
+//						throw new Exception( "below command line values are point to same file: \n\t" + fios[i] + "\n\t" + fios[j]   ) ;
+//				} catch (final Exception e) {
+//					//e.printStackTrace();
+//					System.err.println(e.getMessage());
+//					return false;
+//				}
+//
+//    	return true;    	
+//    }	 
+    
+//    protected boolean checkOutputs( String[]  outputs){   
+//    	for(int i = 0; i < outputs.length; i ++){
+//	        final File out = new File(outputs[i] );
+//	        if((out.exists() && !out.canWrite()) || !out.getParentFile().canWrite() ){
+//	        	System.err.println( Messages.getMessage("OUTPUT_ERR_DESCRIPTION",out.getName()) );
+//	        	 return false;
+//	        }
+//	        
+//    	}
+//    	return true;
+//    }
+   
+	public String getCommandLine() {	return commandLine; }		
 	
 	 boolean hasHelp() throws Exception{
 		 if(options.has("h") || options.has("help")){    
@@ -100,39 +137,122 @@ public class Options {
 		return false;
 	 }
 	 
-	 boolean commandCheck() throws Exception{
-			//quit system after provide help or version info
-			if( hasHelp() || hasVersion() ){ 
-				 System.exit(0); 
-			} 		 	
+	 
+    /**
+     * check input and output files
+     * @return true if input file readable and output file writable
+     */
+    protected boolean checkInputs( String[] inputs ){   
+        String errMessage = null;
+        
+        for(int i = 0; i < inputs.length; i ++){
+        	final File in = new File(inputs[i] );
+	        if(!in.exists()) 
+	            errMessage = Messages.getMessage("NONEXIST_INPUT_FILE", in.getPath());
+	        else if(!in.isFile())       
+	            errMessage = Messages.getMessage("FILE_NOT_DIRECTORY", in.getPath());
+	         else if(!in.canRead())
+	        	errMessage = Messages.getMessage("UNREAD_INPUT_FILE",in.getPath());     
+	           
+	        if(errMessage != null){
+	        	System.err.println(errMessage);
+	        	 return false;
+	        }
+	       }  	
+	        	
+	       return true;
+    }	
+    
+    protected boolean checkOutputs( String[] outputs ){
+       String errMessage = null;
+        
+        for(int i = 0; i < outputs.length; i ++){
+        	final File in = new File(outputs[i] );
+	        if(!in.exists()) 
+	            errMessage = Messages.getMessage("NONEXIST_INPUT_FILE", in.getPath());
+	        else if(!in.isFile())       
+	            errMessage = Messages.getMessage("FILE_NOT_DIRECTORY", in.getPath());
+	         else if(!in.canRead())
+	        	errMessage = Messages.getMessage("UNREAD_INPUT_FILE",in.getPath());     
+	           
+	        if(errMessage != null){
+	        	System.err.println(errMessage);
+	        	 return false;
+	        }
+	       }  	
+	        	
+	       return true;    	
+    }
+    
+    
+    protected boolean checkUnique(String[] ios ){   
 		
-			if (options.nonOptionArguments().size() > 0) {	
-				List<String> nonoptions = (List<String>) options.nonOptionArguments();
-
-				for(String str : nonoptions){
-					System.err.println("INVALID OPTION: " + str);
-				} 				
-				return false;
-			}
-
-			if(getIO(primaryInput) == null || getIO(additionalInput) == null || getIO(output) == null){
-				System.err.println("Missing primaryInput, additionalInput or output option");		 
-				return false;
-			}
-			if( getIO(primaryInput).equals(getIO(additionalInput))){
-				System.err.println(Messages.getMessage("SAME_FILES", primaryInput, additionalInput));		
-						return false;
-			}	
-
-			if( getIO(primaryInput).equals(getIO(output))){
-				System.err.println(Messages.getMessage("SAME_FILES", primaryInput, output));		
-						return false;
-			}
-			if( getIO(output).equals(getIO(additionalInput))){
-				System.err.println(Messages.getMessage("SAME_FILES", output, additionalInput));		
-						return false;
-			}
-			
-			return true;	
+		final File[] fios = new File[ios.length];
+		
+		for (int i = 0; i < ios.length; i ++)
+			fios[i] = new File(ios[i]); 
+		   	
+		for(int  i = ios.length -1; i > 0; i --)
+			for (int j = i-1; j >= 0; j -- )
+				try {
+					//if( Files.isSameFile(pios[i], pios[j]))
+					if(fios[i].getCanonicalFile().equals(fios[j].getCanonicalFile()))
+						throw new Exception( "below command line values are point to same file: \n\t" + fios[i] + "\n\t" + fios[j]   ) ;
+					} catch (final Exception e) {
+						//e.printStackTrace();
+					System.err.println(e.getMessage());
+					return false;
+				}
+	
+		return true;    	
+	}	    
+    
+    /**
+     * check input and output files
+     * @return true if input file readable and output file writable
+     */
+    protected boolean checkIO(String input, String output ){   	
+    	final File in = new File(input );
+        final File out = new File(output  );
+               
+		if(! in.getAbsolutePath().equals(out.getAbsoluteFile())){
+			System.err.println(Messages.getMessage("SAME_FILES", input, output));		
+			return false; 
 		}
+                
+        return   checkInputs(new String[] {input})  && checkOutputs(new String[] {input});        
+    }
+	 
+    //IO parameters
+	String getUniqIO(String io) throws Exception{		
+
+		int size = options.valuesOf(io).size();
+		if( size > 1){
+			throw new Exception("multiple "+ io + " files specified" );
+		}
+		else if( size < 1 ){
+			throw new Exception(" missing or invalid IO option specified: " + io );
+		}
+		
+		return options.valueOf(io).toString();		 
+	}
+	
+	QLogger getLogger(String[] args, Class myclass) throws Exception{
+		
+		// configure logging
+		if(logger != null)
+			return logger; 
+		
+		String logLevel = (String) options.valueOf("loglevel");
+		String logFile;
+		if(options.has("log")){
+			logFile = options.valueOf("log").toString();			 
+		}else{
+			logFile = options.valueOf(output) + ".log";			 
+		}		
+		
+		logger = QLoggerFactory.getLogger( myclass, logFile,logLevel);
+		logger.logInitialExecutionStats(myclass.toString(), version, args);	
+		return logger;
+	}
 }

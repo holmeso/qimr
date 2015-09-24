@@ -49,7 +49,7 @@ public class VcfCompare {
         	for (final VcfRecord re : reader1){     
         		noPrimary ++; 
         		ChrPosition pos = re.getChrPosition();
-        		re.appendInfo(Options.Info_From + "=1");        		
+        		re.appendInfo(VcfCompareOptions.Info_From + "=1");        		
         		positionRecordMap.put(new ChrPosition(pos.getChromosome(), pos.getPosition(), pos.getEndPosition(), re.getAlt()), re);	 
         	}
         	
@@ -59,34 +59,34 @@ public class VcfCompare {
         		ChrPosition pos = re.getChrPosition();
         		pos = new ChrPosition(pos.getChromosome(), pos.getPosition(), pos.getEndPosition(), re.getAlt());        		
         		if(positionRecordMap.get(pos) == null)  //second file
-        			re.appendInfo(Options.Info_From + "=2"); 
+        			re.appendInfo(VcfCompareOptions.Info_From + "=2"); 
         		else{ //both file
         			noBoth ++; 
-        			re.appendInfo(Options.Info_From + "=0"); 
+        			re.appendInfo(VcfCompareOptions.Info_From + "=0"); 
         		}
         		positionRecordMap.put(pos, re); //replace
         	}         	
 		} 
 	}
 	
-	public void reheader( String cmd, Options options) throws Exception {	
+	public void reheader( String cmd, VcfCompareOptions options) throws Exception {	
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		String version = VcfCompare.class.getPackage().getImplementationVersion();
 		String pg = VcfCompare.class.getPackage().getImplementationTitle();
 		final String fileDate = df.format(Calendar.getInstance().getTime());
 		final String uuid = QExec.createUUid();		
 
-		try ( VCFFileReader reader1 = new VCFFileReader(options.getIO(Options.primaryInput));
-				VCFFileReader reader2 = new VCFFileReader(options.getIO(Options.additionalInput))) {
+		try ( VCFFileReader reader1 = new VCFFileReader(options.getIO(VcfCompareOptions.primaryInput));
+				VCFFileReader reader2 = new VCFFileReader(options.getIO(VcfCompareOptions.additionalInput))) {
 		   
 			VcfHeader h2 = reader2.getHeader();
 			String inputUuid = (h2.getUUID() == null)? null: new VcfHeaderUtils.SplitMetaRecord(h2.getUUID()).getValue();   
 		//	h2.replace("##" + Options.additionalInput + "=" + inputUuid + ":" + options.getIO(Options.additionalInput));
-			h2.replace( VcfHeaderUtils.STANDARD_INPUT_LINE  + "=" + inputUuid + ":" + options.getIO(Options.additionalInput));
+			h2.replace( VcfHeaderUtils.STANDARD_INPUT_LINE  + "=" + inputUuid + ":" + options.getIO(VcfCompareOptions.additionalInput));
 			
 			VcfHeader h1 = reader1.getHeader();	    	   
 			inputUuid = (h1.getUUID() == null)? null: new VcfHeaderUtils.SplitMetaRecord(h1.getUUID()).getValue();  
-			h1.replace( VcfHeaderUtils.STANDARD_INPUT_LINE  + "=" + inputUuid + ":" + options.getIO(Options.primaryInput));
+			h1.replace( VcfHeaderUtils.STANDARD_INPUT_LINE  + "=" + inputUuid + ":" + options.getIO(VcfCompareOptions.primaryInput));
 			h1.parseHeaderLine(VcfHeaderUtils.STANDARD_FILE_DATE + "=" + fileDate);
 			h1.parseHeaderLine(VcfHeaderUtils.STANDARD_UUID_LINE + "=" + uuid);
 			h1.parseHeaderLine(VcfHeaderUtils.STANDARD_SOURCE_LINE + "=" + pg+"-"+version);	
@@ -98,7 +98,7 @@ public class VcfCompare {
 	    if(pg == null ) pg = Constants.NULL_STRING;
 	    if(cmd == null) cmd = Constants.NULL_STRING;
 		VcfHeaderUtils.addQPGLineToHeader(header, pg, version, cmd);
-		header.addInfoLine(Options.Info_From, "1", "Integer", Options.Info_From_Description);
+		header.addInfoLine(VcfCompareOptions.Info_From, "1", "Integer", VcfCompareOptions.Info_From_Description);
 	
 	}
 	
@@ -127,13 +127,13 @@ public class VcfCompare {
 	public static void main(final String[] args) throws Exception {		
 	
 		//check arguments
-		Options options = new Options( args);	
+		VcfCompareOptions options = new VcfCompareOptions( args);	
 		if(! options.commandCheck()){ System.out.println("command check failed! ");	System.exit(1);	}		
 		
 		 
 		QLogger logger =  options.getLogger(args);		
 		try{    
-			File foutput = new File(options.getIO(Options.output));
+			File foutput = new File(options.getIO(VcfCompareOptions.output));
 			File primary = new File(options.getIO("primaryInput"));			
 			File addition = new File(options.getIO("additionalInput"));		
 						
