@@ -18,6 +18,10 @@ import org.qcmg.common.vcf.VcfRecord;
 import org.qcmg.common.vcf.header.VcfHeader;
 import org.qcmg.common.vcf.header.VcfHeaderUtils;
 import org.qcmg.vcf.VCFFileReader;
+
+import au.edu.qimr.utility.Messages;
+import au.edu.qimr.utility.VcfCompare;
+import au.edu.qimr.utility.VcfCompareOptions;
  
 public class VcfCompareTest {
 	public static String outputName = "output.vcf";
@@ -75,7 +79,7 @@ public class VcfCompareTest {
 	public void checkMerge() throws Exception {
  	   //call VcfCompare		
 		VcfCompare compare = new VcfCompare( new File(inputPrimaryName), new File(inputAdditionalName));				
-		compare.reheader( Messages.reconstructCommandLine(args ), new Options( args)	);
+		compare.reheader( Messages.reconstructCommandLine(args ), new VcfCompareOptions( args)	);
 		compare.VcfMerge( new File(outputName));    
 			
 		try ( VCFFileReader reader = new VCFFileReader(new File(outputName)) ) {  
@@ -84,7 +88,7 @@ public class VcfCompareTest {
 			String fileDate = new SimpleDateFormat("yyyyMMdd").format(Calendar.getInstance().getTime());
 			assertTrue(header.getFileDate().toString().equals(VcfHeaderUtils.STANDARD_FILE_DATE + "=" + fileDate));			
  			assertFalse(header.getUUID().toString().equals(VcfHeaderUtils.STANDARD_UUID_LINE + "=abcd_12345678_xzy_999666333"));
-			assertTrue(header.getInfoRecords().containsKey(Options.Info_From));
+			assertTrue(header.getInfoRecords().containsKey(VcfCompareOptions.Info_From));
 		}
 		
 		//check counts
@@ -101,16 +105,16 @@ public class VcfCompareTest {
         		switch (pos){
 	        		case 248845:		        			 
 	        		case 248945:
-	        			re.getInfo().equals(Options.Info_From +"=0");
+	        			re.getInfo().equals(VcfCompareOptions.Info_From +"=0");
 	        		case 249065:	
-	        			re.getInfoRecord().getField(Options.Info_From).equals("0");
+	        			re.getInfoRecord().getField(VcfCompareOptions.Info_From).equals("0");
 	        			break;
 	        		case 250065:	
-	        			assertTrue(re.getInfoRecord().getField(Options.Info_From).equals("1"));
+	        			assertTrue(re.getInfoRecord().getField(VcfCompareOptions.Info_From).equals("1"));
 	        			assertTrue(re.getInfoRecord().getField("SOMATIC") != null);
 	        			break;
 	        		case 260065:	
-	        			re.getInfo().equals(Options.Info_From +"=2");
+	        			re.getInfo().equals(VcfCompareOptions.Info_From +"=2");
 	        			break;
 	        		default:
 	        			throw new IllegalArgumentException("unexpected record: " + re.toString());
