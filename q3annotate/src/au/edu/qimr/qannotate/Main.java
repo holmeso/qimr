@@ -10,6 +10,7 @@ import au.edu.qimr.qannotate.modes.ConfidenceMode;
 import au.edu.qimr.qannotate.modes.CustomerConfidenceMode;
 import au.edu.qimr.qannotate.modes.DbsnpMode;
 import au.edu.qimr.qannotate.modes.GermlineMode;
+import au.edu.qimr.qannotate.modes.RepeatMaskMode;
 import au.edu.qimr.qannotate.modes.SnpEffMode;
 import au.edu.qimr.qannotate.modes.Vcf2maf;
 import au.edu.qimr.qannotate.options.ConfidenceOptions;
@@ -17,6 +18,7 @@ import au.edu.qimr.qannotate.options.CustomerConfidenceOptions;
 import au.edu.qimr.qannotate.options.DbsnpOptions;
 import au.edu.qimr.qannotate.options.GermlineOptions;
 import au.edu.qimr.qannotate.options.Options;
+import au.edu.qimr.qannotate.options.RepeatMaskOptions;
 import au.edu.qimr.qannotate.options.SnpEffOptions;
 import au.edu.qimr.qannotate.options.Vcf2mafOptions;
 import au.edu.qimr.qannotate.options.CaddOptions;
@@ -48,7 +50,8 @@ public class Main {
             	   new Vcf2maf((Vcf2mafOptions) options.getOption(),logger);
                else if(options.getOption().getMode() == Options.MODE.cadd)
             	   new CaddMode( (CaddOptions) options.getOption()  , logger);
-
+               else if(options.getOption().getMode() == Options.MODE.repeatmask)
+            	   new RepeatMaskMode((RepeatMaskOptions) options.getOption(), logger);
                else
             	   throw new Exception("No valid mode are specified on commandline: " + options.getMode().name()) ;
 

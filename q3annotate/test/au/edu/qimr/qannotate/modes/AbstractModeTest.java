@@ -11,6 +11,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 import org.junit.AfterClass;
@@ -81,7 +82,19 @@ public class AbstractModeTest {
 	        		i ++;
 	        	}
 	        	assertEquals(9, i);	
-        }		
+        }	
+        
+        
+        
+        //debug
+//        BitSet mask = new BitSet(64*8);
+//        
+//        System.out.println("empty bitset is " + mask.length());
+//        
+//        mask.set(64*64*64*64*64*64,true);
+//        System.out.println("after set bitset is " + mask.length());
+// //       System.out.println("check set bitset 100000000000000 " + mask.get(100000000000000));
+        
 	}
 	
 	@Test
