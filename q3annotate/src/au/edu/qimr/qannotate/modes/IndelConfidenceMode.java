@@ -30,15 +30,16 @@ import org.qcmg.vcf.VCFFileReader;
 import org.qcmg.vcf.VCFFileWriter;
 
 import au.edu.qimr.qannotate.modes.ConfidenceMode.Confidence;
-import au.edu.qimr.qannotate.options.RepeatMaskOptions;
+import au.edu.qimr.qannotate.options.IndelConfidenceOptions;
 
 /**
  * @author christix
+ * annotate whether indel is high, low or zero confidence
  *
  */
-public class RepeatMaskMode{
+public class IndelConfidenceMode extends AbstractMode{
 	private final QLogger logger;
-	private final RepeatMaskOptions options;
+	private final IndelConfidenceOptions options;
 	final int MAX_CONTIG_SIZE = 250000000;	
 	static final float DEFAULT_NIOC = 0.1f;
 	static final int DEFAULT_HOMCNTXTN = 6;
@@ -52,7 +53,7 @@ public class RepeatMaskMode{
  	
 	public static final String DESCRITPION_FILTER_REPEAT = String.format( "this variants is fallen into the repeat region");
 //	public enum Confidence{	HIGH , LOW, ZERO ; }	
-	public RepeatMaskMode(RepeatMaskOptions options, QLogger logger) throws Exception{	
+	public IndelConfidenceMode(IndelConfidenceOptions options, QLogger logger) throws Exception{	
 		this.logger = logger;	
 		this.options = options;
 		logger.tool("input: " + options.getInputFileName());
@@ -61,16 +62,21 @@ public class RepeatMaskMode{
         logger.tool("logger file " + options.getLogFileName());
         logger.tool("logger level " + options.getLogLevel()); 
         
-        
-        loadMask( options.getDatabaseFileName() );	
-        annotateVcf( );
+//        can't inputRecord, since same position may have multi entry for differnt insertion
+//		inputRecord(new File( options.getInputFileName())   );
+ 
+		addAnnotation(options.getDatabaseFileName() );
+ 
  		
  				
 	}
 
-	 
-	public void loadMask(String dbfile) throws Exception {
-		
+	/**
+	 * load repeart region into RAM 
+	 * @param dbfile
+	 * @throws Exception
+	 */
+	private void loadMask(String dbfile) throws Exception {		
         //load repeat region to bitset
         try(BufferedReader reader = new BufferedReader(new FileReader(dbfile))){
                 String line;
@@ -91,13 +97,12 @@ public class RepeatMaskMode{
                         	 continue;
                         }
                 }
-		}
-        
-        
+		}        
 	}
-	
-	
-	
+		
+	/*
+	 *check the confidence level
+	 */
 	private Confidence getConfidence(VcfRecord vcf){
 		String filter = vcf.getFilter();
 		if( filter.equals(VcfHeaderUtils.FILTER_PASS) ){
@@ -158,34 +163,41 @@ public class RepeatMaskMode{
        	return false; 
        	
 	}
+
+
+	@Override
+	void addAnnotation(String dbfile) throws Exception {
+		// TODO Auto-generated method stub
+		loadMask( dbfile );	
+		
+		long count = 0;
+		long repeatCount = 0; 
 	
-	public void annotateVcf( ) throws IOException{
 		try (VCFFileReader reader = new VCFFileReader(options.getInputFileName()  ) ;
-                        VCFFileWriter writer = new VCFFileWriter(new File( options.getOutputFileName() ))  ) {
-             
-        	 //reheat
-        	  VcfHeader header = reader.getHeader();
-        	  header.addFilterLine(FILTER_REPEAT, DESCRITPION_FILTER_REPEAT );       	  
-      		  header.addInfoLine(VcfHeaderUtils.INFO_CONFIDENT, "1", "String", DESCRITPION_INFO_CONFIDENCE);
-              for(final VcfHeader.Record record: header)  
-            	  writer.addHeader(record.toString());
-
-                long count = 0;
-                long repeatCount = 0; 
-                for (final VcfRecord vcf : reader) {               	
-                	if( isRepeat(vcf) ){
-                		VcfUtils.updateFilter(vcf, FILTER_REPEAT);
-                		repeatCount ++;
-                	}
-            		vcf.getInfoRecord().setField(VcfHeaderUtils.INFO_CONFIDENT, getConfidence(vcf).toString());		
-            		
-            		count++;
-            		writer.add(vcf);
-                }
-                
-                logger.info("outputed VCF record:  " + count + "; no of variants falled fallen into repeat region is " + repeatCount);
-        }
-
+                VCFFileWriter writer = new VCFFileWriter(new File( options.getOutputFileName() ))  ) {
+			    
+			//reheader
+		    VcfHeader hd = 	reader.getHeader();
+		    hd.addFilterLine(FILTER_REPEAT, DESCRITPION_FILTER_REPEAT );       	  
+		    hd.addInfoLine(VcfHeaderUtils.INFO_CONFIDENT, "1", "String", DESCRITPION_INFO_CONFIDENCE);		    
+		    hd = reheader(hd, options.getCommandLine(),options.getInputFileName());			    	  
+	
+		    for(final VcfHeader.Record record: hd)  
+		    	writer.addHeader(record.toString());
+		
+	        for (final VcfRecord vcf : reader) {               	
+	        	if( isRepeat(vcf) ){
+	        		VcfUtils.updateFilter(vcf, FILTER_REPEAT);
+	        		repeatCount ++;
+	        	}
+	    		vcf.getInfoRecord().setField(VcfHeaderUtils.INFO_CONFIDENT, getConfidence(vcf).toString());		
+	    		
+	    		count++;
+	    		writer.add(vcf);
+	        }
+		}        
+		logger.info("outputed VCF record:  " + count + "; no of variants falled fallen into repeat region is " + repeatCount);
+					 
 	}
  
 }	

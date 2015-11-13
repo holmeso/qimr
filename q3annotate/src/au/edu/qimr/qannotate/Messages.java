@@ -1,5 +1,7 @@
 package au.edu.qimr.qannotate;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.MessageFormat;
 import java.util.ResourceBundle;
 
@@ -65,6 +67,13 @@ public class Messages {
 		}
 		return result;
 	}
+	
+	public static String getStrackTrace(Exception e) {
+		StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        return sw.toString();
+	} 
 
 
 }
