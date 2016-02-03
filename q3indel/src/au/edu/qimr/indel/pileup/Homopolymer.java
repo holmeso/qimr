@@ -36,6 +36,7 @@ public class Homopolymer {
 	private List<Integer> maxBase = new ArrayList<Integer>();
 	private List<byte[]> homoString = new ArrayList<byte[]>();
 	private byte[] referenceBase;
+
 	
 	public Homopolymer(IndelPosition position, final byte[] referenceBase, int homopolymerWindow, int reportWindow) {
 		this.position = position.getChrPosition();
@@ -121,39 +122,46 @@ public class Homopolymer {
 		
 //		if(downBaseCount > 1)
 //			downBase.set(index, downBaseCount + "" + nearBase );
+			
 		
 		int max  = 0;
 		//reset up or down stream for deletion reference base
-		if(indelType.equals(SVTYPE.DEL)){			
-			byte[] mByte = motifs.get(0).getBytes(); 	
-			
-			int left = 0;
-			nearBase = (char) upstreamReference[finalUpIndex];			
-			for(int i = 0; i < mByte.length; i ++ ) 
-				if (nearBase == mByte[i])  left ++;
-				else  break;				 
-			upBaseCount += left; 
-						
-			int right = 0;
+		if(indelType.equals(SVTYPE.DEL)){
+			nearBase = (char) upstreamReference[finalUpIndex];
+			for(int i = position.getPosition()+1; i <= position.getEndPosition(); i ++){
+				if (nearBase == referenceBase[i]) {
+					upBaseCount++;
+				} else {
+					break;
+				}
+			}
 			nearBase = (char) downstreamReference[0];
-			for(int i = mByte.length -1; i >=0; i--) 
-				if (nearBase == mByte[i]) right++;
-				else break;
-			downBaseCount += right; 
+			for(int i = position.getPosition()+1; i <= position.getEndPosition(); i ++){
+				if (nearBase == referenceBase[i]) {
+					downBaseCount++;
+				} else {
+					break;
+				}
+			}
 			
-			max = (left == right && left == mByte.length)? 
-					(downBaseCount + upBaseCount - mByte.length) : Math.max(downBaseCount, upBaseCount);
-						 			
+			max = Math.max(downBaseCount, upBaseCount);
+			if( upstreamReference[finalUpIndex] == downstreamReference[0] &&
+				upstreamReference[finalUpIndex] == referenceBase[position.getPosition()+1]	&&	
+				downstreamReference[0] == referenceBase[position.getEndPosition()]  )
+				max = downBaseCount + upBaseCount - (position.getEndPosition() - position.getPosition());				
 		}else{
 		    //INS don't have reference base
 			max = (upstreamReference[finalUpIndex] == downstreamReference[0] )? 
 					(downBaseCount + upBaseCount) : Math.max(downBaseCount, upBaseCount);
 		}
 					
-		if(max > 1){
-			maxBase.set(index, max);
+			if(max > 1)
+				maxBase.set(index, max);
+		
+		
+		//set ffs sequence
+		if(upBaseCount > 1 || downBaseCount > 1)
 			homoString.set(index, setSequence(motifs.get(index))); 
-		}
 	}
 	
 //	public String getUpBaseCount(int index){ return upBase.get(index); }

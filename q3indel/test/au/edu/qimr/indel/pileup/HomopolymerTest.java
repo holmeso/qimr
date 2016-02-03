@@ -16,7 +16,9 @@ public class HomopolymerTest {
 		VcfRecord vs = new VcfRecord( new String[] {"chr1", "21",null, "T", "TTAA" });
 		IndelPosition indel = new IndelPosition (vs);		
 		Homopolymer homo = new Homopolymer(indel, getReference(), 3, 3);
-		assertTrue(homo.getPolymerSequence(0).equals("CCTtaaCCC"));
+//		assertTrue(homo.getUpBaseCount(0).equals(homo.nullValue));				
+//		assertTrue(homo.getDownBaseCount(0).equals("3C"  ));		
+		assertTrue(homo.getPolymerSequence(0).equals("GCTtaaCCC"));
 		assertTrue(homo.getCount(0) == 3);
 	
 		
@@ -37,17 +39,22 @@ public class HomopolymerTest {
 	public void testEmbed(){
 		VcfRecord vs = new VcfRecord(new String[] {"chr1", "23", null, "C", "CCAC" });
 		Homopolymer homo = new Homopolymer(new IndelPosition (vs), getReference(), 3,3);		
+//		assertTrue(homo.getUpBaseCount(0).equals("2C")); //   .getType(0).equals(HOMOTYPE.HOMCON));
+//		assertTrue(homo.getDownBaseCount(0).equals("3C"));  //.getHomopolymerCount(0)  == 3);
 		assertTrue(homo.getPolymerSequence(0).equals("TCCcacCCC"));
 		assertTrue(homo.getCount(0) == 5);
 				
 		vs = new VcfRecord( new String[] {"chr1", "23", null, "C", "CCCC" });
 		homo = new Homopolymer(new IndelPosition (vs), getReference(), 100,100);		
-		assertTrue(homo.getPolymerSequence(0).equals("AATGCAATTGGATCGGACCCTCCcccCCCCCCCCCCCCCCCCC"));	
-		
+//		assertTrue(homo.getUpBaseCount(0).equals("2C")); //   .getType(0).equals(HOMOTYPE.HOMCON));
+//		assertTrue(homo.getDownBaseCount(0) .equals("17C" ));  //.getHomopolymerCount(0)  == 3);
+		assertTrue(homo.getPolymerSequence(0).equals("AATGCAATTGGATCGGATGCTCCcccCCCCCCCCCCCCCCCCC"));	
 		assertTrue(homo.getCount(0) == 19);
 		
 		homo = new Homopolymer(new IndelPosition (vs), getReference(), 100,10);		
-		assertTrue(homo.getPolymerSequence(0).equals("CGGACCCTCCcccCCCCCCCCCC"));	
+//		assertTrue(homo.getUpBaseCount(0).equals("2C")); //   .getType(0).equals(HOMOTYPE.HOMCON));
+//		assertTrue(homo.getDownBaseCount(0) .equals("17C" ));  //.getHomopolymerCount(0)  == 3);
+		assertTrue(homo.getPolymerSequence(0).equals("CGGATGCTCCcccCCCCCCCCCC"));	
 		assertTrue(homo.getCount(0) == 19);		 
 	}	
 		
@@ -56,45 +63,33 @@ public class HomopolymerTest {
 		VcfRecord vs = new VcfRecord(new String[] {  "chr1", "21", null, "TCC", "T" });
 		IndelPosition indel = new IndelPosition (vs);
 		Homopolymer homo = new Homopolymer(indel, getReference(), 3, 4);
-		assertTrue(homo.getPolymerSequence(0).equals("CCT__CCC"));		
+//		assertTrue(homo.getUpBaseCount(0) .equals( Homopolymer.nullValue)); //   .getType(0).equals(HOMOTYPE.HOMCON));
+//		assertTrue(homo.getDownBaseCount(0).equals( "3C" ));  //.getHomopolymerCount(0)  == 3);
+		assertTrue(homo.getPolymerSequence(0).equals("GCT__CCC"));
 		assertTrue(homo.getCount(0) == 5);	
 		
 		vs = new VcfRecord(new String[] {  "chr1", "25", null, "CCC", "C" });
 		indel = new IndelPosition (vs);
 		homo = new Homopolymer(indel, getReference(), 100,10);
-		assertTrue(homo.getPolymerSequence(0).equals("GACCCTCCCC__CCCCCCCCCC") );		
+//		assertTrue(homo.getUpBaseCount(0).equals( Homopolymer.nullValue));
+//		assertTrue(homo.getDownBaseCount(0).equals( "17C"));
+		assertTrue(homo.getPolymerSequence(0).equals("GATGCTCCCC__CCCCCCCCCC") );		
 		assertTrue(homo.getCount(0) == 19);	
-		
-		//no repeats
-		vs = new VcfRecord(new String[] {  "chr1", "12", null, "AT", "A" });
-		indel = new IndelPosition (vs);
-		homo = new Homopolymer(indel, getReference(), 100,10);	
-		assertTrue(homo.getCount(0)  == 0 );
-		assertTrue(homo.getPolymerSequence(0) == null);		
-		
-		//motif of DEL contains repeat base same to adjacant homopolymers 
-		vs = new VcfRecord(new String[] {  "chr1", "18", null, "CCCTCC", "C" });
-		indel = new IndelPosition (vs);
-		homo = new Homopolymer(indel, getReference(), 100,10);	
-		assertTrue(homo.getPolymerSequence(0).equals("TGGATCGGAC_____CCCCCCCCCC") );														
-		assertTrue(homo.getCount(0) == 19);	 	
-		
 	}
 	
-	private byte[] getReference(){				
-		
+	private byte[] getReference(){
 		/**
 		1  AATGC
 		6  AATTG
 		11 GATCG
-		16 GACCC
+		16 GATGC
 		21 TCCCC
 		26 CCCCC
 		31 CCCCC
 		36 CCCCC
-	*/			
-					 	
-		String ref = "AATGCAATTGGATCGGACCCTCCCCCCCCCCCCCCCCCCC"	;				  
+		 */
+				
+		String ref = "AATGCAATTGGATCGGATGCTCCCCCCCCCCCCCCCCCCC";				  
 		byte[] bytes = ref.getBytes();
 		return bytes; 	
 	}

@@ -206,12 +206,12 @@ public class IndelPosition {
 	public VcfRecord getPileupedVcf(int index, final int gematic_nns, final float gematic_soi){
 		VcfRecord re = vcfs.get(index);		
 		
-	 		//not interested int these indels since over coverage
+		//not interested int these indels since over coverage
 		if(tumourPileup != null  && tumourPileup.getTotalCount() > 1000){
 			re.setFilter( IndelUtils.FILTER_HCOVT);
 			return re; 
 		}
-	 	
+		
 		if(normalPileup != null  && normalPileup.getTotalCount() > 1000){
 			re.setFilter( IndelUtils.FILTER_HCOVN);
 			return re; 
@@ -225,9 +225,9 @@ public class IndelPosition {
 			else if(normalPileup.getInformativeCount() > 0){
 				int scount =   normalPileup.getsuportReadCount(index);
 				int icount =   normalPileup.getInformativeCount();
-				if((100 * scount / icount) >= (gematic_soi * 100)) 
+				if((float )(scount / icount) >= gematic_soi ) 
 					somatic = false; 
-			}		
+			}
 		}
 		
 		if(somatic) 
@@ -248,10 +248,10 @@ public class IndelPosition {
 				 
 			if(somatic && tumourPileup.getnovelStartReadCount(index) < 4 )
 				VcfUtils.updateFilter(re,IndelUtils.FILTER_NNS);
-			if(tumourPileup.getparticalReadCount(index) >= 3 &&
+			if(tumourPileup.getparticalReadCount(index) > 3 &&
 					(100 * tumourPileup.getparticalReadCount(index) / tumourPileup.getTotalCount()) > 10)
 				VcfUtils.updateFilter(re,IndelUtils.FILTER_TPART);
-			if(somatic && tumourPileup.getsuportReadCount(index) >=3 && tumourPileup.hasStrandBias(index, 0.1))
+			if(somatic && tumourPileup.getsuportReadCount(index) >=3 && tumourPileup.hasStrandBias(index, 0.1, 0.9))
 				VcfUtils.updateFilter(re,IndelUtils.FILTER_TBIAS);
 		}	
 		
@@ -269,11 +269,11 @@ public class IndelPosition {
 				VcfUtils.updateFilter(re,IndelUtils.FILTER_COVN8);			
 			if(somatic && normalPileup.getnovelStartReadCount(index) > 0)
 				VcfUtils.updateFilter(re,IndelUtils.FILTER_MIN);
-			if(normalPileup.getparticalReadCount(index) >= 3 &&
+			if(normalPileup.getparticalReadCount(index) > 3 &&
 					(100 * normalPileup.getparticalReadCount(index) / normalPileup.getTotalCount()) > 5)
 				VcfUtils.updateFilter(re,IndelUtils.FILTER_NPART);
-			if( !somatic && normalPileup.getsuportReadCount(index) >=3 && normalPileup.hasStrandBias(index, 0.05))
-				VcfUtils.updateFilter(re,IndelUtils.FILTER_NBIAS);	
+			if(somatic && normalPileup.getsuportReadCount(index) >=3 && normalPileup.hasStrandBias(index, 0.05, 0.95))
+				VcfUtils.updateFilter(re,IndelUtils.FILTER_TBIAS);			 
 		}
 					 
 		//future job should check GT column	

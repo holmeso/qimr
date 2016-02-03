@@ -329,11 +329,11 @@ public class IndelMT {
 	 * @return
 	 * @throws Exception
 	 */
-//	public int process(final int threadNo) throws Exception {
-//		
-//		return process( threadNo,  true);		
-//		
-//	}
+	public int process(final int threadNo) throws Exception {
+		
+		return process( threadNo,  true);		
+		
+	}
 	
 	/**
 	 * run parallel pileup without homopolymers pileup if the withHomoOption is false
@@ -342,7 +342,7 @@ public class IndelMT {
 	 * @return
 	 * @throws Exception
 	 */
-	public int process(final int threadNo) throws Exception {
+	public int process(final int threadNo, boolean withHomoOption) throws Exception {
 		positionRecordMap = indelload.getIndelMap();
 		if(positionRecordMap == null || positionRecordMap.size() == 0){
 			logger.info("Exit program since there is no indels loaded from inputs");
@@ -368,12 +368,7 @@ public class IndelMT {
     			pileupThreads.execute(new contigPileup(contig, getIndelList(contig), options.getControlBam(),query,
     				normalQueue, Thread.currentThread(),pileupLatch ));
     		
-    		 if(options.getTestBam() != null)
-    			 pileupThreads.execute(new contigPileup(contig, getIndelList(contig), options.getTestBam() , query,
-    					 tumourQueue, Thread.currentThread() ,pileupLatch));
-    		
-    		
-    		if(options.getReference() != null)
+    		if(withHomoOption)
     			pileupThreads.execute(new homopoPileup(contig.getSequenceName(), getIndelList(contig), options.getReference(),
     				homopoQueue, options.nearbyHomopolymer,options.getNearbyHomopolymerReportWindow(), Thread.currentThread(),pileupLatch));    		
     	}
@@ -473,14 +468,12 @@ public class IndelMT {
 		if( options.getControlBam() != null ){
 			String normalBamName = options.getControlBam().getAbsolutePath();			
 			header.parseHeaderLine( VcfHeaderUtils.STANDARD_CONTROL_BAM  + "=" + normalBamName);
-		  //header.parseHeaderLine( "##qControlBamUUID=" + QBamIdFactory.getBamId(normalBamName));
-			header.parseHeaderLine( "##qControlBamUUID=" + QBamIdFactory.getQ3BamId(normalBamName).getUUID());
+			header.parseHeaderLine( "##qControlBamUUID=" + QBamIdFactory.getBamId(normalBamName));
 		}
 		if( options.getTestBam() != null ){
 			String tumourBamName = options.getTestBam().getAbsolutePath();
 			header.parseHeaderLine( VcfHeaderUtils.STANDARD_TEST_BAM  + "=" + tumourBamName);
-		  //header.parseHeaderLine( "##qControlBamUUID=" + QBamIdFactory.getBamId(tumourBamName));
-			header.parseHeaderLine( "##qControlBamUUID=" + QBamIdFactory.getQ3BamId(tumourBamName).getUUID());
+			header.parseHeaderLine( "##qControlBamUUID=" + QBamIdFactory.getBamId(tumourBamName));		 			 			 	
 			header.parseHeaderLine( VcfHeaderUtils.STANDARD_ANALYSIS_ID +"=" + options.getAnalysisId() );
 		}		
 		

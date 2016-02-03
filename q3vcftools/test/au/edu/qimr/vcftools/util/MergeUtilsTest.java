@@ -7,7 +7,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.qcmg.common.meta.QExec;
 import org.qcmg.common.vcf.VcfRecord;
-import org.qcmg.common.vcf.VcfUtils;
 import org.qcmg.common.vcf.header.VcfHeader;
 import org.qcmg.common.vcf.header.VcfHeader.FormattedRecord;
 import org.qcmg.common.vcf.header.VcfHeader.Record;
@@ -265,11 +263,10 @@ public class MergeUtilsTest {
 	
 	@Test
 	public void mergeRecordInfo() {
-		VcfRecord r1 = new VcfRecord( "1", 100, null, "ABC", "DEF");
-		VcfRecord r2 = new VcfRecord( "1", 100, null, "ABC", "DEF");
+		VcfRecord r1 = new VcfRecord("1", 100, null, "ABC", "DEF");
+		VcfRecord r2 = new VcfRecord("1", 100, null, "ABC", "DEF");
 		VcfRecord mergedR = new VcfRecord("1", 100, null, "ABC", "DEF");
-		VcfRecord actualMergerRecord = MergeUtils.mergeRecords(null, r1, r2);
-		assertEquals(mergedR, actualMergerRecord);
+		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 		
 		r1.setInfo("Hello");
 		r2.setInfo("Hello");
@@ -302,183 +299,46 @@ public class MergeUtilsTest {
 	
 	@Test
 	public void mergeRecordIdOnly() {
-		VcfRecord r1 = VcfUtils.createVcfRecord("1", 0);			 
-		VcfRecord r2 = VcfUtils.createVcfRecord("1", 0);				 
-		VcfRecord mergedR = VcfUtils.createVcfRecord("1", 0);			 
-				
+		VcfRecord r1 = new VcfRecord("1", 0);
+		VcfRecord r2 = new VcfRecord("1", 0);
+		VcfRecord mergedR = new VcfRecord("1", 0);
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 		
-		r1 = new VcfRecord( "1", 100, null, ".", null);
-		r2 = new VcfRecord( "1", 100, null, ".", null);
-		mergedR = new VcfRecord( "1", 100, null, ".",  null);
+		r1 = new VcfRecord("1", 100, null, null, null);
+		r2 = new VcfRecord("1", 100, null, null, null);
+		mergedR = new VcfRecord("1", 100, null, null, null);
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 		
-		r1 = new VcfRecord( "1", 100, null, "ABC", null);
-		r2 = new VcfRecord( "1", 100, null, "ABC", null);
+		r1 = new VcfRecord("1", 100, null, "ABC", null);
+		r2 = new VcfRecord("1", 100, null, "ABC", null);
 		mergedR = new VcfRecord("1", 100, null, "ABC", null);
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 		
-		r1 = new VcfRecord( new String[] {"1", "100", null, "ABC", "DEF"});
-		r2 = new VcfRecord( new String[] {"1", "100", null, "ABC", "DEF"});
-		mergedR = new VcfRecord( new String[] {"1", "100", null, "ABC", "DEF"});
+		r1 = new VcfRecord("1", 100, null, "ABC", "DEF");
+		r2 = new VcfRecord("1", 100, null, "ABC", "DEF");
+		mergedR = new VcfRecord("1", 100, null, "ABC", "DEF");
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 		
-		r1 = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
-		r2 = new VcfRecord( new String[] {"1", "100", null, "ABC", "DEF"});
-		mergedR = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
+		r1 = new VcfRecord("1", 100, "rs123", "ABC", "DEF");
+		r2 = new VcfRecord("1", 100, null, "ABC", "DEF");
+		mergedR = new VcfRecord("1", 100, "rs123", "ABC", "DEF");
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 		
-		r1 = new VcfRecord( new String[] {"1", "100", null, "ABC", "DEF"});
-		r2 = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
-		mergedR = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
+		r1 = new VcfRecord("1", 100, null, "ABC", "DEF");
+		r2 = new VcfRecord("1", 100, "rs123", "ABC", "DEF");
+		mergedR = new VcfRecord("1", 100, "rs123", "ABC", "DEF");
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 		
-		r1 = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
-		r2 = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
-		mergedR = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
+		r1 = new VcfRecord("1", 100, "rs123", "ABC", "DEF");
+		r2 = new VcfRecord("1", 100, "rs123", "ABC", "DEF");
+		mergedR = new VcfRecord("1", 100, "rs123", "ABC", "DEF");
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 		
-		r1 = new VcfRecord( "1", 100, "rs123", "ABC", "DEF");
-		r2 = new VcfRecord( "1", 100, "rs456", "ABC", "DEF");
+		r1 = new VcfRecord("1", 100, "rs123", "ABC", "DEF");
+		r2 = new VcfRecord("1", 100, "rs456", "ABC", "DEF");
 		mergedR = new VcfRecord("1", 100, "rs123,rs456", "ABC", "DEF");
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 	}
-	
-	@Test
-	public void mergeRecordInfoOnlyWithRules() {
-		Map<Integer, Map<String, String>> idRules = new HashMap<>();
-		Map<String, String> rulesForThisFile = new HashMap<>();
-		idRules.put(1,  rulesForThisFile);
-		rulesForThisFile.put("ID", "ID1");
-		
-		VcfRecord r1 = new VcfRecord("1", 100, "rs123", "ABC", "DEF");
-		VcfRecord r2 = new VcfRecord("1", 100, "rs456", "ABC", "DEF");
-		VcfRecord mergedR = new VcfRecord("1", 100, "rs123,rs456", "ABC", "DEF");
-		assertEquals(mergedR, MergeUtils.mergeRecords(idRules, r1, r2));
-		
-		r1.setInfo("ID=XXX");
-		r2.setInfo("ID=YYY");
-		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
-		assertEquals("ID=XXX;ID1=YYY", mergedR.getInfo());
-		
-		r1.setInfo("ID=XXX");
-		r2.setInfo("ID=XXX");
-		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
-		assertEquals("ID=XXX;ID1=XXX", mergedR.getInfo());
-		
-		r1.setInfo("ID=I dont know");
-		r2.setInfo("ID=XXX");
-		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
-		assertEquals("ID=I dont know;ID1=XXX", mergedR.getInfo());
-		
-		r1.setInfo("XY=Z");
-		r2.setInfo("XY=ABC");
-		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
-		assertEquals("XY=Z,ABC", mergedR.getInfo());
-	}
-	
-	@Test
-	public void mergeRecordFilter() {
-		
-		VcfRecord r1 = new VcfRecord("1", 100, "rs123", "ABC", "DEF");
-		VcfRecord r2 = new VcfRecord("1", 100, "rs456", "ABC", "DEF");
-		VcfRecord mergedR = new VcfRecord("1", 100, "rs123,rs456", "ABC", "DEF");
-		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
-		
-		r1.setFilter("F1");
-		r2.setFilter("F1");
-		mergedR = MergeUtils.mergeRecords(null, r1, r2);
-		assertEquals("F1_1;F1_2", mergedR.getFilter());
-		
-		r1.setFilter("F1");
-		r2.setFilter("F2");
-		mergedR = MergeUtils.mergeRecords(null, r1, r2);
-		assertEquals("F1_1;F2_2", mergedR.getFilter());
-	}
-	
-	// TODO should we do anything special when dealing with FILTER? PASS value for example?
-	
-	@Test
-	public void mergeRecordFormat() {
-		VcfRecord r1 = new VcfRecord("1", 100, "rs123", "ABC", "DEF");
-		VcfRecord r2 = new VcfRecord("1", 100, "rs456", "ABC", "DEF");
-		VcfRecord mergedR = new VcfRecord("1", 100, "rs123,rs456", "ABC", "DEF");
-		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
-		
-		r1.setFormatFields(Arrays.asList("AB:CD:EF", "1:2:3"));
-		r2.setFormatFields(Arrays.asList("GH:IJ:KL", "4:5:6"));
-		mergedR = MergeUtils.mergeRecords(null, r1, r2);
-		assertEquals("AB:CD:EF:GH:IJ:KL\t1:2:3:4:5:6", mergedR.getFormatFieldStrings());
-		
-		r1.setFormatFields(Arrays.asList("AB:CD:EF", "1:2:3"));
-		r2.setFormatFields(Arrays.asList("EF:GH:IJ:KL", "3:4:5:6"));
-		mergedR = MergeUtils.mergeRecords(null, r1, r2);
-		assertEquals("AB:CD:EF:GH:IJ:KL\t1:2:3:4:5:6", mergedR.getFormatFieldStrings());
-		
-		r1.setFormatFields(Arrays.asList("AB:CD:EF:GH", "1:2:3:X"));
-		r2.setFormatFields(Arrays.asList("EF:GH:IJ:KL", "3:4:5:6"));
-		mergedR = MergeUtils.mergeRecords(null, r1, r2);
-		assertEquals("AB:CD:EF:GH:IJ:KL\t1:2:3:X,4:5:6", mergedR.getFormatFieldStrings());
-	}
-	
-	@Test
-	public void mergeRecordFormatWithRules() {
-		Map<Integer, Map<String, String>> idRules = new HashMap<>();
-		Map<String, String> rulesForThisFile = new HashMap<>();
-		idRules.put(1,  rulesForThisFile);
-		rulesForThisFile.put("EF", "EF1");
-		
-		VcfRecord r1 = new VcfRecord("1", 100, "rs123", "ABC", "DEF");
-		VcfRecord r2 = new VcfRecord("1", 100, "rs456", "ABC", "DEF");
-		VcfRecord mergedR = new VcfRecord("1", 100, "rs123,rs456", "ABC", "DEF");
-		assertEquals(mergedR, MergeUtils.mergeRecords(idRules, r1, r2));
-		
-		r1.setFormatFields(Arrays.asList("AB:CD:EF", "1:2:3"));
-		r2.setFormatFields(Arrays.asList("GH:IJ:KL", "4:5:6"));
-		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
-		assertEquals("AB:CD:EF:GH:IJ:KL\t1:2:3:4:5:6", mergedR.getFormatFieldStrings());
-		
-		r1.setFormatFields(Arrays.asList("AB:CD:EF", "1:2:3"));
-		r2.setFormatFields(Arrays.asList("EF:GH:IJ:KL", "3:4:5:6"));
-		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
-		assertEquals("AB:CD:EF:EF1:GH:IJ:KL\t1:2:3:3:4:5:6", mergedR.getFormatFieldStrings());
-		
-		r1.setFormatFields(Arrays.asList("AB:CD:EF", "1:2:3"));
-		r2.setFormatFields(Arrays.asList("EF:GH:IJ:KL", "HEllo:4:5:6"));
-		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
-		assertEquals("AB:CD:EF:EF1:GH:IJ:KL\t1:2:3:HEllo:4:5:6", mergedR.getFormatFieldStrings());
-		
-		r1.setFormatFields(Arrays.asList("AB:CD:EF:GH", "1:2:3:X"));
-		r2.setFormatFields(Arrays.asList("EF:GH:IJ:KL", "3:4:5:6"));
-		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
-		assertEquals("AB:CD:EF:GH:EF1:IJ:KL\t1:2:3:X,4:3:5:6", mergedR.getFormatFieldStrings());
-		
-	}
-	
-	@Test
-	public void mergeRealLifeData() {
-		VcfRecord v1 = new VcfRecord(new String[]{"chr1","10250",".","A","C",".","PASS","FLANK=CCTAACCCCTA;IN=1","GT:GD:AC:MR:NNS","0/1:A/C:A38[31.42],32[25],C11[27.64],5[36.6]:16:16","0/1:A/C:A75[31.96],57[29.32],C12[35.25],6[38]:18:16"});
-		VcfRecord v2 = new VcfRecord(new String[]{"chr1","10250",".","A","C","43.77","NCIT","C=1;AF=0.500;AN=2;BaseQRankSum=1.026;ClippingRankSum=0.000;DP=12;IN=2;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=29.55;MQ0=0;MQRankSum=-1.026;QD=3.65;ReadPosRankSum=1.026;SOR=0.693","GT:AD:DP:GQ:PL:GD:AC:MR:NNS","0/1:2,2:4:69:72,0,69:A/C:A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:51:44",".:.:.:.:.:.:A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:162:101"});
-		VcfRecord mr = MergeUtils.mergeRecords(null,  v1, v2);
-		
-		assertEquals("chr1", mr.getChromosome());
-		assertEquals(10250, mr.getPosition());
-		assertEquals("A", mr.getRef());
-		assertEquals("C", mr.getAlt());
-		assertEquals("PASS_1;NCIT_2", mr.getFilter());
-		Stream.of("FLANK=CCTAACCCCTA","IN=1,2","C=1","AF=0.500","AN=2","BaseQRankSum=1.026","ClippingRankSum=0.000","DP=12","FS=0.000","MLEAC=1","MLEAF=0.500","MQ=29.55","MQ0=0","MQRankSum=-1.026","QD=3.65","ReadPosRankSum=1.026","SOR=0.693")
-			.forEach(s -> assertEquals(true, mr.getInfo().contains(s)));
-		
-		List<String> ff = mr.getFormatFields();
-		assertEquals(3, ff.size());
-		assertEquals("GT:GD:AC:MR:NNS:AD:DP:GQ:PL", ff.get(0));
-		assertEquals("0/1:A/C:A38[31.42],32[25],C11[27.64],5[36.6],A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:16,51:16,44:2,2:4:69:72,0,69", ff.get(1));
-//		0/1:2,2:4:69:72,0,69:A/C:A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:51:44
-		assertEquals("0/1,.:A/C,.:A75[31.96],57[29.32],C12[35.25],6[38],A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:18,162:16,101:.:.:.:.", ff.get(2));
-		//.:.:.:.:.:.:A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:162:101
-	}
-	
-	// TODO should we do anything special when dealing with FILTER? PASS value for example? 
 	
 //	@Test
 //	public void recordsEligibleForMergingCPOnly() {
