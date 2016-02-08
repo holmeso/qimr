@@ -63,7 +63,7 @@ public class IndelMTTest {
 	
 	@After
 	public void clear() throws IOException {		
-		Support.clear();		
+		Support.clear();	
 	}
 	
 	@Test

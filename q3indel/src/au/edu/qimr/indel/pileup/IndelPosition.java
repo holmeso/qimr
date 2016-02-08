@@ -7,7 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.qcmg.common.model.ChrPosition;
+
+import org.qcmg.common.model.ChrRangePosition;
 import org.qcmg.common.string.StringUtils;
 import org.qcmg.common.util.Constants;
 import org.qcmg.common.util.IndelUtils;
@@ -18,7 +19,7 @@ import org.qcmg.common.vcf.header.VcfHeaderUtils;
 public class IndelPosition {
 	
 	private final List<VcfRecord> vcfs ; 	
-	private final ChrPosition position; 
+	private final ChrRangePosition position; 
 	private final int indelStart, indelEnd; 
 	
 	private final SVTYPE mutationType;	
@@ -56,7 +57,7 @@ public class IndelPosition {
 		
 		int start = vcf.getPosition();
 		int end = vcf.getChrPosition().getEndPosition();
-		position = new ChrPosition(fullChromosome, start, end);
+		position = new ChrRangePosition(fullChromosome, start, end);
 		
 	}
 
@@ -99,12 +100,12 @@ public class IndelPosition {
 
 	/**
 	 * 
-	 * @return ChrPosition from vcfRecord but convert chr to full chromosome
-	 * eg return new ChrPosition("chr1", 99, 99 ) for vcf "1 99 . A ATT"
-	 *   return new ChrPosition("chr1", 99, 101 ) for vcf "1 99 . ATT A"
+	 * @return ChrRangePosition from vcfRecord but convert chr to full chromosome
+	 * eg return new ChrRangePosition("chr1", 99, 99 ) for vcf "1 99 . A ATT"
+	 *   return new ChrRangePosition("chr1", 99, 101 ) for vcf "1 99 . ATT A"
 	 * 
 	 */
-	public ChrPosition getChrPosition(){		
+	public ChrRangePosition getChrRangePosition(){		
 		return position; 
 	}
 	
