@@ -92,14 +92,13 @@ public class ReadIndelsTest {
 				if(indel.getStart() == 59033286)
 					assertFalse(indel.getIndelVcf(0).getFormatFields().get(1).equals(indel.getIndelVcf(0).getFormatFields().get(2)));
 				else if(indel.getStart() == 59033423){	
- 					assertTrue(indel.getIndelVcf(0).getFormatFields().get(1).equals("0/1:7,4:11:99:257,0,348"));
- 					assertTrue(indel.getIndelVcf(0).getFormatFields().get(2).equals(".:7,5:.:.:."));
-					
-					assertTrue(indel.getIndelVcf(1).getFormatFields().get(1).equals(".:." ));
-					assertTrue(indel.getIndelVcf(1).getFormatFields().get(2).equals(".:7,5"));
+ 					assertTrue(indel.getIndelVcf(0).getFormatFields().get(1).equals("0/1:T/TC:7,4:11:99:257,0,348"));
+ 					assertTrue(indel.getIndelVcf(0).getFormatFields().get(2).equals(".:T/A:7,5:.:.:."));
+					assertTrue(indel.getIndelVcf(1).getFormatFields().get(1).equals(".:.:." ));
+					assertTrue(indel.getIndelVcf(1).getFormatFields().get(2).equals(".:T/A:7,5"));
 				}else if(indel.getStart() == 59033285){
 					assertFalse(indel.getIndelVcf(0).getFormatFields().get(1).equals(indel.getIndelVcf(0).getFormatFields().get(2))); 
-					assertTrue(indel.getIndelVcf(0).getFormatFields().get(1).equals(".:.:.:.:." ));						 
+					assertTrue(indel.getIndelVcf(0).getFormatFields().get(1).equals(".:.:.:.:.:." ));						 
 				}						 
 			}
 
@@ -114,8 +113,8 @@ public class ReadIndelsTest {
 	//test different records with same hascode, but hashCode() can change from Java versions
 	public void LoadIndelsTest2()  {
 		List<String> data = new ArrayList<String>();
-		data.add("chr2\t71697867\t.\tTTTCC\tT\t115.73\t.\tAC=1;AF=0.500;AN=2;BaseQRankSum=0.361;ClippingRankSum=-0.361;DP=11;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=60.00;MQ0=0;MQRankSum=1.881;QD=10.52;ReadPosRankSum=-0.922;SOR=1.609 GT:AD:DP:GQ:PL  0/1:5,4:9:99:153,0,145");
-		data.add("chr2\t241133989\t.\tGAGGTGGAGCGTAGTGTTGAAATTGCATCCATTGTGGGGCAGTGTTGGA\tG\t457.73\t.\t AC=1;AF=0.500;AN=2;BaseQRankSum=2.462;ClippingRankSum=-0.359;DP=26;FS=3.628;MLEAC=1;MLEAF=0.500;MQ=59.33;MQ0=0;MQRankSum=-2.103;QD=17.61;ReadPosRankSum=-0.449;SOR=0.991\t GT:AD:DP:GQ:PL\t0/1:13,13:26:99:495,0,2645");
+		data.add("chr2\t71697867\t.\tTTTCC\tT\t115.73\t.\tAC=1;AF=0.500;AN=2;BaseQRankSum=0.361;ClippingRankSum=-0.361;DP=11;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=60.00;MQ0=0;MQRankSum=1.881;QD=10.52;ReadPosRankSum=-0.922;SOR=1.609\tGT:AD:DP:GQ:PL\t0/1:5,4:9:99:153,0,145");
+		data.add("chr2\t241133989\t.\tGAGGTGGAGCGTAGTGTTGAAATTGCATCCATTGTGGGGCAGTGTTGGA\tG\t457.73\t.\t AC=1;AF=0.500;AN=2;BaseQRankSum=2.462;ClippingRankSum=-0.359;DP=26;FS=3.628;MLEAC=1;MLEAF=0.500;MQ=59.33;MQ0=0;MQRankSum=-2.103;QD=17.61;ReadPosRankSum=-0.449;SOR=0.991\tGT:AD:DP:GQ:PL\t0/1:13,13:26:99:495,0,2645");
 			
 		Support.createVcf(data, input1);
 		
@@ -170,7 +169,14 @@ public class ReadIndelsTest {
 				if(indel.getStart() == 59033423){
 					assertTrue( indel.getMotif(0).equals("C"));
 					assertTrue( indel.getMotif(1).equals("CG"));
-					assertTrue(indel.getIndelVcf(0).getFormatFieldStrings().equals(indel.getIndelVcf(1).getFormatFieldStrings()  ));				 
+					assertTrue(indel.getIndelVcf(0).getFormatFieldStrings().equals(indel.getIndelVcf(1).getFormatFieldStrings()  ));
+
+					//check GT:GD
+					assertTrue(indel.getIndelVcf(0).getFormatFields().get(0).equals("GT:GD:AD"));
+ 					assertTrue(indel.getIndelVcf(0).getFormatFields().get(1).equals(".:T/A:7,5"));
+ 					assertTrue(indel.getIndelVcf(0).getFormatFields().get(2).equals(".:A/TC:9,9"));
+					assertTrue(indel.getIndelVcf(1).getFormatFields().get(1).equals(".:T/A:7,5"));
+					assertTrue(indel.getIndelVcf(1).getFormatFields().get(2).equals(".:A/TC:9,9"));					
 				}			
  			}
 		 		

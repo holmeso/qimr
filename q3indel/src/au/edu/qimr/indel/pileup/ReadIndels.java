@@ -4,12 +4,14 @@ package au.edu.qimr.indel.pileup;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.qcmg.common.log.QLogger;
 import org.qcmg.common.model.ChrRangePosition;
+import org.qcmg.common.string.StringUtils;
 import org.qcmg.common.util.Constants;
 import org.qcmg.common.util.IndelUtils;
 import org.qcmg.common.util.IndelUtils.SVTYPE;
@@ -24,8 +26,10 @@ import org.qcmg.vcf.VCFFileReader;
 public class ReadIndels {
 	QLogger logger; 
 	private VcfHeader header; 
+	
+	private final int errRecordLimit = 100;
 	private int overwriteNo = 0;
-	private final int overwriteLimit = 100;
+	private int errGTNo = 0;
  
 	//here key will be uniq for indel: chr, start, end, allel 
 //	private final  Map<Integer, VcfRecord> positionRecordMap = new  ConcurrentHashMap<Integer, VcfRecord>();
@@ -77,8 +81,9 @@ public class ReadIndels {
 	 	        		VcfRecord vcf1 = re; 
 	 	        		//reset allele column
 	 	        		if(StrAlts.length > 1){
-	 	        			vcf1 = new VcfRecord(re.toString().trim().split("\t"));
-	 	        			vcf1.setAlt(alt);
+	 	        			vcf1 = VcfUtils.resetAllel(re, alt);
+//	 	        					new VcfRecord(re.toString().trim().split("\t"));
+//	 	        			vcf1.setAlt(alt);
 	 	        		}
      					if(!mergeIndel(vcf1))
      						indelnewCount ++;
@@ -166,11 +171,9 @@ public class ReadIndels {
 					inVariants ++;
 					SVTYPE type = IndelUtils.getVariantType(re.getRef(), alt);
 	 	        	if(type.equals(SVTYPE.DEL) ||type.equals(SVTYPE.INS) ){
-	 	        		VcfRecord vcf1 = new VcfRecord(re.toString().trim().split("\t"));
-     					vcf1.setAlt(alt);
-     					if(positionRecordMap.containsKey(vcf1) && (overwriteNo ++) < overwriteLimit){ 
-     						//debug     						
-     						logger.warn("overwriting same variants:\n" + positionRecordMap.get(vcf1).toString() + "by ("+ vcf1.hashCode() + ") : " +vcf1.toString());
+	 	        		VcfRecord vcf1 = VcfUtils.resetAllel(re, alt);
+     					if(positionRecordMap.containsKey(vcf1) && (overwriteNo ++) < errRecordLimit){ 						
+     						logger.warn("overwriting same variants:\n" + positionRecordMap.get(vcf1).toString() );
     					}
      					positionRecordMap.put(vcf1, vcf1);    					
 	 	        	}
@@ -179,8 +182,11 @@ public class ReadIndels {
  	      }
 		  logger.info(String.format("Find %d indels from %d variants (%d records lines) within file: %s",
 						positionRecordMap.size(), inVariants, inLines, f.getAbsoluteFile()));
-		  if(overwriteNo >= overwriteLimit)
-			  logger.warn("there are big number (" + overwriteNo + ") of same variant but maybe with different annotation are overwrited/removed");			  
+		  if(overwriteNo >= errRecordLimit)
+			  logger.warn("there are big number (" + overwriteNo + ") of same variant but maybe with different annotation are overwrited/removed");		
+		  if(errGTNo >= errRecordLimit)
+			  logger.warn("there are big number (" + overwriteNo + ") of input vcf contains invalid GT field on Format column");				  
+		  
 		  logger.info(String.format("There are %d input record contains multi alleles within file: %s", multiAltNo, f.getAbsoluteFile()));
 	}
 	
@@ -190,21 +196,67 @@ public class ReadIndels {
 	 * @param vcf: input vcf record
 	 */
 	public void resetGenotype(VcfRecord vcf){
-		if(!vcf.getAlt().contains(","))
-			return;
+//		if(!vcf.getAlt().contains(","))
+//			return;
 		
-		List<String> format = vcf.getFormatFields();
-		List<String> newformat = new ArrayList<String>();
-		newformat.add(format.get(0));
+		if(vcf.getFormatFields() == null)
+			return; 
+		
+		//add GD to second field 
+		List<String> format = vcf.getFormatFields();		
+		String[] details = new String[format.size()];
+		
+		//store the merged field GT:GD
+		details[0] = VcfHeaderUtils.FORMAT_GENOTYPE + ":" + VcfHeaderUtils.FORMAT_GENOTYPE_DETAILS;
+		
 		for(int i = 1; i < format.size(); i ++){
 			VcfFormatFieldRecord re = new  VcfFormatFieldRecord(format.get(0), format.get(i));
 			//if "GT" field is not exist, do nothing
-			if(re.getField(VcfHeaderUtils.FORMAT_GENOTYPE) == null)
-				return; 
-			else if (! re.getField(VcfHeaderUtils.FORMAT_GENOTYPE).equals(Constants.MISSING_DATA_STRING)){
-				re.setField(VcfHeaderUtils.FORMAT_GENOTYPE, Constants.MISSING_DATA_STRING);
-				newformat.add(re.toString());
-			}				
+			String sgt = re.getField(VcfHeaderUtils.FORMAT_GENOTYPE) ;
+			details[i] = (vcf.getAlt().contains(Constants.COMMA_STRING))? Constants.MISSING_DATA_STRING : sgt; 
+			details[i] += Constants.COLON_STRING;
+			
+			
+			if(StringUtils.isNullOrEmpty(sgt) || sgt.equals(Constants.MISSING_DATA_STRING)){
+				details[i] += Constants.MISSING_DATA_STRING;
+				continue; 
+			}else{
+				boolean isbar = sgt.contains("\\|");
+				String[] gts = isbar? sgt.split("\\|") : sgt.split("\\/"); 
+				if(gts.length != 2 && (errGTNo++) < errRecordLimit){					
+					logger.warn("invalid GT field in format column: " + vcf.toString());
+					details[i] += Constants.MISSING_DATA_STRING;
+					continue;
+				}
+					
+				String[] sgd = new String[2];
+				String[] alts = vcf.getAlt().split(",");
+				//only allow three multi-allele, otherwise too confuse
+				for(int j = 0; j < 2; j ++) 
+					switch (gts[j].trim()){
+						case "0": sgd[j] = vcf.getRef(); 
+						break;
+						case "1": sgd[j] = (alts.length >= 1) ? alts[0] : Constants.MISSING_DATA_STRING; 
+						break;
+						case "2": sgd[j] = (alts.length >= 2) ? alts[1] : Constants.MISSING_DATA_STRING; 
+						break;
+						case "3": sgd[j] = (alts.length >= 3) ? alts[2] : Constants.MISSING_DATA_STRING; 
+						break;
+						default:
+							sgd[j] = Constants.MISSING_DATA_STRING; 
+					}
+				
+				details[i] += isbar? String.join("|", sgd) : String.join("/", sgd);
+//				newformat.add(re.toString());
+			}
+		}
+		
+		//replace GT with GT:GD actually insert GD
+		List<String> newformat = new ArrayList<String>();
+		for(int i = 0; i < format.size(); i ++){
+			List<String> ff = Arrays.asList(format.get(i).split(Constants.COLON_STRING));
+			ff.set(0, details[i]);			
+			newformat.add(String.join(Constants.COLON_STRING,ff));			
 		}
 		
 		vcf.setFormatFields(newformat);
