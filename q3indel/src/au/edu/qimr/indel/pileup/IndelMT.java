@@ -506,7 +506,7 @@ public class IndelMT {
 		header.addInfoLine(IndelUtils.INFO_NIOC, "1", "String", IndelUtils.DESCRITPION_INFO_NIOC);
 //		header.addInfoLine(IndelUtils.INFO_HOMCNTXT, "1", "String", IndelUtils.DESCRITPION_INFO_HOMCNTXT); 
 		header.addInfoLine(IndelUtils.INFO_HOMTXT, "1", "String", IndelUtils.DESCRITPION_INFO_HOMTXT); 
-		header.addFormatLine(IndelUtils.INFO_ACINDEL, "1", "String", IndelUtils.DESCRITPION_INFO_ACINDEL);
+		header.addFormatLine(IndelUtils.FORMAT_ACINDEL, "1", "String", IndelUtils.DESCRITPION_FORMAT_ACINDEL);
 
 		VcfHeaderUtils.addQPGLineToHeader(header, qexec.getToolName().getValue(), qexec.getToolVersion().getValue(), qexec.getCommandLine().getValue() 
 				+  " [runMode: " + options.getRunMode() + "]");        

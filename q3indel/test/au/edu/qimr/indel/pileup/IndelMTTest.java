@@ -118,8 +118,8 @@ public class IndelMTTest {
 		//there is no record pass the query so no indel counts
 		assertTrue(passNo == 4);
 		if(record.getChromosome().equals("chrY")){
-			assertTrue(record.getSampleFormatRecord(1).getField(IndelUtils.INFO_ACINDEL).equals("."));
-			assertTrue(record.getSampleFormatRecord(2).getField(IndelUtils.INFO_ACINDEL).equals("."));
+			assertTrue(record.getSampleFormatRecord(1).getField(IndelUtils.FORMAT_ACINDEL).equals("."));
+			assertTrue(record.getSampleFormatRecord(2).getField(IndelUtils.FORMAT_ACINDEL).equals("."));
 		}
 		
 		//check sample column name

@@ -3,15 +3,12 @@ package au.edu.qimr.indel.pileup;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.qcmg.common.log.QLogger;
 import org.qcmg.common.model.ChrRangePosition;
-import org.qcmg.common.string.StringUtils;
 import org.qcmg.common.util.Constants;
 import org.qcmg.common.util.IndelUtils;
 import org.qcmg.common.util.IndelUtils.SVTYPE;
@@ -196,70 +193,40 @@ public class ReadIndels {
 	 * @param vcf: input vcf record
 	 */
 	public void resetGenotype(VcfRecord vcf){
-//		if(!vcf.getAlt().contains(","))
-//			return;
+		List<String> format = vcf.getFormatFields();
 		
-		if(vcf.getFormatFields() == null)
+		if(format == null || format.size() < 2)
 			return; 
 		
-		//add GD to second field 
-		List<String> format = vcf.getFormatFields();		
-		String[] details = new String[format.size()];
-		
-		//store the merged field GT:GD
-		details[0] = VcfHeaderUtils.FORMAT_GENOTYPE + ":" + VcfHeaderUtils.FORMAT_GENOTYPE_DETAILS;
-		
-		for(int i = 1; i < format.size(); i ++){
+		//add GD to second field 				
+		VcfFormatFieldRecord[] frecords = new VcfFormatFieldRecord[format.size() -  1];		
+		for(int i = 1; i < format.size(); i ++){			
 			VcfFormatFieldRecord re = new  VcfFormatFieldRecord(format.get(0), format.get(i));
-			//if "GT" field is not exist, do nothing
-			String sgt = re.getField(VcfHeaderUtils.FORMAT_GENOTYPE) ;
-			details[i] = (vcf.getAlt().contains(Constants.COMMA_STRING))? Constants.MISSING_DATA_STRING : sgt; 
-			details[i] += Constants.COLON_STRING;
+			String gd = IndelUtils.getGenotypeDetails(re, vcf.getRef(), vcf.getAlt() );
+			if(gd == null)
+				re.setField(1, VcfHeaderUtils.FORMAT_GENOTYPE_DETAILS, Constants.MISSING_DATA_STRING);
+			else
+				re.setField(1, VcfHeaderUtils.FORMAT_GENOTYPE_DETAILS, gd);
 			
+			//put . since not sure GT value after split
+			if(vcf.getAlt().contains(Constants.COMMA_STRING))
+				re.setField(VcfHeaderUtils.FORMAT_GENOTYPE, Constants.MISSING_DATA_STRING);
 			
-			if(StringUtils.isNullOrEmpty(sgt) || sgt.equals(Constants.MISSING_DATA_STRING)){
-				details[i] += Constants.MISSING_DATA_STRING;
-				continue; 
-			}else{
-				boolean isbar = sgt.contains("\\|");
-				String[] gts = isbar? sgt.split("\\|") : sgt.split("\\/"); 
-				if(gts.length != 2 && (errGTNo++) < errRecordLimit){					
-					logger.warn("invalid GT field in format column: " + vcf.toString());
-					details[i] += Constants.MISSING_DATA_STRING;
-					continue;
-				}
-					
-				String[] sgd = new String[2];
-				String[] alts = vcf.getAlt().split(",");
-				//only allow three multi-allele, otherwise too confuse
-				for(int j = 0; j < 2; j ++) 
-					switch (gts[j].trim()){
-						case "0": sgd[j] = vcf.getRef(); 
-						break;
-						case "1": sgd[j] = (alts.length >= 1) ? alts[0] : Constants.MISSING_DATA_STRING; 
-						break;
-						case "2": sgd[j] = (alts.length >= 2) ? alts[1] : Constants.MISSING_DATA_STRING; 
-						break;
-						case "3": sgd[j] = (alts.length >= 3) ? alts[2] : Constants.MISSING_DATA_STRING; 
-						break;
-						default:
-							sgd[j] = Constants.MISSING_DATA_STRING; 
-					}
-				
-				details[i] += isbar? String.join("|", sgd) : String.join("/", sgd);
-//				newformat.add(re.toString());
-			}
+			frecords[i-1] = re; 
 		}
 		
-		//replace GT with GT:GD actually insert GD
-		List<String> newformat = new ArrayList<String>();
-		for(int i = 0; i < format.size(); i ++){
-			List<String> ff = Arrays.asList(format.get(i).split(Constants.COLON_STRING));
-			ff.set(0, details[i]);			
-			newformat.add(String.join(Constants.COLON_STRING,ff));			
+		format.clear();
+		format.add(frecords[0].getFormatColumnString());
+		format.add(frecords[0].getSampleColumnString());
+		for(int i = 1; i< frecords.length; i++){
+			//the exception shouldn't happen
+			if( !frecords[i].getFormatColumnString().equals(frecords[0].getFormatColumnString())) 
+				throw new IllegalArgumentException("both sample column with differnt format column: \n" + 
+						frecords[0].getFormatColumnString()+"\n" + frecords[i].getFormatColumnString());
+			format.add(frecords[i].getSampleColumnString());
 		}
 		
-		vcf.setFormatFields(newformat);
+		vcf.setFormatFields(format);
 	}
 	
 	/**

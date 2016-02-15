@@ -145,6 +145,7 @@ public class ReadIndelsTest {
 			System.out.println(Q3IndelException.getStrackTrace(e));
 			assertFalse(true);
 		}
+		
 	}		
 			
 	@Test
@@ -170,11 +171,12 @@ public class ReadIndelsTest {
 					assertTrue( indel.getMotif(0).equals("C"));
 					assertTrue( indel.getMotif(1).equals("CG"));
 					assertTrue(indel.getIndelVcf(0).getFormatFieldStrings().equals(indel.getIndelVcf(1).getFormatFieldStrings()  ));
-
+					
 					//check GT:GD
 					assertTrue(indel.getIndelVcf(0).getFormatFields().get(0).equals("GT:GD:AD"));
  					assertTrue(indel.getIndelVcf(0).getFormatFields().get(1).equals(".:T/A:7,5"));
  					assertTrue(indel.getIndelVcf(0).getFormatFields().get(2).equals(".:A/TC:9,9"));
+ 					
 					assertTrue(indel.getIndelVcf(1).getFormatFields().get(1).equals(".:T/A:7,5"));
 					assertTrue(indel.getIndelVcf(1).getFormatFields().get(2).equals(".:A/TC:9,9"));					
 				}			

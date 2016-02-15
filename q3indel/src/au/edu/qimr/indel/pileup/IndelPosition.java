@@ -280,7 +280,7 @@ public class IndelPosition {
 		//future job should check GT column	
 		//control always on first column and then test
 		List<String> field = new ArrayList<String>();
-		field.add(0,  (genotypeField.size() > 0)? genotypeField.get(0) + ":ACINDEL" : "ACINDEL");
+		field.add(0,  (genotypeField.size() > 0)? genotypeField.get(0) + ":" + IndelUtils.FORMAT_ACINDEL : IndelUtils.FORMAT_ACINDEL );
 		field.add(1,  (genotypeField.size() > 1)? genotypeField.get(1) + ":" + nd : nd);
 		field.add(2,  (genotypeField.size() > 2)? genotypeField.get(2) + ":" + td: td);					
 		re.setFormatFields(  field); 
