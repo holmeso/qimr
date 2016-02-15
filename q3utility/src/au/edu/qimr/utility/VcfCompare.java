@@ -9,6 +9,7 @@ import java.util.*;
 import org.qcmg.common.log.*;
 import org.qcmg.common.meta.QExec;
 import org.qcmg.common.model.ChrPosition;
+import org.qcmg.common.model.ChrPositionName;
 import org.qcmg.common.util.Constants;
 import org.qcmg.common.vcf.*;
 import org.qcmg.common.vcf.header.*;
@@ -17,7 +18,7 @@ import org.qcmg.vcf.*;
 public class VcfCompare {
 	
 	
-	final Map<ChrPosition,VcfRecord> positionRecordMap = new HashMap<ChrPosition,VcfRecord>();
+	final Map<ChrPositionName,VcfRecord> positionRecordMap = new HashMap<ChrPositionName,VcfRecord>();
 	VcfHeader header  = null;	
 	private long noPrimary = 0;
 	private long noAdditional = 0;
@@ -50,14 +51,13 @@ public class VcfCompare {
         		noPrimary ++; 
         		ChrPosition pos = re.getChrPosition();
         		re.appendInfo(VcfCompareOptions.Info_From + "=1");        		
-        		positionRecordMap.put(new ChrPosition(pos.getChromosome(), pos.getPosition(), pos.getEndPosition(), re.getAlt()), re);	 
+        		positionRecordMap.put(new ChrPositionName(pos.getChromosome(),pos.getStartPosition(), pos.getEndPosition(), re.getAlt()), re);	 
         	}
         	
         	//compare to second file
         	for (final VcfRecord re : reader2){
         		noAdditional ++;
-        		ChrPosition pos = re.getChrPosition();
-        		pos = new ChrPosition(pos.getChromosome(), pos.getPosition(), pos.getEndPosition(), re.getAlt());        		
+        		ChrPositionName pos =  new ChrPositionName(re.getChromosome(),re.getPosition(), re.getChrPosition().getEndPosition(), re.getAlt());        		
         		if(positionRecordMap.get(pos) == null)  //second file
         			re.appendInfo(VcfCompareOptions.Info_From + "=2"); 
         		else{ //both file
@@ -103,7 +103,7 @@ public class VcfCompare {
 	}
 	
 	public void VcfMerge( File output) throws IOException{
-		final List<ChrPosition> orderedList = new ArrayList<ChrPosition>(positionRecordMap.keySet());
+		final List<ChrPositionName> orderedList = new ArrayList<ChrPositionName>(positionRecordMap.keySet());
 		Collections.sort(orderedList);
 		
 		try(VCFFileWriter writer = new VCFFileWriter( output)) {			

@@ -1,5 +1,2 @@
 include "q3indel"
-include "q3clinvar"
-include "q3vcftools"
-include "q3tiledaligner"
 include "q3utility"
