@@ -1,3 +1,4 @@
+include "q3clinvar"
 include "q3indel"
 include "q3utility"
 include "q3tiledaligner"
