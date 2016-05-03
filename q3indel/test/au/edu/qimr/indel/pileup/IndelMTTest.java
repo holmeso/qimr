@@ -80,8 +80,8 @@ public class IndelMTTest {
 				line ++;
 				record = re; 						
 				if(record.getChromosome().equals("chrY"))
-					//input 12 reads including one duplicate so coverage is 11
-					assertTrue(record.getSampleFormatRecord(1).getField("ACINDEL").equals("3,12,11,4[2,2],2,4,4"));
+					//input 12 reads including one duplicate so coverage is 11, nns:b and (i,k) as one since same end
+					assertTrue(record.getSampleFormatRecord(1).getField("ACINDEL").equals("2,12,11,3[1,2],2,5,4"));
 				}
 		}
 		
@@ -142,7 +142,6 @@ public class IndelMTTest {
 		assertTrue( headerlist.get(VcfHeaderUtils.STANDARD_TEST_BAM ).equals(options.getTestBam().getAbsolutePath()) );
 		assertTrue( headerlist.get(VcfHeaderUtils.STANDARD_ANALYSIS_ID).equals(options.getAnalysisId()) );
 		
-
 	}
 	
 	public static void createDelBam( String output) {

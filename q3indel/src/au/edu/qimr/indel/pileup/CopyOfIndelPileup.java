@@ -15,7 +15,7 @@ import htsjdk.samtools.CigarOperator;
 import htsjdk.samtools.SAMRecord;
 
 
-public class IndelPileup {
+public class CopyOfIndelPileup {
 	private  final int indelStart, indelEnd, nearbySoftClipWindow ,nearyIndelWindow; 
 	private final ChrRangePosition position; 
 	private final List<String> motifs ; //same ChrRangePosition but differnt allel
@@ -33,7 +33,7 @@ public class IndelPileup {
 	List<Integer> partial = new ArrayList<Integer>();  
 	List<Integer> novelStart = new ArrayList<Integer>(); 
 	
-	public IndelPileup( IndelPosition pos, int nearbySoftClipWindow, int nearyIndelWindow) throws Exception { 	
+	public CopyOfIndelPileup( IndelPosition pos, int nearbySoftClipWindow, int nearyIndelWindow) throws Exception { 	
 		this.position = pos.getChrRangePosition();
 		this.indelStart = pos.getStart();
 		this.indelEnd = pos.getEnd();		
@@ -61,15 +61,16 @@ public class IndelPileup {
 				
 		this.informativeCount = infoPool.size();	
 				
-		List<SAMRecord> tmpPool = removeNonSupportReads(infoPool);		
-		// assign real counts to overwrite the list init
+		List<SAMRecord> tmpPool = getRegionIndels(infoPool, nearyIndelWindow);		
+		//assign real counts to overwrite the list init
 		for(int i = 0; i < motifs.size(); i ++){			 
-			int[] counts = getCounts( tmpPool, motifs.get(i) );
-			support.add( i, counts[0] );			
-			forwardsupport.add( i, counts[1] );  
-			backwardsupport.add( i, counts[2] );			
-			partial.add( i, counts[3] );
-			novelStart.add( i, counts[4] );			
+			int[] counts = getCounts(tmpPool, motifs.get(i));
+			support.add(i, counts[0]);			
+			forwardsupport.add(i, counts[1]);  
+			backwardsupport.add(i, counts[2]);
+			
+			partial.add(i,counts[3]);
+			novelStart.add(i, counts[4]);			
 		}
 	}
 	
@@ -79,53 +80,70 @@ public class IndelPileup {
 	 * @param window: window size on both side of indel
 	 * @return: a pool of reads which are potential supporting reads or partial supporting reads
 	 */
-	private List<SAMRecord> removeNonSupportReads(List<SAMRecord> pool){
+	private List<SAMRecord> getRegionIndels(List<SAMRecord> pool, int window){
 		int count = 0;
-//		int windowStart = indelStart - window;
-//		int windowEnd =  indelEnd + window;
+		int windowStart = indelStart - window;
+		int windowEnd =  indelEnd + window;
 		
  		List<SAMRecord> regionPool = new ArrayList<SAMRecord>();
  		
 		for(SAMRecord re: pool){
-			Cigar cigar = re.getCigar();	
-			//remove non indel reads
+			Cigar cigar = re.getCigar();		 		
 			if (null == cigar || cigar.isEmpty() ||
 					(! cigar.toString().contains("I") && ! cigar.toString().contains("D")) ) 
-					continue; //skip current record	}	
+					continue; //skip current record	}		
 			
-			int refPos = re.getAlignmentStart();			
-			boolean nearby = false;		
-			for (CigarElement ce : cigar.getCigarElements()){					
+			boolean nearby = false; 
+			boolean support = false; 
+			int refPos = re.getAlignmentStart();
+					
+			for (CigarElement ce : cigar.getCigarElements()){				
 				//insertion only one base, eg, start = 100; end = 101
 				if(CigarOperator.I == ce.getOperator()){
-					nearby = true;				
-					if( refPos >= indelStart && refPos <= indelEnd  && type.equals(SVTYPE.INS) )
-						nearby = false;							
+					//check whether it is supporting or partical indel
+					//if(refPos == indelStart ){
+					if (refPos >= indelStart && refPos <= indelEnd)  {	
+						if(type.equals(SVTYPE.DEL) ) 
+							nearby = true; 	//insertion inside deletion region							
+						else	
+							support = true; // refPos==indelStart=indelEnd
+					}else if(refPos > windowStart && refPos < windowEnd)						
+						nearby = true;  //nearby insertion overlap the window
 				}else if( CigarOperator.D == ce.getOperator()){
-					nearby = true;
-					int refPosEnd = refPos + ce.getLength() -1;	
-					if(type.equals(SVTYPE.DEL) &&									 
-						 ((refPosEnd >= indelStart && refPos <= indelEnd) 
-								 || (refPos <= indelStart && refPosEnd >= indelEnd))) 
-							nearby = false;	
-					 
+					// deletion overlaps variants, full/part supporting reads
+						//rePos inside indle region
+					if( (refPos >= indelStart && refPos <= indelEnd)  || 
+						//indel chock end inside indel region
+						(refPos + ce.getLength() -1 >= indelStart && refPos + ce.getLength() -1 <= indelEnd) || 
+						//indel chock have base on both side of indel region
+						(refPos <= indelStart && refPos + ce.getLength() -1 >= indelEnd)){						
+						if(type.equals(SVTYPE.INS))
+							nearby = true;		//nearyby deletion
+						else							
+							support = true; // supporting or partial 						 	
+					}else if((refPos >= windowStart &&  refPos <= windowEnd) ||
+							(refPos + ce.getLength() -1 >= windowStart && refPos + ce.getLength() -1 <= windowEnd) ||
+							(refPos <= windowStart && refPos + ce.getLength() -1 >= windowEnd)) 											
+						nearby = true;			//nearby deletion 						 
 				}
-				
-				if(nearby) break; //quit current samrecord				
+												
+				if(nearby)
+					break; //quit current samrecord				
 					
 				//go to next block
 				if (ce.getOperator().consumesReferenceBases()) 
 					refPos += ce.getLength();
 			}
 			
-			//remove nearby reads
 			if(  nearby)  count ++;
-			else regionPool.add(re); 
+			else if(support)
+				regionPool.add(re); //if support but nearby won't be added 
 		}
 		
 		this.nearbyIndel = count; 
 				
-		return regionPool; //all nearby/faraway indle reads are removed;		
+		return regionPool; //all nearby/faraway indle reads are removed;
+		
 	}
 	
 	private Set<Integer> addToNovelStarts(SAMRecord record, Set<Integer> novelStarts) {

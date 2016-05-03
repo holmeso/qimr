@@ -42,7 +42,7 @@ public class singleModeTest {
 				if(re.getChromosome().equals("chrY")){
 					System.out.println(re.toString()); 
 					assertTrue(re.getSampleFormatRecord(2).getField("ACINDEL").equals(".") );
-					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("1,1,1,1[1,0],0,0,1") );
+					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("0,1,1,0[0,0],0,1,1") );
 				}
 		}	
 		new File(IniFileTest.output).delete(); 		 
@@ -60,7 +60,7 @@ public class singleModeTest {
 				if(re.getChromosome().equals("chrY")){
 					System.out.println(re.toString()); 
 					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals(".") );
-					assertTrue(re.getSampleFormatRecord(2).getField("ACINDEL").equals("1,1,1,1[1,0],0,0,1") );
+					assertTrue(re.getSampleFormatRecord(2).getField("ACINDEL").equals("0,1,1,0[0,0],0,1,1") );
 				}
 		}	
 		new File(IniFileTest.output).delete(); 

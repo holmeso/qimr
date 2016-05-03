@@ -104,6 +104,10 @@ public class IndelPositionTest {
  
 	@Test
 	public void notSomaticTest() throws IOException{
+
+		 //debug
+		 System.out.println("debug: " + new File(IniFileTest.output).getAbsolutePath());
+		
 		
 		//normal BAM with one novel start
 		 List<String> data = new ArrayList<String>();
@@ -116,15 +120,16 @@ public class IndelPositionTest {
 		
 		 IniFileTest.createIniFile(IndelMTTest.ini_noquery,  tumourBAM, normalBAM,inputIndel, inputIndel, null);		
 		 Support.runQ3IndelNoHom(IndelMTTest.ini_noquery);
+		 
 		 		 
 		 //not somatic since supporting/informative=100% on control BAM 
-		 //NBIAS 100 support reads >=3 and one of strand is 0; 
+		 //NBIAS 100 support reads >=3 and one of strand is 0; 		 
 		 try (VCFFileReader reader = new VCFFileReader(IniFileTest.output)) {				 
 			 for (VcfRecord re : reader)  											
 				if(re.getChromosome().equals("chrY")){		
-					assertTrue(!re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC));
- 					assertTrue(re.getFilter().contains(IndelUtils.FILTER_NBIAS)); //germline, support 7>=3 and all in one strand
- 					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("1,7,7,7[7,0],0,0,7"));
+					assertTrue(re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC));
+ 					assertTrue(!re.getFilter().contains(IndelUtils.FILTER_NBIAS)); //germline, support 7>=3 and all in one strand
+ 					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("0,7,7,0[0,0],0,7,7"));
 				}
 		}	
 		new File(IniFileTest.output).delete();				
@@ -147,6 +152,7 @@ public class IndelPositionTest {
 		 //("ACINDEL").equals("1,8,8,8[8,0],0,0,8"
 		 for(int i = 7; i <= 8; i ++) 
 			 data.add("ST-" + i + ":a:102\t99\tchrY\t2672601\t60\t10M2D123M2D10M8S\t=\t2673085\t631\tGTAGTTTATATTTCTGTGGGGTCAGTGGTGATATCCCTTTTATTATTTTTTATTGTGTCTTTTTGATTCTTCTCTCTTTTCTTTTTTATTAATCTACCTAGCAGTCTATCTTATTGGGTGTG\t*");	 
+	        
 		 Support.createBam(data,normalBAM);
 		 IniFileTest.createIniFile(IndelMTTest.ini_noquery,  normalBAM, tumourBAM,inputIndel, inputIndel, null);		
 		 Support.runQ3IndelNoHom(IndelMTTest.ini_noquery);
@@ -185,7 +191,6 @@ public class IndelPositionTest {
 		 try (VCFFileReader reader = new VCFFileReader(IniFileTest.output)) {				 
 			 for (VcfRecord re : reader)  											
 				if(re.getChromosome().equals("chrY")){ 
-				
 					assertTrue(re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC)); //somatic: total three partial reads
 					assertTrue(re.getFilter().contains(VcfHeaderUtils.FILTER_NOVEL_STARTS)); //somatic and three novel < 4
 					assertTrue(re.getFilter().contains(VcfHeaderUtils.FILTER_COVERAGE_NORMAL_12)); //coverage only 3
@@ -194,7 +199,6 @@ public class IndelPositionTest {
 				}
 		}
 		 new File(IniFileTest.output).delete();
-		 
 		 
 		// somatic 4 partial 46 supporting  partial/total=8%
 		 //normal BAM have strong indel evident
@@ -207,15 +211,17 @@ public class IndelPositionTest {
 		 Support.runQ3IndelNoHom(IndelMTTest.ini_noquery);
 		 try (VCFFileReader reader = new VCFFileReader(IniFileTest.output)) {				 
 			 for (VcfRecord re : reader)  											
-				if(re.getChromosome().equals("chrY")){ 
-					
-					assertTrue(!re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC)); //NOT somatic: support 46 reads of 50 informative reads
-					assertTrue(!re.getFilter().contains(VcfHeaderUtils.FILTER_NOVEL_STARTS)); //Not Somatic, so don't care nns 
+				if(re.getChromosome().equals("chrY")){ 					
+					//assertTrue(!re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC)); //NOT somatic: support 46 reads of 50 informative reads
+					assertTrue(re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC)); //  somatic: support 0 reads of 50 informative reads
+					assertTrue(re.getFilter().contains(VcfHeaderUtils.FILTER_NOVEL_STARTS)); //Not Somatic, so don't care nns 
 					assertTrue(!re.getFilter().contains(VcfHeaderUtils.FILTER_COVERAGE_NORMAL_12)); //total coverage 50
-					assertTrue(!re.getFilter().contains(IndelUtils.FILTER_TPART));	//partial reads 4>=3 but partial/total=8% < 10%	on tumour								
-					assertTrue(!re.getFilter().contains(IndelUtils.FILTER_TBIAS)); //not somtic, don't care TBIAS
-					assertTrue(re.getFilter().contains(IndelUtils.FILTER_NBIAS)); //not somtic, support read 46>3 and all in one strand
-					assertTrue(re.getFilter().contains(IndelUtils.FILTER_NPART)); //partial reads 4>= and partial/total=8% >5%	on normal	
+					
+					assertTrue(!re.getFilter().contains(IndelUtils.FILTER_TPART)); //partial reads 4>=3 but partial/total=8% < 10%	on tumour								
+					assertTrue(re.getFilter().contains(IndelUtils.FILTER_NPART));  //partial reads 4>= and partial/total=8% >5%	on normal	
+					
+					assertTrue(!re.getFilter().contains(IndelUtils.FILTER_TBIAS)); // somatic, support read 0<3 and all in one strand
+					assertTrue(!re.getFilter().contains(IndelUtils.FILTER_NBIAS)); // somatic 
 				}
 		}
 		 new File(IniFileTest.output).delete();
@@ -223,8 +229,8 @@ public class IndelPositionTest {
 	}
 	
 	 
-	@Test //SOMTIC, COVN12, MIN, NNS
-	public void somaticTest() throws IOException{
+	@Test //NNS;COVN12
+	public void somaticPartialTest() throws IOException{
 		//normal BAM with one novel start, gematic.soi = 3% < 0.05
 		 List<String> data = new ArrayList<String>();
         data.add("ST-E00139:1112:a:102\t99\tchrY\t2672601\t60\t10M2D123M2D10M8S\t=\t2673085\t631\tGTAGTTTATATTTCTGTGGGGTCAGTGGTGATATCCCTTTTATTATTTTTTATTGTGTCTTTTTGATTCTTCTCTCTTTTCTTTTTTATTAATCTACCTAGCAGTCTATCTTATTGGGTGTG\t*");
@@ -244,19 +250,47 @@ public class IndelPositionTest {
 		 try (VCFFileReader reader = new VCFFileReader(IniFileTest.output)) {				 
 			 for (VcfRecord re : reader)  											
 				if(re.getChromosome().equals("chrY")){	
-			 
-					assertTrue(re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC));
+					assertTrue(re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC));					
 					assertTrue(re.getInfo().contains("GATKINFO")); //make sure GATK INFO column still exists
-					assertTrue(re.getFilter().contains(IndelUtils.FILTER_COVN12)); 
-					assertTrue(re.getFilter().contains(IndelUtils.FILTER_MIN)); 
-					assertTrue(re.getFilter().contains(IndelUtils.FILTER_NNS)); 					
-					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("1,11,11,1[1,0],0,10,1"));
+					assertTrue(re.getFilter().contains(IndelUtils.FILTER_COVN12)); //coverage normal is 11
+					assertTrue(!re.getFilter().contains(IndelUtils.FILTER_MIN)); //no supporting in normal
+					assertTrue(re.getFilter().contains(IndelUtils.FILTER_NNS)); //tumour only have three nns					
+					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("0,11,11,0[0,0],0,11,1"));
 				}
 		}	
-		new File(IniFileTest.output).delete();	
-		
+		new File(IniFileTest.output).delete();			
 	}
+
 	
+	@Test //SOMTIC, COVN12, MIN, NNS 
+	public void somaticSupportTest() throws IOException{
+		//normal BAM with one novel start, gematic.soi = 3% < 0.05
+		 List<String> data = new ArrayList<String>();
+         data.add("ST-E00139:2210:b:103\t99\tchrY\t2672680\t60\t56M2D50M45S\t=\t2672878\t349\tCTTTTCTTTTTTATTAATCTACCTAGCAGTCTATCTTATTGGGTGTGTGTGTGTGATTTTTTTTTTTTTTTCAAAAAACCAGTTCCTGAATTTATTTATTTTTTGATGTGTTTTTTTTTTCA\t*");
+		
+		 for(int i = 1; i <= 10; i ++) 
+			data.add("ST-" + i + ":f:108\t147\tchrY\t2672723\t60\t28S13M1I109M\t=\t2672317\t-527\tTTTTTTTTTTTTTGTTGTTTATTTTTTTGTGTGTGTGTGTGTTTTTTTTTTTTTTTTCCAAAAAACCAGTTCCTGAATTCATTGATTTTTTGAAGGGTTTTTTGTGTCACTGTC\t*");        
+		 Support.createBam(data,normalBAM);
 
-
+		//tumour BAM with assertTrue(record.getSampleFormatRecord(1).getField("ACINDEL").equals("3,12,11,4[2,2],2,4,4"));
+		 IndelMTTest.createDelBam(tumourBAM);
+		
+		 IniFileTest.createIniFile(IndelMTTest.ini_noquery,  tumourBAM, normalBAM,inputIndel, inputIndel, null);		
+		 Support.runQ3IndelNoHom(IndelMTTest.ini_noquery);
+		 		 
+		 //not somatic since supporting/informative=100% on control BAM 
+		 //NBIAS 100 support reads >=3 and one of strand is 0; 
+		 try (VCFFileReader reader = new VCFFileReader(IniFileTest.output)) {				 
+			 for (VcfRecord re : reader)  											
+				if(re.getChromosome().equals("chrY")){	
+					assertTrue(re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC));					
+					assertTrue(re.getInfo().contains("GATKINFO")); //make sure GATK INFO column still exists
+					assertTrue(re.getFilter().contains(IndelUtils.FILTER_COVN12)); //coverage normal is 11
+					assertTrue(re.getFilter().contains(IndelUtils.FILTER_MIN)); //no supporting in normal
+					assertTrue(re.getFilter().contains(IndelUtils.FILTER_NNS)); //tumour only have three nns					
+					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("1,11,11,1[1,0],0,10,0"));
+				}
+		}	
+		new File(IniFileTest.output).delete();			
+	}	
 }
