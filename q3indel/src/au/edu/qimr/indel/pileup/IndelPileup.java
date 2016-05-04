@@ -166,6 +166,7 @@ public class IndelPileup {
 	 */
 	private int[] getCounts(List<SAMRecord> pool, String motif) throws Exception{
 		int support = 0;
+		int strongSupport = 0;
 		int partsupport = 0;
 		int forwardSupport = 0;
 		int backwardSupport = 0;
@@ -188,7 +189,7 @@ public class IndelPileup {
 			 			String base = re.getReadString().substring(startIndex+1,endIndex);
 			 			if(motif.toLowerCase().matches(base.toLowerCase())){
 			 				supportflag = true;				 				 
-			 				novelStarts = addToNovelStarts(re, novelStarts);
+			 				//novelStarts = addToNovelStarts(re, novelStarts);
 			 				//System.out.println("supportI: " + re.getSAMString());
 			 			}else 
 			 				partialflag = true; 
@@ -200,16 +201,20 @@ public class IndelPileup {
 					if(refPos <= indelEnd && refPos + ce.getLength() >= indelStart && type.equals(SVTYPE.DEL)){ 												 						
 							if(refPos == indelStart && ce.getLength() == motif.length()){
 				 				supportflag = true; 				 				
-				 				novelStarts = addToNovelStarts(re, novelStarts);					 				 
+				 				//novelStarts = addToNovelStarts(re, novelStarts);					 				 
 							}else
 								partialflag = true; 
 					}						
 				
 				// match indel
 				if(supportflag){ 					
-					if (re.getReadNegativeStrandFlag())   backwardSupport ++;
-					else   forwardSupport ++;
-					support ++;
+					if(isStrongSupport(re, 3)){ //check variants no inside read
+						strongSupport++;
+						novelStarts = addToNovelStarts(re, novelStarts);
+						if (re.getReadNegativeStrandFlag())   backwardSupport ++;
+						else   forwardSupport ++;		
+					}
+					support ++;			
 					break;
 				}else if(partialflag){
 					partsupport ++;
@@ -220,9 +225,48 @@ public class IndelPileup {
 			}
 		}
 					 
-		int[] counts = {support, forwardSupport,backwardSupport, partsupport, novelStarts.size() };
+		int[] counts = {support, forwardSupport,backwardSupport, partsupport, novelStarts.size(), strongSupport };
 		return counts; 
 		
+	}
+	
+	/**
+	 * 
+	 * @param record: a support bam record
+	 * @return true, if there are less specified number of variants events on that read. it self counts as one
+	 */
+	 boolean isStrongSupport(final SAMRecord record, final int eventNo ) {
+		int count = 0;
+		Cigar cigar = record.getCigar();
+		for (CigarElement ce : cigar.getCigarElements()) 					
+			if(CigarOperator.I == ce.getOperator() || CigarOperator.D == ce.getOperator() ) 
+				count ++;
+		 
+		if(count > eventNo) return false;
+		
+		//check MD field
+		String mdData = (String)record.getAttribute("MD");
+		if (null == mdData) return false; //no MD filed, supports to be bad reads
+				 
+		for (int i = 0, size = mdData.length() ; i < size ; i++) {
+			char c = mdData.charAt(i);
+			if ('^' == c) { //skip deletion
+				while (++i < size && Character.isLetter(mdData.charAt(i))) {}
+			}
+			
+			boolean flag = false;
+			while (c == 'A' || c == 'C' || c == 'G' || c == 'T' || c == 'N') {
+				flag = true; 
+				c = mdData.charAt(++i);
+				if ('0' == c) i++;  //Adjacent snp as MNP
+				else break; 					
+			} 
+			
+			if(flag) count ++;		
+			if(count > eventNo ) return false; 
+		}
+		 		
+		return true; 
 	}
 		
 	private boolean nBasePresentInInsertion(SAMRecord record ) {
