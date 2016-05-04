@@ -343,10 +343,13 @@ public class IndelMT {
         if(options.getFilterQuery() != null)
         	query = new QueryExecutor(options.getFilterQuery()); 
         
+        //debugging
+        QueryExecutor query1 = new QueryExecutor("and (Flag_DuplicateRead == false, MAPQ >10)");
+        
      	//each time only throw threadNo thread, the loop finish untill the last threadNo                    	
     	for(SAMSequenceRecord contig : sortedContigs ){       		
     		if(options.getControlBam() != null)    			
-    			 pileupThreads.execute(new contigPileup(contig, getIndelList(contig, null), options.getControlBam(),query,
+    			 pileupThreads.execute(new contigPileup(contig, getIndelList(contig, null), options.getControlBam(),query1,
     				normalQueue, Thread.currentThread(),pileupLatch ));
     		
     		//getIndelList must be called repeately, since it will be empty after pileup
