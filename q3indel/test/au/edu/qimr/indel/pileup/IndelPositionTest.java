@@ -108,7 +108,7 @@ public class IndelPositionTest {
 		//normal BAM with one novel start
 		 List<String> data = new ArrayList<String>();
 		 for(int i = 1; i <= 7; i ++) 
-			 data.add("ST-" + i + ":a:102\t99\tchrY\t2672601\t60\t10M2D123M2D10M8S\t=\t2673085\t631\tGTAGTTTATATTTCTGTGGGGTCAGTGGTGATATCCCTTTTATTATTTTTTATTGTGTCTTTTTGATTCTTCTCTCTTTTCTTTTTTATTAATCTACCTAGCAGTCTATCTTATTGGGTGTG\t*");	 
+			 data.add("ST-" + i + ":a:102\t99\tchrY\t2672601\t60\t10M2D123M2D10M8S\t=\t2673085\t631\tGTAGTTTATATTTCTGTGGGGTCAGTGGTGATATCCCTTTTATTATTTTTTATTGTGTCTTTTTGATTCTTCTCTCTTTTCTTTTTTATTAATCTACCTAGCAGTCTATCTTATTGGGTGTG\t*\tMD:Z:10^TT123^TT10");	 
 		 Support.createBam(data,normalBAM);
 
 		//tumour BAM with assertTrue(record.getSampleFormatRecord(1).getField("ACINDEL").equals("3,12,11,4[2,2],2,4,4"));
@@ -121,10 +121,11 @@ public class IndelPositionTest {
 		 //NBIAS 100 support reads >=3 and one of strand is 0; 
 		 try (VCFFileReader reader = new VCFFileReader(IniFileTest.output)) {				 
 			 for (VcfRecord re : reader)  											
-				if(re.getChromosome().equals("chrY")){		
+				if(re.getChromosome().equals("chrY")){	
+					System.out.println(re.toString());
 					assertTrue(!re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC));
  					assertTrue(re.getFilter().contains(IndelUtils.FILTER_NBIAS)); //germline, support 7>=3 and all in one strand
- 					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("1,7,7,7[7,0],0,0,7"));
+ 					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("1,7,7,7[7,0],7[1],0,0,7"));
 				}
 		}	
 		new File(IniFileTest.output).delete();				
@@ -227,7 +228,7 @@ public class IndelPositionTest {
 	public void somaticTest() throws IOException{
 		//normal BAM with one novel start, gematic.soi = 3% < 0.05
 		 List<String> data = new ArrayList<String>();
-        data.add("ST-E00139:1112:a:102\t99\tchrY\t2672601\t60\t10M2D123M2D10M8S\t=\t2673085\t631\tGTAGTTTATATTTCTGTGGGGTCAGTGGTGATATCCCTTTTATTATTTTTTATTGTGTCTTTTTGATTCTTCTCTCTTTTCTTTTTTATTAATCTACCTAGCAGTCTATCTTATTGGGTGTG\t*");
+        data.add("ST-E00139:1112:a:102\t99\tchrY\t2672601\t60\t10M2D123M2D10M8S\t=\t2673085\t631\tGTAGTTTATATTTCTGTGGGGTCAGTGGTGATATCCCTTTTATTATTTTTTATTGTGTCTTTTTGATTCTTCTCTCTTTTCTTTTTTATTAATCTACCTAGCAGTCTATCTTATTGGGTGTG\t*\tMD:Z:10^TT12^TT10M");
 		
 		 for(int i = 1; i <= 10; i ++) 
 			data.add("ST-" + i + ":f:108\t147\tchrY\t2672723\t60\t28S13M1I109M\t=\t2672317\t-527\tTTTTTTTTTTTTTGTTGTTTATTTTTTTGTGTGTGTGTGTGTTTTTTTTTTTTTTTTCCAAAAAACCAGTTCCTGAATTCATTGATTTTTTGAAGGGTTTTTTGTGTCACTGTC\t*");        
@@ -250,7 +251,7 @@ public class IndelPositionTest {
 					assertTrue(re.getFilter().contains(IndelUtils.FILTER_COVN12)); 
 					assertTrue(re.getFilter().contains(IndelUtils.FILTER_MIN)); 
 					assertTrue(re.getFilter().contains(IndelUtils.FILTER_NNS)); 					
-					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("1,11,11,1[1,0],0,10,1"));
+					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("1,11,11,1[1,0],1[1],0,10,1"));
 				}
 		}	
 		new File(IniFileTest.output).delete();	
