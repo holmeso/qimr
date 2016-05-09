@@ -36,8 +36,7 @@ import au.edu.qimr.indel.Q3IndelException;
 
 
 public class IndelMTTest {
-	public static final String inputVcf = "input.vcf"; 
- 
+	public static final String inputVcf = "input.vcf";  
 	public static final String TEST_BAM_NAME = "test.bam";
 	public static final String ini_noquery = "test1.ini";
 	public static final String ini_query = "test2.ini";
@@ -80,17 +79,17 @@ public class IndelMTTest {
 				line ++;
 				record = re; 	
 				System.out.println(record.toString());
-				if(record.getChromosome().equals("chrY")){
-					
-				
+				if(record.getChromosome().equals("chrY")){									
 					//input 12 reads including one duplicate so coverage is 11
 					assertTrue(record.getSampleFormatRecord(1).getField("ACINDEL").equals("2,12,11,3[1,2],4[3],2,4,4"));
 					//check qFlag
-				assertTrue(record.getFilter().equals("PASS"));
-				
+					assertTrue(record.getFilter().equals("PASS"));					 
+				}else{
+					assertTrue(record.getFilter().contains("NNS"));	
+					assertTrue(record.getFilter().contains("COVN12"));	
 				}
 				
-				}
+			}
 		}
 		
 		assertTrue(line == 4);					

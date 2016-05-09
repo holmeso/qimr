@@ -289,13 +289,15 @@ public class IndelPosition {
 			re.appendInfo(String.format(IndelUtils.INFO_HOMTXT  + "=" + polymer.getPolymerSequence(index)));
 		}
 					 
-		float nn = 0;
-		if(somatic && tumourPileup != null && tumourPileup.getTotalCount() > 0) 
-			nn =  (float)tumourPileup.getNearbyIndelCount() / tumourPileup.getTotalCount();
-		else if(normalPileup != null && normalPileup.getTotalCount() > 0)
-			nn = (float) normalPileup.getNearbyIndelCount() / normalPileup.getTotalCount();		
-		String nioc =   ((nn == 0 )? "0" : String.format("%.3f", nn));				
-		re.appendInfo( String.format( IndelUtils.INFO_NIOC + "=" + nioc) );		
+		IndelPileup pileup = normalPileup; 
+		if(somatic && tumourPileup != null && tumourPileup.getTotalCount() > 0)
+			pileup = tumourPileup;
+		
+		float nn = (pileup == null || pileup.getTotalCount() == 0)? 0 : (float) pileup.getNearbyIndelCount() / pileup.getTotalCount();
+		float ss = (pileup == null || pileup.getInformativeCount() == 0)? 0 : (float) pileup.getstrongSuportReadCount(index) / pileup.getInformativeCount();
+
+		re.appendInfo( String.format( IndelUtils.INFO_NIOC + "=" + ((nn == 0 )? "0" : String.format("%.3f", nn))) );		
+		re.appendInfo( String.format( IndelUtils.INFO_SSOI + "=" + ((nn == 0 )? "0" : String.format("%.3f", ss))) );	
 		
 		re.appendInfo("SVTYPE=" + this.mutationType.name());
 		re.appendInfo("END=" + indelEnd);
