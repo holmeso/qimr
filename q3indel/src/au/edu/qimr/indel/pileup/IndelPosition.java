@@ -296,9 +296,10 @@ public class IndelPosition {
 		float nn = (pileup == null || pileup.getTotalCount() == 0)? 0 : (float) pileup.getNearbyIndelCount() / pileup.getTotalCount();
 		float ss = (pileup == null || pileup.getInformativeCount() == 0)? 0 : (float) pileup.getstrongSuportReadCount(index) / pileup.getInformativeCount();
 
-		re.appendInfo( String.format( IndelUtils.INFO_NIOC + "=" + ((nn == 0 )? "0" : String.format("%.3f", nn))) );		
-		re.appendInfo( String.format( IndelUtils.INFO_SSOI + "=" + ((nn == 0 )? "0" : String.format("%.3f", ss))) );	
 		
+		re.appendInfo( String.format( IndelUtils.INFO_NIOC + "=" + ((nn == 0 )? "0" : String.format("%.3f", nn))) );		
+		re.appendInfo( String.format( IndelUtils.INFO_SSOI + "=" + ((ss == 0 )? "0" : String.format("%.3f", ss))) );	
+				
 		re.appendInfo("SVTYPE=" + this.mutationType.name());
 		re.appendInfo("END=" + indelEnd);
 					
