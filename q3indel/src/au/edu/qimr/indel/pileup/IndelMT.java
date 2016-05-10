@@ -273,19 +273,16 @@ public class IndelMT {
 		this.options = options;	
 		this.logger = logger; 
 		
-		SamReader reader;
-		if(options.getTestBam() != null)
-			reader = SAMFileReaderFactory.createSAMFileReader(options.getTestBam()); 
-		else
-			reader = SAMFileReaderFactory.createSAMFileReader(options.getControlBam()); 
-		
+		//get sequence from bam header
+		File bam = (options.getTestBam() != null)? options.getTestBam(): options.getControlBam();
+		SamReader reader =  SAMFileReaderFactory.createSAMFileReader(bam) ;				 
 		for (final SAMSequenceRecord contig : reader.getFileHeader().getSequenceDictionary().getSequences())  
 			sortedContigs.add(contig);
 		reader.close(); 
 		
 		//loading indels 
 		this.indelload = new ReadIndels(logger);		
-		if(options.getRunMode().equalsIgnoreCase(options.RUNMODE_GATK) || options.getRunMode().equalsIgnoreCase(options.RUNMODE_GATKTEST)){	
+		if(options.getRunMode().equalsIgnoreCase(options.RUNMODE_GATK) ){	
 			//first load control
 			if(options.getControlInputVcf() != null){
 				indelload.LoadIndels(options.getControlInputVcf(),options.getRunMode());	
@@ -299,17 +296,14 @@ public class IndelMT {
 			}	
 			//then test second column
 			if(options.getTestInputVcf() != null){
-				indelload.appendIndels(options.getTestInputVcf(), options.getRunMode());
-				
+				indelload.appendTestIndels(options.getTestInputVcf());				
 				logger.info(indelload.getCounts_inputLine() + " variants record exsits inside test vcf input.");
 				logger.info(indelload.getCounts_inputMultiAlt() + " variants record with multi Alleles exsits inside test vcf input.");	
-				logger.info(indelload.getCounts_multiIndel() + " indels are split from multi alleles inside test vcf");	
-				
+				logger.info(indelload.getCounts_multiIndel() + " indels are split from multi alleles inside test vcf");					
 				logger.info(indelload.getCounts_newIndel() + " new indels are found in Test vcf input only.");
 				logger.info(indelload.getCounts_overlapIndel() + " indels are found in both Control and Test vcf inputs.");
 				logger.info((indelload.getCounts_totalIndel() - indelload.getCounts_newIndel() - indelload.getCounts_overlapIndel()) +  
-						" indels are found in Control vcf input only." );
-				
+						" indels are found in Control vcf input only." );				
 			}				
 		}else if(options.getRunMode().equalsIgnoreCase("pindel")){	
 			for(int i = 0; i < options.getInputVcfs().size(); i ++)

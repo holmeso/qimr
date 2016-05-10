@@ -54,7 +54,7 @@ public class QFlagTest {
         Support.createBam(data, CONTROL_BAM_NAME);
         
 		File ini = new File(ini_noquery);	
-		IniFileTest.createIniFile(ini, new File(TEST_BAM_NAME), new File(CONTROL_BAM_NAME), new File(test_vcf), new File(control_vcf), null, "test" );	        
+		IniFileTest.createIniFile(ini, new File(TEST_BAM_NAME), new File(CONTROL_BAM_NAME), new File(test_vcf), new File(control_vcf), null );	        
 		Support.runQ3IndelNoHom( ini_noquery);
 		 
 		//gemline since control 100% supporting even only one record	

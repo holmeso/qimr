@@ -186,10 +186,8 @@ public class IndelPositionTest {
 		 try (VCFFileReader reader = new VCFFileReader(IniFileTest.output)) {				 
 			 for (VcfRecord re : reader)  											
 				if(re.getChromosome().equals("chrY")){ 
-				
-					assertTrue(re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC)); //somatic: total three partial reads
-					assertTrue(re.getFilter().contains(VcfHeaderUtils.FILTER_NOVEL_STARTS)); //somatic and three novel < 4
-					assertTrue(re.getFilter().contains(VcfHeaderUtils.FILTER_COVERAGE_NORMAL_12)); //coverage only 3
+					assertTrue(re.getFilter().contains(VcfHeaderUtils.FILTER_COVERAGE_TUMOUR )); //germline and coverage only 3
+					assertTrue(re.getFilter().contains(VcfHeaderUtils.FILTER_COVERAGE_NORMAL_8 )); //
 					assertTrue(re.getFilter().contains(IndelUtils.FILTER_NPART)); //partial reads 3>=3 and partial/total=100% >5% on normal	
 					assertTrue(re.getFilter().contains(IndelUtils.FILTER_TPART));//partial reads 3>= and partial/total=100% >10% on tumour						
 				}
@@ -236,8 +234,12 @@ public class IndelPositionTest {
 
 		//tumour BAM with assertTrue(record.getSampleFormatRecord(1).getField("ACINDEL").equals("3,12,11,4[2,2],2,4,4"));
 		 IndelMTTest.createDelBam(tumourBAM);
-		
-		 IniFileTest.createIniFile(IndelMTTest.ini_noquery,  tumourBAM, normalBAM,inputIndel, inputIndel, null);		
+		 
+        data.clear();;
+        data.add("chr11	2672739	.	ATT	A	123.86	.	.	GT	0/1"); 
+        Support.createVcf(data, data, "control.vcf");
+	
+	     IniFileTest.createIniFile(IndelMTTest.ini_noquery,tumourBAM, normalBAM, inputIndel,"control.vcf", null);		
 		 Support.runQ3IndelNoHom(IndelMTTest.ini_noquery);
 		 		 
 		 //not somatic since supporting/informative=100% on control BAM 
@@ -245,7 +247,6 @@ public class IndelPositionTest {
 		 try (VCFFileReader reader = new VCFFileReader(IniFileTest.output)) {				 
 			 for (VcfRecord re : reader)  											
 				if(re.getChromosome().equals("chrY")){	
-			 
 					assertTrue(re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC));
 					assertTrue(re.getInfo().contains("GATKINFO")); //make sure GATK INFO column still exists
 					assertTrue(re.getFilter().contains(IndelUtils.FILTER_COVN12)); 

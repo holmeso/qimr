@@ -85,8 +85,8 @@ public class IndelMTTest {
 					//check qFlag
 					assertTrue(record.getFilter().equals("PASS"));					 
 				}else{
-					assertTrue(record.getFilter().contains("NNS"));	
-					assertTrue(record.getFilter().contains("COVN12"));	
+					assertTrue(record.getFilter().contains("COVN8"));	
+					assertTrue(record.getFilter().contains("COVT"));	
 				}
 				
 			}
