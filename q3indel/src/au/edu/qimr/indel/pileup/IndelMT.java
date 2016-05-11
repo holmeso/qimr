@@ -125,7 +125,7 @@ public class IndelMT {
 			 		else{
 			 			next_pool.add(re); 
 			 			//pileup
-			 			IndelPileup pileup= new IndelPileup(topPos, options.getSoftClipWindow(), options.getNearbyIndelWindow());
+			 			IndelPileup pileup= new IndelPileup(topPos, options.getSoftClipWindow(), options.getNearbyIndelWindow(), options.getMaxEventofStrongSupport());
 			 			pileup.pileup(current_pool);
 			 			qOut.add(pileup);
 			 			
@@ -141,7 +141,7 @@ public class IndelMT {
 			 		//check whether previous loop also used up all indel position
 			 		if(topPos == null) break; 
 			 			
-		 			IndelPileup pileup= new IndelPileup(topPos, options.getSoftClipWindow(), options.getNearbyIndelWindow());
+		 			IndelPileup pileup= new IndelPileup(topPos, options.getSoftClipWindow(), options.getNearbyIndelWindow(),options.getMaxEventofStrongSupport());
 		 			pileup.pileup(current_pool);
 		 			qOut.add(pileup);
 					

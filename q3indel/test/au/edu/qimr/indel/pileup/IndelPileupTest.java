@@ -46,7 +46,7 @@ public class IndelPileupTest {
 		vcfs.add(new VcfRecord.Builder("chr1",	183014, "G").allele("GT").build());
 		
 		IndelPosition indel = new IndelPosition (vcfs, SVTYPE.INS);
-		IndelPileup  pileup = new IndelPileup( indel, 13, 3); 	
+		IndelPileup  pileup = new IndelPileup( indel, 13, 3,3); 	
 		List<SAMRecord> pool = makePool(indel.getEnd()); //get pool	
 		pileup.pileup(pool);
 	 		
@@ -78,7 +78,7 @@ public class IndelPileupTest {
 		IndelPosition indel = new IndelPosition (vs);
 				
 		List<SAMRecord> pool = makePool(indel.getEnd());
-        IndelPileup pileup = new IndelPileup( indel, 13, 3); 	
+        IndelPileup pileup = new IndelPileup( indel, 13, 3,3); 	
         pileup.pileup(pool);
                 
         assertTrue(pileup.getmotif(0).equals("AG"));
@@ -97,7 +97,7 @@ public class IndelPileupTest {
 		
 		VcfRecord vs = new VcfRecord.Builder("chrX", 150936181, "GTGTGT").allele("G").build();				 
 		IndelPosition indel = new IndelPosition (vs);
-        IndelPileup pileup = new IndelPileup( indel, 13, 3); 	
+        IndelPileup pileup = new IndelPileup( indel, 13, 3,3); 	
         
 		List<SAMRecord> pool = new ArrayList<SAMRecord>();	
 		pool.add(new SAMRecord(null ));		
@@ -130,7 +130,7 @@ public class IndelPileupTest {
 		
 		VcfRecord vs = new VcfRecord.Builder("chrX", 150936181, "GTGTGTTTTTTTTTTTTTTTTTTTTTTTTTTTTT").allele("G").build();				 
 		IndelPosition indel = new IndelPosition (vs);
-        IndelPileup pileup = new IndelPileup( indel, 20, 3); 	
+        IndelPileup pileup = new IndelPileup( indel, 20, 3,3); 	
         
 		List<SAMRecord> pool = new ArrayList<SAMRecord>();	
 		pool.add(new SAMRecord(null ));		

@@ -25,6 +25,7 @@ public class IndelPileup {
 	private  int informativeCount; //crossover full indels start - end
 	private  int nearbysoftClip ; //reads contain softclipping in either side window
 	private  int nearbyIndel ;//= new ArrayList<Integer>(); //must be informative	
+	private int maxEvent; //max variant event allowed in a strong supporting read
 	
 	List<Integer> support = new ArrayList<Integer>();
 	List<Integer> strongSupport = new ArrayList<Integer>();
@@ -35,13 +36,14 @@ public class IndelPileup {
 	List<Integer> novelStart4strong = new ArrayList<Integer>(); 
 	List<Integer> novelStart4support = new ArrayList<Integer>(); 
 	
-	public IndelPileup( IndelPosition pos, int nearbySoftClipWindow, int nearyIndelWindow) throws Exception { 	
+	public IndelPileup( IndelPosition pos, int nearbySoftClipWindow, int nearyIndelWindow, int maxEvent) throws Exception { 	
 		this.position = pos.getChrRangePosition();
 		this.indelStart = pos.getStart();
 		this.indelEnd = pos.getEnd();		
 		this.type = pos.getIndelType();
 		this.nearbySoftClipWindow = nearbySoftClipWindow;
 		this.nearyIndelWindow = nearyIndelWindow;
+		this.maxEvent = maxEvent;
 		this.motifs = pos.getMotifs();		
 		for(int i = 0; i < motifs.size(); i ++){
 			support.add(i,0); 
@@ -218,7 +220,7 @@ public class IndelPileup {
 				if(supportflag){ 	
 					int ss = re.getReadNegativeStrandFlag() ? re.getAlignmentEnd() : re.getAlignmentStart() ;
 					novel4support.add(ss);					
-					if(isStrongSupport(re, 3)){ //check variants no inside read
+					if(isStrongSupport(re, maxEvent)){ //check variants no inside read
 						strong_support++;
 						novel4strong.add(ss);
 						if (re.getReadNegativeStrandFlag())   backward_strong ++;
