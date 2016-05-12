@@ -147,8 +147,8 @@ public class IndelPositionTest {
 		 try (VCFFileReader reader = new VCFFileReader(IniFileTest.output)) {				 
 			 for (VcfRecord re : reader)  											
 				if(re.getChromosome().equals("chrY")){
-				//	System.out.println(re.toString());
-					assertTrue(re.getFilter().equals(IndelUtils.FILTER_COVT )); //germline, tumour with coverge 7
+					//System.out.println(re.toString());
+					assertTrue(re.getFilter().contains(IndelUtils.FILTER_COVT )); //germline, tumour with coverge 7
 					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("2,12,11,3[1,2],4[3],2,4,4"));
  					assertTrue(re.getInfoRecord().getField(IndelUtils.INFO_NIOC).equals("0.333"));  // 4/12 == 0.333
  					assertTrue(re.getInfoRecord().getField(IndelUtils.INFO_SSOI).equals("0.273"));  // 3/11 == 0.273 why not 0.272
@@ -173,7 +173,7 @@ public class IndelPositionTest {
 			 for (VcfRecord re : reader)  											
 				if(re.getChromosome().equals("chrY")){
 					assertFalse( re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC)); 
-					assertTrue(re.getFilter().equals(VcfHeaderUtils.FILTER_PASS)); 
+					assertTrue(re.getFilter().equals(IndelUtils.FILTER_NNS)); 
 					assertTrue(re.getSampleFormatRecord(2).getField("ACINDEL").equals("1,8,8,8[8,0],8[1],0,0,8"));
 					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("2,12,11,3[1,2],4[3],2,4,4"));
 				}
@@ -220,7 +220,7 @@ public class IndelPositionTest {
 				if(re.getChromosome().equals("chrY")){ 
 					
 					assertTrue(!re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC)); //NOT somatic: support 46 reads of 50 informative reads
-					assertTrue(!re.getFilter().contains(VcfHeaderUtils.FILTER_NOVEL_STARTS)); //Not Somatic, so don't care nns 
+					assertTrue(re.getFilter().contains(VcfHeaderUtils.FILTER_NOVEL_STARTS)); //Not Somatic, so don't care nns 
 					assertTrue(!re.getFilter().contains(VcfHeaderUtils.FILTER_COVERAGE_NORMAL_12)); //total coverage 50
 					assertTrue(!re.getFilter().contains(IndelUtils.FILTER_TPART));	//partial reads 4>=3 but partial/total=8% < 10%	on tumour								
 					assertTrue(!re.getFilter().contains(IndelUtils.FILTER_TBIAS)); //not somtic, don't care TBIAS

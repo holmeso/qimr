@@ -70,7 +70,7 @@ public class QFlagTest {
 								
 				assertTrue(re.getFilter().contains("COVN8"));						
 				assertFalse(re.getFilter().contains("MIN"));	
-				assertFalse(re.getFilter().contains("NNS"));						
+				assertTrue(re.getFilter().contains("NNS"));						
 				assertFalse(re.getFilter().contains("NPART"));
 				assertFalse(re.getFilter().contains("NBIAS"));
 				assertFalse(re.getFilter().contains("TPART"));

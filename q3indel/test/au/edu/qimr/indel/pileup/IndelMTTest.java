@@ -78,12 +78,11 @@ public class IndelMTTest {
 			for (VcfRecord re : reader) {	
 				line ++;
 				record = re; 	
-				System.out.println(record.toString());
+				assertTrue(record.getFilter().contains("NNS"));
 				if(record.getChromosome().equals("chrY")){									
 					//input 12 reads including one duplicate so coverage is 11
 					assertTrue(record.getSampleFormatRecord(1).getField("ACINDEL").equals("2,12,11,3[1,2],4[3],2,4,4"));
-					//check qFlag
-					assertTrue(record.getFilter().equals("PASS"));					 
+					assertTrue(record.getFilter().equals("NNS"));					 
 				}else{
 					assertTrue(record.getFilter().contains("COVN8"));	
 					assertTrue(record.getFilter().contains("COVT"));	

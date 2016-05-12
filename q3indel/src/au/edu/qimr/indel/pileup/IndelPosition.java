@@ -246,8 +246,6 @@ public class IndelPosition {
 			
 			if(!somatic && tumourPileup.getTotalCount() < 8)
 				VcfUtils.updateFilter(re,  IndelUtils.FILTER_COVT);		 
-			if(somatic && tumourPileup.getstrongsupportNovelStartReadCount(index) < 4 )
-				VcfUtils.updateFilter(re,IndelUtils.FILTER_NNS);
 			if(tumourPileup.getparticalReadCount(index) >= 3 &&
 					(100 * tumourPileup.getparticalReadCount(index) / tumourPileup.getTotalCount()) > 10)
 				VcfUtils.updateFilter(re,IndelUtils.FILTER_TPART);
@@ -289,14 +287,15 @@ public class IndelPosition {
 			re.appendInfo(String.format(IndelUtils.INFO_HOMTXT  + "=" + polymer.getPolymerSequence(index)));
 		}
 					 
-		IndelPileup pileup = normalPileup; 
-		if(somatic && tumourPileup != null && tumourPileup.getTotalCount() > 0)
-			pileup = tumourPileup;
+		IndelPileup pileup = (somatic)? tumourPileup: normalPileup; 				
+		
+//		if(somatic && tumourPileup.getstrongsupportNovelStartReadCount(index) < 4 )
+		//if coverage == 0 
+		if(pileup !=null  && pileup.getstrongsupportNovelStartReadCount(index) < 4)
+			VcfUtils.updateFilter(re,IndelUtils.FILTER_NNS);
 		
 		float nn = (pileup == null || pileup.getTotalCount() == 0)? 0 : (float) pileup.getNearbyIndelCount() / pileup.getTotalCount();
-		float ss = (pileup == null || pileup.getInformativeCount() == 0)? 0 : (float) pileup.getstrongSuportReadCount(index) / pileup.getInformativeCount();
-
-		
+		float ss = (pileup == null || pileup.getInformativeCount() == 0)? 0 : (float) pileup.getstrongSuportReadCount(index) / pileup.getInformativeCount();		
 		re.appendInfo( String.format( IndelUtils.INFO_NIOC + "=" + ((nn == 0 )? "0" : String.format("%.3f", nn))) );		
 		re.appendInfo( String.format( IndelUtils.INFO_SSOI + "=" + ((ss == 0 )? "0" : String.format("%.3f", ss))) );	
 				
