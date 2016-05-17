@@ -56,8 +56,6 @@ public class IniFileTest {
 		} catch (Exception e) {
 			Assert.fail("Should not threw a Exception");
 		}
-	
-
 	}	
 	@Test
 	public final void testIni() throws Exception {
