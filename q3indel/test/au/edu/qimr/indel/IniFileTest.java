@@ -124,13 +124,14 @@ public class IniFileTest {
         data.add("window.nearbyIndel=3");
         data.add("window.homopolymer=100,10");
         data.add("window.softClip =13");
+        data.add("strong.event=3");  
         data.add("");
         data.add("[rules]");
         data.add("#discard all duplicate reads");
         data.add("exclude.Duplicates=true");
         data.add("gematic.nns=2");
         data.add("gematic.soi=0.15");  
-        data.add("strong.event=3");  
+
         	      	     	    
         try( BufferedWriter out = new BufferedWriter(new FileWriter(ini))) {	           
            for (String line : data)  

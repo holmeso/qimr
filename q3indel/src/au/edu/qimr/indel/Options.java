@@ -117,6 +117,7 @@ public class Options {
 		String[] windows = iniFile.fetch(ini_secParameter, "window.homopolymer").split(",");
 		nearbyHomopolymer = Integer.parseInt(windows[0]);
 		nearbyHomopolymerReport = Integer.parseInt(windows[1]);
+		max_events = Integer.parseInt( iniFile.fetch(ini_secParameter, "strong.event"));
 		softClipWindow = Integer.parseInt( iniFile.fetch(ini_secParameter, "window.softClip"));
 		threadNo = Integer.parseInt( iniFile.fetch(ini_secParameter, "threadNo"));
 		filterQuery =  iniFile.fetch(ini_secParameter, "filter");
@@ -130,7 +131,7 @@ public class Options {
 		
 		gematic_nns = Integer.parseInt( iniFile.fetch(ini_secRule, "gematic.nns"));
 		gematic_soi = Float.parseFloat( iniFile.fetch(ini_secRule, "gematic.soi"));
-		max_events = Integer.parseInt( iniFile.fetch(ini_secRule, "strong.event"));
+		
 //		exdup  = Boolean.parseBoolean( iniFile.fetch(ini_secRule, "exclude.Duplicates"));
 				 		
   		detectBadOptions();	  		  		

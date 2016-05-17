@@ -174,14 +174,6 @@ public class ReadIndels {
 	 	        		//format data from control, set default as germline
 	 	        		vcf1.setFilter(Constants.MISSING_DATA_STRING);
 	 	        		
-	 	        		
-//	 	        		//the test mode set default as germline;	 	        		
-//	 	        		//the others set default as somatic
-//	 	        		if(runMode.equals(Options.RUNMODE_GATKTEST))
-//	 	        			vcf1.setFilter(Constants.MISSING_DATA_STRING);
-//	 	        		else
-//	 	        			vcf1.setFilter(FILTER_SOMATIC);
-	 	        		
      					if(positionRecordMap.containsKey(vcf1) && (indelOverlap ++) < errRecordLimit){						
      						logger.warn("same variants already exsits, this one will be discard:\n" + positionRecordMap.get(vcf1).toString() );
      						continue; //no overwrite but just warning
@@ -262,11 +254,6 @@ public class ReadIndels {
 				indelPositionMap.get(indelPos).addVcf( vcf );
  			  else 
 				indelPositionMap.put(indelPos, new IndelPosition(vcf));
-			
-//			//debug
-//			System.out.println("getIndelMap():: " + indelPos.toIGVString());
-//			for(VcfRecord vcfxx : indelPositionMap.get(indelPos).getIndelVcfs())
-//				System.out.println(vcfxx.toString());
 		}	
 
 		return indelPositionMap;
