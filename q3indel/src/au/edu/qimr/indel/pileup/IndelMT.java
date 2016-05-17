@@ -28,6 +28,7 @@ import htsjdk.samtools.SAMRecord;
 import org.qcmg.common.log.QLogger;
 import org.qcmg.common.meta.QBamId;
 import org.qcmg.common.meta.QExec;
+import org.qcmg.common.model.ChrPosition;
 import org.qcmg.common.model.ChrRangePosition;
 import org.qcmg.common.string.StringUtils;
 import org.qcmg.common.util.IndelUtils;
@@ -50,7 +51,7 @@ public class IndelMT {
 	public static final int  MAXRAMREADS = 1500; //maximum number of total reads in RAM
 	
  
-	class contigPileup implements Runnable {
+	class ContigPileup implements Runnable {
 
 		private final AbstractQueue<IndelPosition> qIn;
 		private final AbstractQueue<IndelPileup> qOut;
@@ -61,7 +62,7 @@ public class IndelMT {
 		private QueryExecutor exec;
 		
 		//unit Test only
-		contigPileup(){
+		ContigPileup(){
 			this.qIn = null;
 			this.qOut = null;
 			this.mainThread = null;
@@ -79,7 +80,7 @@ public class IndelMT {
 		 * @param rLatch : the counter for reading thread
 		 * @param fLatch : the counter for filtering thread (current type)
 		 */
-		contigPileup(SAMSequenceRecord contig,  AbstractQueue<IndelPosition> qIn, File bam, QueryExecutor exec,
+		ContigPileup(SAMSequenceRecord contig,  AbstractQueue<IndelPosition> qIn, File bam, QueryExecutor exec,
 				AbstractQueue<IndelPileup> qOut, Thread mainThread, CountDownLatch latch)  {
 			this.qIn = qIn;
 			this.qOut = qOut;
@@ -200,18 +201,18 @@ public class IndelMT {
 		}				
 	}
 			
-	class homopoPileup implements Runnable {
+	class HomopoPileup implements Runnable {
 		private final AbstractQueue<IndelPosition> qIn;
 		private final AbstractQueue<Homopolymer> qOut;
 		private final Thread mainThread;
-		private File referenceFile; 
-		private String contig; 
+		private final File referenceFile; 
+		private final String contig; 
 		private final byte[] referenceBase;
-		private int window; 
-		private int reportWindow; 
+		private final int window; 
+		private final int reportWindow; 
 		final CountDownLatch pLatch;
 		
-		homopoPileup(String contig,   AbstractQueue<IndelPosition> qIn, File reference,  
+		HomopoPileup(String contig,   AbstractQueue<IndelPosition> qIn, File reference,  
 				AbstractQueue<Homopolymer> qOut, int window,int reportWindow,  Thread mainThread, CountDownLatch latch) {
 			this.qIn = qIn;
 			this.qOut = qOut;
@@ -257,7 +258,7 @@ public class IndelMT {
 	ReadIndels indelload;
 		
 	private final List<SAMSequenceRecord> sortedContigs = new ArrayList<SAMSequenceRecord>();
-	private Map<ChrRangePosition, IndelPosition> positionRecordMap ;
+	private Map<ChrPosition, IndelPosition> positionRecordMap ;
 	
 	//unit test purpose
 	@Deprecated
@@ -504,7 +505,7 @@ public class IndelMT {
 			return new ConcurrentLinkedQueue<IndelPosition>(); 			  
 		  
 		List<IndelPosition> list = new ArrayList<IndelPosition> ();	
-		for(ChrRangePosition pos : positionRecordMap.keySet()){
+		for(ChrPosition pos : positionRecordMap.keySet()){
 			if(contig != null && !pos.getChromosome().equals(contig.getSequenceName())  )
 				continue; 
 			
