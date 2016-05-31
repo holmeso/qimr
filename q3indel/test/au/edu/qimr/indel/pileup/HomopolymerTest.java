@@ -2,9 +2,6 @@ package au.edu.qimr.indel.pileup;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.Test;
 import org.qcmg.common.vcf.VcfRecord;
 
@@ -13,17 +10,14 @@ public class HomopolymerTest {
 	@Test
 	public void testInsert(){
 				
-		VcfRecord vs = new VcfRecord( new String[] {"chr1", "21",null, "T", "TTAA" });
+		VcfRecord vs = new VcfRecord( new String[] {"chr1", "21",null, "T", "TTAA" });		
 		IndelPosition indel = new IndelPosition (vs);		
 		Homopolymer homo = new Homopolymer(indel, getReference(), 3, 3);
 		assertTrue(homo.getPolymerSequence(0).equals("CCTtaaCCC"));
 		assertTrue(homo.getCount(0) == 3);
-	
-		
+			
 		//check on edge of contig but report window still inside
 		homo = new Homopolymer(indel, getReference(), 100, 10);		
-//		assertTrue(homo.getUpBaseCount(0) .equals( homo.nullValue));		
-//		assertTrue(homo.getDownBaseCount(0) .equals( "19C" ) );
 		assertTrue(homo.getPolymerSequence(0).length() == 23);	
 		assertTrue(homo.getCount(0) == 19);
 		
