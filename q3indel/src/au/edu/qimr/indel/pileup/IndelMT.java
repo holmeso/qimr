@@ -480,7 +480,8 @@ public class IndelMT {
 
 		header.addInfoLine(VcfHeaderUtils.INFO_SOMATIC, "1", "String", SOMATIC_DESCRIPTION);
 		header.addInfoLine(IndelUtils.INFO_NIOC, "1", "String", IndelUtils.DESCRITPION_INFO_NIOC);
-		header.addInfoLine(IndelUtils.INFO_HOM, "1", "String", IndelUtils.DESCRITPION_INFO_HOM); 
+		header.addInfoLine(IndelUtils.INFO_SSOI, "1", "String", IndelUtils.DESCRITPION_INFO_SSOI);		
+//		header.addInfoLine(IndelUtils.INFO_HOM, "1", "String", IndelUtils.DESCRITPION_INFO_HOM); 
 		header.addInfoLine(VcfHeaderUtils.INFO_MERGE_IN, "1", "String",VcfHeaderUtils.DESCRITPION_MERGE_IN); 
 				
 		header.addFormatLine(VcfHeaderUtils.FORMAT_GENOTYPE_DETAILS, "1","String", "Genotype details: specific alleles");
