@@ -94,9 +94,9 @@ public class VcfCompare {
 			header = VcfHeaderUtils.mergeHeaders(reader1.getHeader(), reader2.getHeader(), false);
 		}
 	 		
-		if(version == null) version = Constants.NULL_STRING;
-	    if(pg == null ) pg = Constants.NULL_STRING;
-	    if(cmd == null) cmd = Constants.NULL_STRING;
+		if(version == null) version = Constants.NULL_STRING_UPPER_CASE;
+	    if(pg == null ) pg = Constants.NULL_STRING_UPPER_CASE;
+	    if(cmd == null) cmd = Constants.NULL_STRING_UPPER_CASE;
 		VcfHeaderUtils.addQPGLineToHeader(header, pg, version, cmd);
 		header.addInfoLine(VcfCompareOptions.Info_From, "1", "Integer", VcfCompareOptions.Info_From_Description);
 	
