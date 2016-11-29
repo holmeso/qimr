@@ -22,6 +22,7 @@ import org.junit.rules.TemporaryFolder;
 import org.qcmg.common.meta.QExec;
 import org.qcmg.common.util.Constants;
 import org.qcmg.common.util.SnpUtils;
+import org.qcmg.common.vcf.VcfFormatFieldRecord;
 import org.qcmg.common.vcf.VcfRecord;
 import org.qcmg.common.vcf.VcfUtils;
 import org.qcmg.common.vcf.header.VcfHeader;
@@ -91,9 +92,19 @@ public class MergeUtilsTest {
 		
 		VcfHeader mergedHeader = pair.getLeft(); 
 		assertEquals(true, mergedHeader.getInfoRecords().containsKey(SnpUtils.SOMATIC));
-		assertEquals(true, mergedHeader.getInfoRecords().containsKey(SnpUtils.SOMATIC+ "_n"));
-		
+//		assertEquals(true, mergedHeader.getInfoRecords().containsKey(SnpUtils.SOMATIC+ "_1"));
+//		assertEquals(true, mergedHeader.getInfoRecords().containsKey(SnpUtils.SOMATIC+ "_2"));
+		assertEquals(true, mergedHeader.getInfoRecords().containsKey(Constants.VCF_MERGE_INFO));
+		String columnHeaderLine = mergedHeader.getChrom().toString();
+		String [] array = columnHeaderLine.split(Constants.TAB_STRING);
+		assertEquals(13, array.length);
+		assertEquals("FORMAT", array[8]);
+		assertEquals("http://purl.org/net/grafli/collectedsample#e734bdbc-2e43-44e4-ad32-11719865f9d6_1", array[9]);
+		assertEquals("http://purl.org/net/grafli/collectedsample#e734bdbc-2e43-44e4-ad32-11719865f9d6_2", array[11]);
+		assertEquals("http://purl.org/net/grafli/collectedsample#49c59f9e-fe9d-4813-a4c6-3198ec003859_1", array[10]);
+		assertEquals("http://purl.org/net/grafli/collectedsample#49c59f9e-fe9d-4813-a4c6-3198ec003859_2", array[12]);
 	}
+	
 	
 	@Test
 	public void mergeHeadersQLines() {
@@ -430,17 +441,17 @@ public class MergeUtilsTest {
 		r1.setFormatFields(Arrays.asList("AB:CD:EF", "1:2:3"));
 		r2.setFormatFields(Arrays.asList("GH:IJ:KL", "4:5:6"));
 		mergedR = MergeUtils.mergeRecords(null, r1, r2);
-		assertEquals("AB:CD:EF:GH:IJ:KL\t1:2:3:4:5:6", mergedR.getFormatFieldStrings());
+		assertEquals("AB:CD:EF:GH:IJ:KL\t1:2:3:.:.:.\t.:.:.:4:5:6", mergedR.getFormatFieldStrings());
 		
 		r1.setFormatFields(Arrays.asList("AB:CD:EF", "1:2:3"));
 		r2.setFormatFields(Arrays.asList("EF:GH:IJ:KL", "3:4:5:6"));
 		mergedR = MergeUtils.mergeRecords(null, r1, r2);
-		assertEquals("AB:CD:EF:GH:IJ:KL\t1:2:3"+ Constants.VCF_MERGE_DELIM + "3:4:5:6", mergedR.getFormatFieldStrings());
+		assertEquals("AB:CD:EF:GH:IJ:KL\t1:2:3:.:.:.\t.:.:3:4:5:6", mergedR.getFormatFieldStrings());
 		
 		r1.setFormatFields(Arrays.asList("AB:CD:EF:GH", "1:2:3:X"));
 		r2.setFormatFields(Arrays.asList("EF:GH:IJ:KL", "3:4:5:6"));
 		mergedR = MergeUtils.mergeRecords(null, r1, r2);
-		assertEquals("AB:CD:EF:GH:IJ:KL\t1:2:3"+ Constants.VCF_MERGE_DELIM + "3:X"+ Constants.VCF_MERGE_DELIM + "4:5:6", mergedR.getFormatFieldStrings());
+		assertEquals("AB:CD:EF:GH:IJ:KL\t1:2:3:X:.:.\t.:.:3:4:5:6", mergedR.getFormatFieldStrings());
 	}
 	
 	@Test
@@ -458,44 +469,61 @@ public class MergeUtilsTest {
 		r1.setFormatFields(Arrays.asList("AB:CD:EF", "1:2:3"));
 		r2.setFormatFields(Arrays.asList("GH:IJ:KL", "4:5:6"));
 		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
-		assertEquals("AB:CD:EF:GH:IJ:KL\t1:2:3:4:5:6", mergedR.getFormatFieldStrings());
+		assertEquals("AB:CD:EF:GH:IJ:KL\t1:2:3:.:.:.\t.:.:.:4:5:6", mergedR.getFormatFieldStrings());
 		
 		r1.setFormatFields(Arrays.asList("AB:CD:EF", "1:2:3"));
 		r2.setFormatFields(Arrays.asList("EF:GH:IJ:KL", "3:4:5:6"));
 		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
-		assertEquals("AB:CD:EF:EF1:GH:IJ:KL\t1:2:3:3:4:5:6", mergedR.getFormatFieldStrings());
+		assertEquals("AB:CD:EF:EF1:GH:IJ:KL\t1:2:3:.:.:.:.\t.:.:.:3:4:5:6", mergedR.getFormatFieldStrings());
 		
 		r1.setFormatFields(Arrays.asList("AB:CD:EF", "1:2:3"));
 		r2.setFormatFields(Arrays.asList("EF:GH:IJ:KL", "HEllo:4:5:6"));
 		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
-		assertEquals("AB:CD:EF:EF1:GH:IJ:KL\t1:2:3:HEllo:4:5:6", mergedR.getFormatFieldStrings());
+		assertEquals("AB:CD:EF:EF1:GH:IJ:KL\t1:2:3:.:.:.:.\t.:.:.:HEllo:4:5:6", mergedR.getFormatFieldStrings());
 		
 		r1.setFormatFields(Arrays.asList("AB:CD:EF:GH", "1:2:3:X"));
 		r2.setFormatFields(Arrays.asList("EF:GH:IJ:KL", "3:4:5:6"));
 		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
-		assertEquals("AB:CD:EF:GH:EF1:IJ:KL\t1:2:3:X" + Constants.VCF_MERGE_DELIM + "4:3:5:6", mergedR.getFormatFieldStrings());
+		assertEquals("AB:CD:EF:GH:EF1:IJ:KL\t1:2:3:X:.:.:.\t.:.:.:4:3:5:6", mergedR.getFormatFieldStrings());
 		
 	}
 	
 	
 	@Test
 	public void whatsHappeningToNNSFormatEntry() {
-		VcfRecord v1 = new VcfRecord(new String[] {"chr1","4985568",".",	"A",	",C",	".",	"PASS",	"FLANK=ACGTTCCTGCA","GT:GD:AC:MR:NNS	0/1:A/C:A8[33.75],11[38.82],C3[42],5[40]:8:8","1/1:C/C:A1[37],0[0],C23[38.96],19[41.21]:42:38"});
+		VcfRecord v1 = new VcfRecord(new String[] {"chr1","4985568",".",	"A",	",C",	".",	"PASS",	"FLANK=ACGTTCCTGCA","GT:GD:AC:MR:NNS	","0/1:A/C:A8[33.75],11[38.82],C3[42],5[40]:8:8","1/1:C/C:A1[37],0[0],C23[38.96],19[41.21]:42:38"});
 		VcfRecord v2 = new VcfRecord(new String[] {"chr1","4985568","rs10753395","A","C","245.77","PASS","AC=1;AF=0.500;AN=2;BaseQRankSum=0.972;ClippingRankSum=1.139;DB;DP=26;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=60.00;MQ0=0;MQRankSum=-0.472;QD=9.45;ReadPosRankSum=-0.194;SOR=0.693","GT:AD:DP:GQ:PL:GD:AC:MR:NNS","0/1:18,8:26:99:274,0,686:A/C:A9[33.56],11[38.82],C3[42],5[40],G0[0],1[22],T1[11],0[0]:8:8","1/1:1,44:45:94:1826,94,0:C/C:A1[37],0[0],C24[38.88],23[40.26]:47:42"});
 		VcfRecord mr = MergeUtils.mergeRecords(null,  v1, v2);
 	}
 	
 	@Test
 	public void multipleSomatics() {
-		VcfRecord v1 = new VcfRecord(new String[] {"chr1","4985568",".",	"A",	",C",	".",	"PASS",	"SOMATIC;FLANK=ACGTTCCTGCA","GT:GD:AC:MR:NNS	0/1:A/C:A8[33.75],11[38.82],C3[42],5[40]:8:8","1/1:C/C:A1[37],0[0],C23[38.96],19[41.21]:42:38"});
+		VcfRecord v1 = new VcfRecord(new String[] {"chr1","4985568",".",	"A",	",C",	".",	"PASS",	"SOMATIC;FLANK=ACGTTCCTGCA","GT:GD:AC:MR:NNS","0/1:A/C:A8[33.75],11[38.82],C3[42],5[40]:8:8","1/1:C/C:A1[37],0[0],C23[38.96],19[41.21]:42:38"});
 		VcfRecord v2 = new VcfRecord(new String[] {"chr1","4985568","rs10753395","A","C","245.77","PASS","AC=1;AF=0.500;AN=2;BaseQRankSum=0.972;ClippingRankSum=1.139;DB;DP=26;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=60.00;MQ0=0;MQRankSum=-0.472;QD=9.45;ReadPosRankSum=-0.194;SOR=0.693","GT:AD:DP:GQ:PL:GD:AC:MR:NNS","0/1:18,8:26:99:274,0,686:A/C:A9[33.56],11[38.82],C3[42],5[40],G0[0],1[22],T1[11],0[0]:8:8","1/1:1,44:45:94:1826,94,0:C/C:A1[37],0[0],C24[38.88],23[40.26]:47:42"});
 		VcfRecord mr = MergeUtils.mergeRecords(null,  v1, v2);
-		assertEquals("SOMATIC_1;FLANK=ACGTTCCTGCA;AC=1;AF=0.500;AN=2;BaseQRankSum=0.972;ClippingRankSum=1.139;DB;DP=26;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=60.00;MQ0=0;MQRankSum=-0.472;QD=9.45;ReadPosRankSum=-0.194;SOR=0.693", mr.getInfo());
+		assertEquals("FLANK=ACGTTCCTGCA;AC=1;AF=0.500;AN=2;BaseQRankSum=0.972;ClippingRankSum=1.139;DB;DP=26;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=60.00;MQ0=0;MQRankSum=-0.472;QD=9.45;ReadPosRankSum=-0.194;SOR=0.693", mr.getInfo());
+		/*
+		 * should have SOMATIC in format INF field
+		 */
+		List<String> ff = mr.getFormatFields();
+		assertEquals(5, ff.size());
+		assertEquals(SnpUtils.SOMATIC, new VcfFormatFieldRecord(ff.get(0), ff.get(1)).getField("INF"));
+		assertEquals(SnpUtils.SOMATIC, new VcfFormatFieldRecord(ff.get(0), ff.get(2)).getField("INF"));
+		assertEquals(Constants.MISSING_DATA_STRING, new VcfFormatFieldRecord(ff.get(0), ff.get(3)).getField("INF"));
+		assertEquals(Constants.MISSING_DATA_STRING, new VcfFormatFieldRecord(ff.get(0), ff.get(4)).getField("INF"));
+//		assertEquals("SOMATIC_1;FLANK=ACGTTCCTGCA;AC=1;AF=0.500;AN=2;BaseQRankSum=0.972;ClippingRankSum=1.139;DB;DP=26;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=60.00;MQ0=0;MQRankSum=-0.472;QD=9.45;ReadPosRankSum=-0.194;SOR=0.693", mr.getInfo());
 		
-		v1 = new VcfRecord(new String[] {"chr1","4985568",".",	"A",	",C",	".",	"PASS",	"SOMATIC;FLANK=ACGTTCCTGCA","GT:GD:AC:MR:NNS	0/1:A/C:A8[33.75],11[38.82],C3[42],5[40]:8:8","1/1:C/C:A1[37],0[0],C23[38.96],19[41.21]:42:38"});
+		v1 = new VcfRecord(new String[] {"chr1","4985568",".",	"A",	",C",	".",	"PASS",	"SOMATIC;FLANK=ACGTTCCTGCA","GT:GD:AC:MR:NNS","0/1:A/C:A8[33.75],11[38.82],C3[42],5[40]:8:8","1/1:C/C:A1[37],0[0],C23[38.96],19[41.21]:42:38"});
 		v2 = new VcfRecord(new String[] {"chr1","4985568","rs10753395","A","C","245.77","PASS","SOMATIC;FLANK=ACGTTCCTGCA","GT:AD:DP:GQ:PL:GD:AC:MR:NNS","0/1:18,8:26:99:274,0,686:A/C:A9[33.56],11[38.82],C3[42],5[40],G0[0],1[22],T1[11],0[0]:8:8","1/1:1,44:45:94:1826,94,0:C/C:A1[37],0[0],C24[38.88],23[40.26]:47:42"});
 		mr = MergeUtils.mergeRecords(null,  v1, v2);
-		assertEquals("SOMATIC_1;FLANK=ACGTTCCTGCA;SOMATIC_2", mr.getInfo());
+		assertEquals("FLANK=ACGTTCCTGCA", mr.getInfo());
+		ff = mr.getFormatFields();
+		assertEquals(5, ff.size());
+		assertEquals(SnpUtils.SOMATIC, new VcfFormatFieldRecord(ff.get(0), ff.get(1)).getField("INF"));
+		assertEquals(SnpUtils.SOMATIC, new VcfFormatFieldRecord(ff.get(0), ff.get(2)).getField("INF"));
+		assertEquals(SnpUtils.SOMATIC, new VcfFormatFieldRecord(ff.get(0), ff.get(3)).getField("INF"));
+		assertEquals(SnpUtils.SOMATIC, new VcfFormatFieldRecord(ff.get(0), ff.get(4)).getField("INF"));
+//		assertEquals("SOMATIC_1;FLANK=ACGTTCCTGCA;SOMATIC_2", mr.getInfo());
 		
 	}
 	
@@ -515,12 +543,17 @@ public class MergeUtilsTest {
 			.forEach(s -> assertEquals(true, mr.getInfo().contains(s)));
 		
 		List<String> ff = mr.getFormatFields();
-		assertEquals(3, ff.size());
-		assertEquals("GT:GD:AC:MR:NNS:AD:DP:GQ:PL", ff.get(0));
-		assertEquals("0/1"+VCF_MERGE_DELIM+"0/1:A/C"+VCF_MERGE_DELIM+"A/C:A38[31.42],32[25],C11[27.64],5[36.6]"+VCF_MERGE_DELIM+"A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:16"+VCF_MERGE_DELIM+"51:16"+VCF_MERGE_DELIM+"44:2,2:4:69:72,0,69", ff.get(1));
-//		0/1:2,2:4:69:72,0,69:A/C:A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:51:44
-		assertEquals("0/1"+VCF_MERGE_DELIM+".:A/C"+VCF_MERGE_DELIM+".:A75[31.96],57[29.32],C12[35.25],6[38]"+VCF_MERGE_DELIM+"A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:18"+VCF_MERGE_DELIM+"162:16"+VCF_MERGE_DELIM+"101:.:.:.:.", ff.get(2));
-		//.:.:.:.:.:.:A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:162:101
+		assertEquals(5, ff.size());
+		assertEquals("GT:GD:AC:MR:NNS:INF:AD:DP:GQ:PL", ff.get(0));
+		assertEquals("0/1:A/C:A38[31.42],32[25],C11[27.64],5[36.6]:16:16:.:.:.:.:.", ff.get(1));
+		assertEquals("0/1:A/C:A75[31.96],57[29.32],C12[35.25],6[38]:18:16:.:.:.:.:.", ff.get(2));
+//		GT:AD:DP:GQ:PL:GD:AC:MR:NNS
+		assertEquals("0/1:A/C:A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:51:44:.:2,2:4:69:72,0,69", ff.get(3));
+		assertEquals(".:.:A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:162:101:.:.:.:.:.", ff.get(4));
+//		assertEquals("0/1"+VCF_MERGE_DELIM+"0/1:A/C"+VCF_MERGE_DELIM+"A/C:A38[31.42],32[25],C11[27.64],5[36.6]"+VCF_MERGE_DELIM+"A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:16"+VCF_MERGE_DELIM+"51:16"+VCF_MERGE_DELIM+"44:2,2:4:69:72,0,69", ff.get(1));
+////		0/1:2,2:4:69:72,0,69:A/C:A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:51:44
+//		assertEquals("0/1"+VCF_MERGE_DELIM+".:A/C"+VCF_MERGE_DELIM+".:A75[31.96],57[29.32],C12[35.25],6[38]"+VCF_MERGE_DELIM+"A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:18"+VCF_MERGE_DELIM+"162:16"+VCF_MERGE_DELIM+"101:.:.:.:.", ff.get(2));
+//		//.:.:.:.:.:.:A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:162:101
 	}
 	
 	// TODO should we do anything special when dealing with FILTER? PASS value for example? 

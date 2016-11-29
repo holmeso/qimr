@@ -94,7 +94,7 @@ public class MergeSameSamples {
 	
 	private void writeOutput() throws IOException {
 		List<VcfRecord> recs = new ArrayList<>(mergedRecords.values());
-		Collections.sort(recs);
+		recs.sort(null);
 		
 		logger.info("writing output");
 		try (VCFFileWriter writer = new VCFFileWriter(new File(outputFileName))) {

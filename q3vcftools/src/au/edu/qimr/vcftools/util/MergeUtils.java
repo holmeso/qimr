@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.qcmg.common.log.QLogger;
 import org.qcmg.common.log.QLoggerFactory;
+import org.qcmg.common.string.StringUtils;
 import org.qcmg.common.util.Constants;
 import org.qcmg.common.util.SnpUtils;
 import org.qcmg.common.vcf.VcfRecord;
@@ -27,6 +28,7 @@ import au.edu.qimr.vcftools.Rule;
 public class MergeUtils {
 	
 	private static final String GENOTYPE = "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">";
+	public static final String FORMAT = "FORMAT";
 	private static final QLogger logger = QLoggerFactory.getLogger(MergeUtils.class);
 
 	public static List<String> mergeOtherHeaderRecords(List<Record> ...  loloRecs) {
@@ -102,9 +104,37 @@ public class MergeUtils {
 			if ( ! infoPair.getLeft().contains(VcfHeaderUtils.INFO_SOMATIC)) {
 				mergedHeader.addInfoLine(VcfHeaderUtils.INFO_SOMATIC, "0", "Flag", VcfHeaderUtils.INFO_SOMATIC_DESC);
 			}
-			mergedHeader.addInfoLine(VcfHeaderUtils.INFO_SOMATIC + "_n", "0", "Flag", "Indicates that the nth input file considered this record to be somatic. Multiple values are allowed which indicate that more than 1 input file consider this record to be somatic");
-				
-			mergedHeader.parseHeaderLine(headers[0].getChrom().toString());
+//			for (int i = 1 ; i <= headers.length ; i++) {
+//				mergedHeader.addInfoLine(VcfHeaderUtils.INFO_SOMATIC + "_" + i, "0", "Flag", "Indicates that the nth input file considered this record to be somatic. Multiple values are allowed which indicate that more than 1 input file consider this record to be somatic");
+//			}
+			/*
+			 * Build up new CHROM line with the samples updated with the input number appended to them
+			 */
+			StringBuilder sb = new StringBuilder();
+			String [] firstChrLine = headers[0].getChrom().toString().split(Constants.TAB_STRING);
+			/*
+			 * add the first 9 columns to sb
+			 */
+			for (int i = 0 ; i < 9 ; i++) {
+				StringUtils.updateStringBuilder(sb, firstChrLine[i], Constants.TAB);
+			}
+			for (int i = 0 ; i < headers.length ; i++) {
+				String [] array = headers[i].getChrom().toString().split(Constants.TAB_STRING);
+				/*
+				 * add every column after FORMAT to sb, appending the numeric identifier
+				 */
+				boolean go = false;
+				for (String s : array) {
+					if (go) {
+						StringUtils.updateStringBuilder(sb, s + "_" + (i+1), Constants.TAB);
+					}
+					if (FORMAT.equals(s)) {
+						go = true;
+					}
+				}
+			}
+			mergedHeader.parseHeaderLine(sb.toString());
+//			mergedHeader.parseHeaderLine(headers[0].getChrom().toString());
 			
 			Rule r = new Rule(headers.length);
 			for (int i = 0 ; i < headers.length ; i++) {
@@ -209,10 +239,19 @@ public class MergeUtils {
 			
 			mergedRecord.appendId(r.getId());
 			
-			if (r.getInfo().contains(SnpUtils.SOMATIC)) {
-				// replace with suffix
-				r.setInfo(r.getInfo().replace(SnpUtils.SOMATIC, SnpUtils.SOMATIC + suffix));
+			/*
+			 * remove SOMATIC from info field, and add to format INF subfield
+			 */
+			List<String> formatInfo = new ArrayList<>(3);
+			formatInfo.add("INF");
+			boolean isSomatic = VcfUtils.isRecordSomatic(r);
+			formatInfo.add(isSomatic ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
+			formatInfo.add(isSomatic ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
+			VcfUtils.addFormatFieldsToVcf(r,formatInfo, false);
+			if (isSomatic) {
+				r.getInfoRecord().removeField(SnpUtils.SOMATIC);
 			}
+			
 			
 			if (null != thisRecordsRules && ! thisRecordsRules.isEmpty()) {
 				
@@ -240,7 +279,12 @@ public class MergeUtils {
 			List<String> rFF =  r.getFormatFields() ;
 			if (null != rFF &&  ! rFF.isEmpty()) {
 				if (null == thisRecordsRules) {
-					VcfUtils.addFormatFieldsToVcf(mergedRecord, r.getFormatFields(), true);
+					if (i == 0) {
+						VcfUtils.addFormatFieldsToVcf(mergedRecord, r.getFormatFields(), true);
+					} else {
+						VcfUtils.addAdditionalSamplesToFormatField(mergedRecord, r.getFormatFields());
+					}
+//					VcfUtils.addFormatFieldsToVcf(mergedRecord, r.getFormatFields(), true);
 				} else {
 					/*
 					 * create new header string, substituting in the new values should any be present in the rules map
@@ -257,10 +301,16 @@ public class MergeUtils {
 					if ( ! newHeader.toString().equals(rFF.get(0))) {
 						rFF.set(0, newHeader.toString());
 					}
-					VcfUtils.addFormatFieldsToVcf(mergedRecord, rFF, true);
+					if (i == 0) {
+						VcfUtils.addFormatFieldsToVcf(mergedRecord,rFF, true);
+					} else {
+						VcfUtils.addAdditionalSamplesToFormatField(mergedRecord, rFF);
+					}
+//					VcfUtils.addFormatFieldsToVcf(mergedRecord, rFF, true);
 					
 				}
 			}
+			
 			
 			/*
 			 * FILTER
