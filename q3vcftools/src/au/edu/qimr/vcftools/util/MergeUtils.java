@@ -242,11 +242,12 @@ public class MergeUtils {
 			/*
 			 * remove SOMATIC from info field, and add to format INF subfield
 			 */
+			List<String> rFF =  r.getFormatFields() ;
 			List<String> formatInfo = new ArrayList<>(3);
 			formatInfo.add("INF");
 			boolean isSomatic = VcfUtils.isRecordSomatic(r);
-			formatInfo.add(isSomatic ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
-			formatInfo.add(isSomatic ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
+			formatInfo.add(isSomatic && ! rFF.get(1).startsWith(Constants.MISSING_DATA_STRING) ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
+			formatInfo.add(isSomatic && ! rFF.get(2).startsWith(Constants.MISSING_DATA_STRING)? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
 			VcfUtils.addFormatFieldsToVcf(r,formatInfo, false);
 			if (isSomatic) {
 				r.getInfoRecord().removeField(SnpUtils.SOMATIC);
@@ -276,7 +277,6 @@ public class MergeUtils {
 			/*
 			 * FORMAT
 			 */
-			List<String> rFF =  r.getFormatFields() ;
 			if (null != rFF &&  ! rFF.isEmpty()) {
 				if (null == thisRecordsRules) {
 					if (i == 0) {
@@ -315,7 +315,7 @@ public class MergeUtils {
 			/*
 			 * FILTER
 			 */
-			if (null != r.getFilter()) {
+			if ( ! StringUtils.isNullOrEmptyOrMissingData(r.getFilter())) {
 				for (String s : r.getFilter().split(Constants.SEMI_COLON_STRING)) {
 					String replacementKey = (null == thisRecordsRules) ? null : thisRecordsRules.get(s);
 					if (null == replacementKey) {

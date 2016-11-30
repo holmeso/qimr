@@ -83,6 +83,13 @@ public class MergeUtilsTest {
 	}
 	
 	@Test
+	public void headerMergeRealLife() {
+		VcfHeader qsnpHeader = new VcfHeader(getheader1());
+		VcfHeader gatkHeader = new VcfHeader(getheader2());
+		assertEquals(true, MergeUtils.canMergeBePerformed(qsnpHeader, gatkHeader));
+	}
+	
+	@Test
 	public void getMergedHeadersAndRules() {
 		VcfHeader qsnpHeader = new VcfHeader(getQsnpVcfHeader());
 		VcfHeader gatkHeader = new VcfHeader(getQsnpVcfHeader());
@@ -455,6 +462,20 @@ public class MergeUtilsTest {
 	}
 	
 	@Test
+	public void mergeRecordFormatRealLife() {
+		VcfRecord r1 = new VcfRecord.Builder("1", 8909078, "T").allele("C").id("rs4908785").build();
+		VcfRecord r2 = new VcfRecord.Builder("1", 8909078, "T").allele("C").id("rs4908785").build();
+		VcfRecord mergedR = new VcfRecord.Builder("1", 8909078, "T").allele("C").id("rs4908785").build();
+		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
+		r1.appendInfo(SnpUtils.SOMATIC);
+		r1.setFormatFields(Arrays.asList("GT:DP:FT:MR:NNS:OABS", ".:0:SAN3:.:.:.", "1/1:3:COVT:3:3:C1[33]2[35]"));
+		r2.setFormatFields(Arrays.asList("GT:AD:DP:GQ:PL:FT:MR:NNS:OABS:INF", ".:.:.:.:.:.:.:.:.:."));
+		mergedR = MergeUtils.mergeRecords(null, r1, r2);
+		assertEquals("GT:DP:FT:MR:NNS:OABS:INF:AD:GQ:PL\t.:0:SAN3:.:.:.:.:.:.:.\t1/1:3:COVT:3:3:C1[33]2[35]:SOMATIC:.:.:.\t.:.:.:.:.:.:.:.:.:.", mergedR.getFormatFieldStrings());
+		
+	}
+	
+	@Test
 	public void mergeRecordFormatWithRules() {
 		Map<Integer, Map<String, String>> idRules = new HashMap<>();
 		Map<String, String> rulesForThisFile = new HashMap<>();
@@ -709,6 +730,31 @@ public class MergeUtilsTest {
 "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype: 0/0 homozygous reference; 0/1 heterozygous for alternate allele; 1/1 homozygous for alternate allele\">",
 "##FORMAT=<ID=GD,Number=1,Type=String,Description=\"Genotype details: specific alleles (A,G,T or C)\">",
 "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	http://purl.org/net/grafli/collectedsample#e734bdbc-2e43-44e4-ad32-11719865f9d6	http://purl.org/net/grafli/collectedsample#49c59f9e-fe9d-4813-a4c6-3198ec003859");
+	}
+	
+	public List<String> getheader1() {
+		return Arrays.asList("##fileformat=VCFv4.2",
+"##fileDate=20161129",
+"##qUUID=6bb0afb6-e924-498b-a4da-ba99f01a0753",
+"##qSource=qSNP v2.1.0 (1427)",
+"##qDonorId=http://purl.org/net/grafli/donor#ed7087d7-b155-4a77-b1fc-36068ba868db",
+"##qControlSample=023a320c-3e86-4e5e-b006-08ce47ba29de",
+"##qTestSample=62535a53-a428-449b-bfb7-016b1e508102",
+"##qControlBam=/mnt/lustre/working/genomeinfo/sample/0/2/023a320c-3e86-4e5e-b006-08ce47ba29de/aligned_read_group_set/bfb11d61-bbf2-4d49-8be5-01f129750cb8.bam",
+"##qControlBamUUID=bfb11d61-bbf2-4d49-8be5-01f129750cb8",
+"##qTestBam=/mnt/lustre/working/genomeinfo/sample/6/2/62535a53-a428-449b-bfb7-016b1e508102/aligned_read_group_set/4473aebc-7cbc-43f8-8bbc-299265214cf3.bam",
+"##qTestBamUUID=4473aebc-7cbc-43f8-8bbc-299265214cf3",
+"##qAnalysisId=870dc04b-c709-486d-b202-b05a1a4f5756",
+"##qControlVcf=/mnt/lustre/working/genomeinfo/analysis/8/1/8184d3e4-b51a-4a81-80b1-806dccac91a0/8184d3e4-b51a-4a81-80b1-806dccac91a0.vcf",
+"##qControlVcfUUID=null",
+"##qControlVcfGATKVersion=3.3-0-g37228af",
+"##qTestVcf=/mnt/lustre/working/genomeinfo/analysis/1/a/1af44b6a-1448-43da-83a4-605418acd9b6/1af44b6a-1448-43da-83a4-605418acd9b6.vcf",
+"##qTestVcfUUID=null",
+"##qTestVcfGATKVersion=3.3-0-g37228af",
+		"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tbfb11d61-bbf2-4d49-8be5-01f129750cb8\t4473aebc-7cbc-43f8-8bbc-299265214cf3");
+	}
+	public List<String> getheader2() {
+		return Arrays.asList("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tbfb11d61-bbf2-4d49-8be5-01f129750cb8\t4473aebc-7cbc-43f8-8bbc-299265214cf3");
 	}
 	
 	public List<String> getUpdatedQsnpVCfHeader() {
