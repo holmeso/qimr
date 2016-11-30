@@ -96,6 +96,7 @@ public class MergeUtils {
 			}
 			
 			mergedHeader.addInfoLine(Constants.VCF_MERGE_INFO, ".","Integer", VcfHeaderUtils.DESCRITPION_MERGE_IN);
+			mergedHeader.addFormatLine(VcfHeaderUtils.FORMAT_INFO, ".","String", VcfHeaderUtils.FORMAT_INFO_DESCRIPTION);
 			//		 "Indicates which INput file this vcf record came from. Multiple values are allowed which indicate that the record has been merged from more than 1 input file");
 			
 			/*
@@ -244,7 +245,7 @@ public class MergeUtils {
 			 */
 			List<String> rFF =  r.getFormatFields() ;
 			List<String> formatInfo = new ArrayList<>(3);
-			formatInfo.add("INF");
+			formatInfo.add(VcfHeaderUtils.FORMAT_INFO);
 			boolean isSomatic = VcfUtils.isRecordSomatic(r);
 			formatInfo.add(isSomatic && ! rFF.get(1).startsWith(Constants.MISSING_DATA_STRING) ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
 			formatInfo.add(isSomatic && ! rFF.get(2).startsWith(Constants.MISSING_DATA_STRING)? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
