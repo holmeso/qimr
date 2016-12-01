@@ -249,7 +249,7 @@ public class MergeUtils {
 			boolean isSomatic = VcfUtils.isRecordSomatic(r);
 			formatInfo.add(isSomatic && ! rFF.get(1).startsWith(Constants.MISSING_DATA_STRING) ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
 			formatInfo.add(isSomatic && ! rFF.get(2).startsWith(Constants.MISSING_DATA_STRING)? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
-			VcfUtils.addFormatFieldsToVcf(r,formatInfo, false);
+			VcfUtils.addFormatFieldsToVcf(r,formatInfo);
 			if (isSomatic) {
 				r.getInfoRecord().removeField(SnpUtils.SOMATIC);
 			}
@@ -281,7 +281,7 @@ public class MergeUtils {
 			if (null != rFF &&  ! rFF.isEmpty()) {
 				if (null == thisRecordsRules) {
 					if (i == 0) {
-						VcfUtils.addFormatFieldsToVcf(mergedRecord, r.getFormatFields(), true);
+						VcfUtils.addFormatFieldsToVcf(mergedRecord, r.getFormatFields());
 					} else {
 						VcfUtils.addAdditionalSamplesToFormatField(mergedRecord, r.getFormatFields());
 					}
@@ -303,7 +303,7 @@ public class MergeUtils {
 						rFF.set(0, newHeader.toString());
 					}
 					if (i == 0) {
-						VcfUtils.addFormatFieldsToVcf(mergedRecord,rFF, true);
+						VcfUtils.addFormatFieldsToVcf(mergedRecord,rFF);
 					} else {
 						VcfUtils.addAdditionalSamplesToFormatField(mergedRecord, rFF);
 					}

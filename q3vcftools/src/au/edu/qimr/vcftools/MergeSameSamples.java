@@ -118,8 +118,8 @@ public class MergeSameSamples {
 	
 	private void writeOutput() throws IOException {
 		List<VcfRecord> recs = new ArrayList<>(mergedRecords);
-		recs.addAll(input1.values());
-		recs.addAll(input2);
+//		recs.addAll(input1.values());
+//		recs.addAll(input2);
 		recs.sort(null);
 		
 		logger.info("writing output [" + recs.size() + " records]");
@@ -170,9 +170,13 @@ public class MergeSameSamples {
 					VcfRecord mr = MergeUtils.mergeRecords(null, input1Rec, rec);
 					mergedRecords.add(mr);
 				} else {
-					input2.add(rec);
+//					input2.add(rec);
+					mergedRecords.add(MergeUtils.mergeRecords(null, rec));
 				}
 			}
+		}
+		for (VcfRecord rec : input1.values()) {
+			mergedRecords.add(MergeUtils.mergeRecords(null, rec));
 		}
 		logger.info("input2 has " + i + " entries");
 	}
