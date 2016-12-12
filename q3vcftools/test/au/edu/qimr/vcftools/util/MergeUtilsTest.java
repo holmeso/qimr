@@ -20,6 +20,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.qcmg.common.meta.QExec;
+import org.qcmg.common.model.ChrPointPosition;
 import org.qcmg.common.util.Constants;
 import org.qcmg.common.util.SnpUtils;
 import org.qcmg.common.vcf.VcfFormatFieldRecord;
@@ -110,6 +111,42 @@ public class MergeUtilsTest {
 		assertEquals("http://purl.org/net/grafli/collectedsample#e734bdbc-2e43-44e4-ad32-11719865f9d6_2", array[11]);
 		assertEquals("http://purl.org/net/grafli/collectedsample#49c59f9e-fe9d-4813-a4c6-3198ec003859_1", array[10]);
 		assertEquals("http://purl.org/net/grafli/collectedsample#49c59f9e-fe9d-4813-a4c6-3198ec003859_2", array[12]);
+	}
+	
+//	@Test
+//	public void singleMerge() {
+//		VcfRecord v = new VcfRecord(new String[]{"chr1","18346092","rs17432613","C","T",".",".","AF=1.00;DP=2;FS=0.000;MLEAC=2;MLEAF=1.00;MQ=60.00;MQ0=0;QD=28.37;SOR=0.693;IN=2;DB;VLD;VAF=0.2107","GT:AD:DP:FT:GQ:INF:MR:NNS:OABS:PL",".:.:.:SAN3:.:.:.:.:C1[35]1[36]:.","1/1:0,2:2:SAT3:6:SOMATIC;GERM=28,185:2:2:T1[37]1[37]:84,6,0"});
+//		
+//		/*
+//		 * start with this as first rec in merge
+//		 */
+//		VcfRecord mr = MergeUtils.mergeRecords(null, v);
+//		List<String> ff = mr.getFormatFields();
+//		assertEquals(5, ff.size());
+////		Map<String, String[]> ffm = VcfUtils.getFormatFieldsAsMap(mr.getFormatFieldStrings());
+//	}
+	
+	@Test
+	public void mergeWith2Alts() {
+		VcfRecord v1 = new VcfRecord(new String[]{"chr20","29633916",".","G","A",".",".","FLANK=AAGCCAACAGA","GT:DP:FT:MR:NNS:OABS","0/1:28:5BP=3:10:9:A9[37.78]1[35];G15[38.13]1[35];T2[38]0[0]","0/1:19:.:9:9:A8[36]1[29];G9[37.33]1[34]"});
+		VcfRecord v2 = new VcfRecord(new String[]{"chr20","29633916",".","G","T,A",".",".","SOMATIC","GT:AD:DP:GQ:PL:FT:MR:NNS:OABS","0/1:19,12:31:99:437,0,690,0,0,0:SBIASALT;MIN;MIN:2:2:A9[37.78]1[35];G15[38.13]1[35];T2[38]0[0]","0/2:9,10:19:99:0,0,0,330,0,322:.:9:9:A8[36]1[29];G9[37.33]1[34]"});
+		VcfRecord mr = MergeUtils.mergeRecords(null, v2, v1);
+		List<String> ff = mr.getFormatFields();
+		assertEquals(5, ff.size());
+		assertEquals("T,A", mr.getAlt());
+		
+	}
+	
+	@Test
+	public void getGT() {
+		assertEquals("0/0", MergeUtils.getGT(null, null, "0/0"));
+		assertEquals("0/0", MergeUtils.getGT("A,B", "A,B", "0/0"));
+		assertEquals("0/0", MergeUtils.getGT("X", "X", "0/0"));
+		assertEquals("0/0", MergeUtils.getGT("12345", "12345", "0/0"));
+		assertEquals("0/2", MergeUtils.getGT("A,B,C", "B", "0/1"));
+		assertEquals("1/2", MergeUtils.getGT("A,B,C", "A,B", "1/2"));
+		assertEquals("1/3", MergeUtils.getGT("A,B,C", "A,C", "1/2"));
+		assertEquals("2/3", MergeUtils.getGT("A,B,C", "B,C", "1/2"));
 	}
 	
 	
@@ -341,20 +378,20 @@ public class MergeUtilsTest {
 	
 	@Test
 	public void mergeRecordIdOnly() {
-		VcfRecord r1 = VcfUtils.createVcfRecord("1", 0);			 
-		VcfRecord r2 = VcfUtils.createVcfRecord("1", 0);				 
-		VcfRecord mergedR = VcfUtils.createVcfRecord("1", 0);			 
+		VcfRecord r1 = VcfUtils.createVcfRecord(new ChrPointPosition("1", 0), ".", ".",".");			 
+		VcfRecord r2 = VcfUtils.createVcfRecord(new ChrPointPosition("1", 0), ".", ".",".");				 
+		VcfRecord mergedR = VcfUtils.createVcfRecord(new ChrPointPosition("1", 0), ".", ".",".");			 
 				
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 		
-		r1 = new VcfRecord.Builder("1", 100, ".").build();
-		r2 = new VcfRecord.Builder("1", 100, ".").build();
-		mergedR = new VcfRecord.Builder("1", 100, ".").build();
+		r1 = new VcfRecord.Builder("1", 100, ".").allele(".").build();
+		r2 = new VcfRecord.Builder("1", 100, ".").allele(".").build();
+		mergedR = new VcfRecord.Builder("1", 100, ".").allele(".").build();
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 		
-		r1 =new VcfRecord.Builder("1", 100, "ABC").build();
-		r2 = new VcfRecord.Builder("1", 100, "ABC").build();
-		mergedR = new VcfRecord.Builder("1", 100, "ABC").build();
+		r1 =new VcfRecord.Builder("1", 100, "ABC").allele(".").build();
+		r2 = new VcfRecord.Builder("1", 100, "ABC").allele(".").build();
+		mergedR = new VcfRecord.Builder("1", 100, "ABC").allele(".").build();
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 		
 		r1 = new VcfRecord( new String[] {"1", "100", null, "ABC", "DEF"});

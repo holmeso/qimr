@@ -14,6 +14,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.qcmg.common.log.QLogger;
 import org.qcmg.common.log.QLoggerFactory;
 import org.qcmg.common.meta.QExec;
+import org.qcmg.common.model.ChrPosition;
 import org.qcmg.common.util.Constants;
 import org.qcmg.common.util.FileUtils;
 import org.qcmg.common.util.LoadReferencedClasses;
@@ -37,7 +38,7 @@ public class MergeSameSamples {
 	private String logFile;
 	private int exitStatus;
 	
-	private final Map<VcfRecord, VcfRecord> input1 = new HashMap<>(1024 * 1024 * 8, 0.95f);
+	private final Map<ChrPosition, VcfRecord> input1 = new HashMap<>(1024 * 1024 * 8, 0.95f);
 	private final List<VcfRecord> input2 = new ArrayList<>(1024 * 1024);
 	private final List< VcfRecord> mergedRecords = new ArrayList<>(1024 * 1024);
 	
@@ -149,7 +150,7 @@ public class MergeSameSamples {
 				 * Add in IN=1 to info field
 				 */
 				rec.appendInfo(Constants.VCF_MERGE_INFO + "=1");
-				input1.put(rec, rec);
+				input1.put(rec.getChrPosition(), rec);
 			}
 		}
 		logger.info("input1 has " + i + " entries");
@@ -161,21 +162,33 @@ public class MergeSameSamples {
 //					break;
 				}
 				/*
-				 * Add in IN=1 to info field
+				 * Add in IN=2 to info field
 				 */
 				rec.appendInfo(Constants.VCF_MERGE_INFO + "=2");
 				
-				VcfRecord input1Rec = input1.remove(rec);
+				VcfRecord input1Rec = input1.remove(rec.getChrPosition());
 				if (null != input1Rec) {
 					VcfRecord mr = MergeUtils.mergeRecords(null, input1Rec, rec);
 					mergedRecords.add(mr);
 				} else {
 //					input2.add(rec);
+					/*
+					 * add missing format columns to rec
+					 */
+					VcfUtils.addMissingDataToFormatFields(rec, 1);
+					VcfUtils.addMissingDataToFormatFields(rec, 1);
 					mergedRecords.add(MergeUtils.mergeRecords(null, rec));
 				}
 			}
 		}
 		for (VcfRecord rec : input1.values()) {
+			/*
+			 * add missing sample columns at end
+			 */
+//			List<String> ff = rec.getFormatFields();
+//			VcfUtils.addAdditionalSamplesToFormatField(rec, Arrays.asList(ff.get(0), Constants.MISSING_DATA_STRING, Constants.MISSING_DATA_STRING));
+			VcfUtils.addMissingDataToFormatFields(rec, 3);
+			VcfUtils.addMissingDataToFormatFields(rec, 3);
 			mergedRecords.add(MergeUtils.mergeRecords(null, rec));
 		}
 		logger.info("input2 has " + i + " entries");

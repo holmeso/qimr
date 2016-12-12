@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -211,6 +214,52 @@ public class MergeUtils {
 		return  Pair.of(mergedRecs, replacementIds);
 	}
 	
+	public static Optional<String> getCombinedAlt(VcfRecord ... recs) {
+		return Optional.ofNullable ( 
+				Arrays.stream(
+					Arrays.stream(recs)
+					.map(VcfRecord::getAlt)
+					.collect(Collectors.joining(Constants.COMMA_STRING))
+				.split(Constants.COMMA_STRING))
+				.distinct()
+				.collect(Collectors.joining(Constants.COMMA_STRING)));
+	}
+	
+	public static String getGT(String combinedAlts, String myAlts, String currentGT) {
+		if ("0/0".equals(currentGT)) {
+			return currentGT;
+		}
+		if (combinedAlts.equals(myAlts)) {
+			return currentGT;
+		}
+		int index = currentGT.indexOf(Constants.SLASH_STRING);
+		int gt1 = Integer.parseInt(currentGT.substring(0, index));
+		int gt2 = Integer.parseInt(currentGT.substring(index + 1));
+		
+		String [] myAltsArray = myAlts.split(Constants.COMMA_STRING);
+		String [] combinedAltsArray = combinedAlts.split(Constants.COMMA_STRING);
+		
+		int newGT1 = getNewPosition(combinedAltsArray, myAltsArray, gt1) ;
+		int newGT2 = getNewPosition(combinedAltsArray, myAltsArray, gt2) ;
+		
+		return newGT1 + Constants.SLASH_STRING + newGT2;
+	}
+	
+	public static int getNewPosition(String[] newAlts, String[] oldAlts, int oldPos) {
+		if (oldPos == 0) return oldPos;
+		
+		String alt = oldAlts[oldPos - 1];
+		int newPos = -1;
+		
+		for (int i = 1 ; i <= newAlts.length ; i++) {
+			if (alt.equals(newAlts[i - 1])) {
+				newPos = i;
+				break;
+			}
+		}
+		return newPos;
+	}
+	
 	/**
 	 * Merge vcf records that have same position, ref, alt and number of samples into a single record
 	 */
@@ -220,11 +269,18 @@ public class MergeUtils {
 		}
 		
 		/*
+		 * build up alt string
+		 */
+		
+		Optional<String> combinedAlt = getCombinedAlt(records);
+//		assert combinedAlt.isPresent() : "Null returned from getCombinedAlt";
+		
+		/*
 		 * Get common values from 1st record
 		 */ 
 //		VcfRecord mergedRecord =  VcfUtils.createVcfRecord(records[0].getChrPosition(),   records[0].getId(), records[0].getRef(), records[0].getAlt());
 		VcfRecord mergedRecord =  new VcfRecord.Builder(records[0].getChrPosition(), records[0].getRef())
-									.id(records[0].getId()).allele(records[0].getAlt()).build();
+									.id(records[0].getId()).allele(combinedAlt.get()).build();
 				
 		
  
@@ -239,11 +295,45 @@ public class MergeUtils {
 			String suffix = "_" + (i+1);
 			
 			mergedRecord.appendId(r.getId());
+			List<String> rFF =  r.getFormatFields() ;
 			
+			/*
+			 * if the combinedAlts is different from the alt for this record, we may need to update the GT field
+			 */
+			String aa = r.getAlt();
+			if ( ! aa.equals(combinedAlt.get())) {
+				
+				Map<String, String[]> ffMap = VcfUtils.getFormatFieldsAsMap(rFF);
+				String[] existingGTs = ffMap.get(VcfHeaderUtils.FORMAT_GENOTYPE);
+				/*
+				 * we could have an updated gts
+				 */
+				boolean needToUpdate = false;
+				for (int z = 0 ; z < existingGTs.length ; z++) {
+					String gt = existingGTs[z];
+					if ( ! gt.equals(Constants.MISSING_DATA_STRING)) {
+						String newGT = getGT(combinedAlt.get(), aa, gt);
+						if ( ! newGT.equals(gt)) {
+							existingGTs[z] = newGT;
+							needToUpdate = true;
+						}
+					}
+				}
+				
+				
+				/*
+				 * update map
+				 */
+				if (needToUpdate) {
+					ffMap.put(VcfHeaderUtils.FORMAT_GENOTYPE, existingGTs);
+					rFF = VcfUtils.convertFFMapToList(ffMap);
+					r.setFormatFields(rFF);
+				}
+				
+			}
 			/*
 			 * remove SOMATIC from info field, and add to format INF subfield
 			 */
-			List<String> rFF =  r.getFormatFields() ;
 			List<String> formatInfo = new ArrayList<>(3);
 			formatInfo.add(VcfHeaderUtils.FORMAT_INFO);
 			boolean isSomatic = VcfUtils.isRecordSomatic(r);
