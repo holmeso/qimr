@@ -13,11 +13,11 @@ import org.qcmg.common.log.QLogger;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import jdk.nashorn.internal.runtime.regexp.joni.constants.NodeType;
 
 public class XmlCompare {
-
-	    private boolean nodeTypeDiff = true;
-	    private boolean nodeValueDiff = true;
 
 	    public boolean diff( String xml1, String xml2, List<String> diffs ) throws Exception
 	    {
@@ -42,66 +42,55 @@ public class XmlCompare {
 	     */
 	    public boolean diff( Node node1, Node node2, List<String> diffs ) throws Exception
 	    {
-	        if( diffNodeExists( node1, node2, diffs ) )
-	        {
-	            return true;
+	        if( diffNodeExists( node1, node2, diffs ) ) return true;
+	        	       
+	        boolean nodeTypeDiff = diffNodeType(node1, node2, diffs );
+	        boolean nodeValueDiff = nodeTypeDiff ? true : diffNodeValue(node1, node2, diffs );
+	        	                 
+	        //check attr and children if node value same 
+	        if( !nodeValueDiff && node1.getNodeType() != Node.ATTRIBUTE_NODE){ 
+	        	diffs.add( "node:" + node1.getNodeName() ) ;
+		        diffAttributes( node1, node2, diffs );
+		        diffChildNodes( node1, node2, diffs );		        
 	        }
-
-	        if( nodeTypeDiff )
-	        {
-	            diffNodeType(node1, node2, diffs );
-	        }
-
-	        if( nodeValueDiff )
-	        {
-	            diffNodeValue(node1, node2, diffs );
-	        }
-
-
-	        System.out.println(node1.getNodeName() + "/" + node2.getNodeName());
-
-	        diffAttributes( node1, node2, diffs );
-	        diffNodes( node1, node2, diffs );
-
+	        
 	        return diffs.size() > 0;
 	    }
 
 	    /**
 	     * Diff the nodes
 	     */
-	    public boolean diffNodes( Node node1, Node node2, List<String> diffs ) throws Exception
+	    public boolean diffChildNodes( Node node1, Node node2, List<String> diffs ) throws Exception
 	    {
 	        //Sort by Name
 	        Map<String,Node> children1 = new LinkedHashMap<String,Node>();      
-	        for( Node child1 = node1.getFirstChild(); child1 != null; child1 = child1.getNextSibling() )
-	        {
-	            children1.put( child1.getNodeName(), child1 );
+	        for( Node child1 = node1.getFirstChild(); child1 != null; child1 = child1.getNextSibling() ){
+	        	if(child1.getNodeType() == Node.ELEMENT_NODE )
+	        		children1.put( child1.getNodeName(), child1 );
 	        }
-
+	        
+	        
 	        //Sort by Name
 	        Map<String,Node> children2 = new LinkedHashMap<String,Node>();      
-	        for( Node child2 = node2.getFirstChild(); child2!= null; child2 = child2.getNextSibling() )
-	        {
-	            children2.put( child2.getNodeName(), child2 );
+	        for( Node child2 = node2.getFirstChild(); child2!= null; child2 = child2.getNextSibling() ) {
+	        	if(child2.getNodeType() == Node.ELEMENT_NODE )
+	        		children2.put( child2.getNodeName(), child2 );
 	        }
 
 	        //Diff all the children1
-	        for( Node child1 : children1.values() )
-	        {
+	        for( Node child1 : children1.values() ) {
 	            Node child2 = children2.remove( child1.getNodeName() );
 	            diff( child1, child2, diffs );
 	        }
 
 	        //Diff all the children2 left over
-	        for( Node child2 : children2.values() )
-	        {
+	        for( Node child2 : children2.values() ) {
 	            Node child1 = children1.get( child2.getNodeName() );
 	            diff( child1, child2, diffs );
 	        }
 
 	        return diffs.size() > 0;
 	    }
-
 
 	    /**
 	     * Diff the nodes
@@ -148,19 +137,19 @@ public class XmlCompare {
 	    {
 	        if( node1 == null && node2 == null )
 	        {
-	            diffs.add( getPath(node2) + ":node " + node1 + "!=" + node2 + "\n" );
+	            diffs.add( getPath(node2) + ": not exist in both XML" );
 	            return true;
 	        }
 
 	        if( node1 == null && node2 != null )
 	        {
-	            diffs.add( getPath(node2) + ":node " + node1 + "!=" + node2.getNodeName() );
+	            diffs.add( getPath(node2) + ": not exists in second XML");
 	            return true;
 	        }
 
 	        if( node1 != null && node2 == null )
 	        {
-	            diffs.add( getPath(node1) + ":node " + node1.getNodeName() + "!=" + node2 );
+	            diffs.add( getPath(node1) + ": not exists in first XML");
 	            return true;
 	        }
 
@@ -174,7 +163,7 @@ public class XmlCompare {
 	    {       
 	        if( node1.getNodeType() != node2.getNodeType() ) 
 	        {
-	            diffs.add( getPath(node1) + ":type " + node1.getNodeType() + "!=" + node2.getNodeType() );
+	            diffs.add( getPath(node1) + ":type " + node1.getNodeType() + " != " + node2.getNodeType() );
 	            return true;
 	        }
 
@@ -186,26 +175,15 @@ public class XmlCompare {
 	     */
 	    public boolean diffNodeValue( Node node1, Node node2, List<String> diffs ) throws Exception
 	    {       
-	        if( node1.getNodeValue() == null && node2.getNodeValue() == null )
-	        {
-	            return false;
-	        }
-
-	        if( node1.getNodeValue() == null && node2.getNodeValue() != null )
-	        {
-	            diffs.add( getPath(node1) + ":type " + node1 + "!=" + node2.getNodeValue() );
+	        if( node1.getNodeValue() == null && node2.getNodeValue() == null ) {  return false;  }
+	        
+	    	if( node1.getNodeValue() == null || node2.getNodeValue() == null ) {
+	    		diffs.add( getPath(node1) + " with null value!");
 	            return true;
 	        }
-
-	        if( node1.getNodeValue() != null && node2.getNodeValue() == null )
-	        {
-	            diffs.add( getPath(node1) + ":type " + node1.getNodeValue() + "!=" + node2 );
-	            return true;
-	        }
-
-	        if( !node1.getNodeValue().equals( node2.getNodeValue() ) )
-	        {
-	            diffs.add( getPath(node1) + ":type " + node1.getNodeValue() + "!=" + node2.getNodeValue() );
+	        
+	        if( !node1.getNodeValue().equals( node2.getNodeValue() ) ) {
+	            diffs.add( getPath(node1) + " with differnt value!" );
 	            return true;
 	        }
 
@@ -218,12 +196,16 @@ public class XmlCompare {
 	     */
 	    public String getPath( Node node ){
 	        StringBuilder path = new StringBuilder();
-
-	        do {           
-	            path.insert(0, node.getNodeName() );
-	            path.insert( 0, "/" );
-	        }while( ( node = node.getParentNode() ) != null );
-
+	        	        
+	        if(node.getNodeType() == Node.ATTRIBUTE_NODE)
+	        	path.insert( 0, "Atrribute::"+ node.getNodeName() );	        
+	        else{
+		        do {           
+		            path.insert(0, node.getNodeName() );
+		            path.insert( 0, "/" );
+		        }while( ( node = node.getParentNode() ) != null );
+	        
+	        }
 	        return path.toString();
 	    }
 	    
@@ -237,7 +219,7 @@ public class XmlCompare {
 	    		//read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
 	    		doc.getDocumentElement().normalize();
 
-	    		System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+//	    		System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
 	    		
 	    		return doc; 	    	
 	    } 
@@ -253,6 +235,8 @@ public class XmlCompare {
  				List<String> diffs = new ArrayList<String>();
  				XmlCompare compare =new XmlCompare();
  				compare.diff( doc1, doc2, diffs );
+ 				
+ 				for(String line : diffs) System.out.println(line);
  				
  				
 			}catch(Exception e){ 
