@@ -4,13 +4,9 @@
 package au.edu.qimr.indel.pileup;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-
 import org.qcmg.common.model.ChrRangePosition;
-import org.qcmg.common.string.StringUtils;
-import org.qcmg.common.util.Constants;
 import org.qcmg.common.util.IndelUtils;
 import org.qcmg.common.util.IndelUtils.SVTYPE;
 import org.qcmg.common.vcf.VcfRecord;
@@ -25,7 +21,6 @@ public class IndelPosition {
 	private final SVTYPE mutationType;	
 	private IndelPileup tumourPileup;
 	private IndelPileup normalPileup;
-	private Homopolymer polymer;	
 
 	/**
 	 * retrive information from a vcf record
@@ -200,9 +195,6 @@ public class IndelPosition {
 			this.normalPileup = pileup;
 	}
 	
-	public void setHomopolymer(Homopolymer polymer){
-		this.polymer = polymer; 
-	}	
 	
 	public VcfRecord getPileupedVcf(int index, final int gematic_nns, final float gematic_soi){
 		VcfRecord re = vcfs.get(index);		
@@ -220,7 +212,6 @@ public class IndelPosition {
 		
 		boolean somatic = (re.getFilter().equals(ReadIndels.FILTER_SOMATIC))? true : false;
  		if(normalPileup != null && somatic){
-//			if( normalPileup.getnovelStartReadCount(index)  > gematic_nns )
  			if( normalPileup.getsuportReadCount(index) > gematic_nns )
 				somatic = false;
 			else if(normalPileup.getInformativeCount() > 0){
@@ -259,8 +250,7 @@ public class IndelPosition {
 				nd = String.format("%d,%d,%d,%d[%d,%d],%d[%d],%d,%d,%d", normalPileup.getstrongsupportNovelStartReadCount(index),normalPileup.getTotalCount(),normalPileup.getInformativeCount(), 
 					normalPileup.getstrongSuportReadCount(index),normalPileup.getforwardsuportReadCount(index),normalPileup.getbackwardsuportReadCount(index),normalPileup.getsuportReadCount(index),
 					normalPileup.getsupportNovelStartReadCount(index),  normalPileup.getparticalReadCount(index),normalPileup.getNearbyIndelCount(),normalPileup.getNearybySoftclipCount());
-			 
-			//re.appendInfo("ND=" + nd);				
+			 			
 			if(somatic && normalPileup.getTotalCount() < 12)
 				VcfUtils.updateFilter(re,IndelUtils.FILTER_COVN12);
 			if(!somatic && normalPileup.getTotalCount() < 8)
@@ -281,16 +271,9 @@ public class IndelPosition {
 		field.add(1,  (genotypeField.size() > 1)? genotypeField.get(1) + ":" + nd : nd);
 		field.add(2,  (genotypeField.size() > 2)? genotypeField.get(2) + ":" + td: td);					
 		re.setFormatFields(  field); 
-				
-//		if(polymer != null &&  polymer.getPolymerSequence(index) != null ){
-//			VcfUtils.updateFilter(re, IndelUtils.FILTER_HOM + polymer.getCount(index));	
-//			re.appendInfo(String.format(IndelUtils.INFO_HOMTXT  + "=" + polymer.getPolymerSequence(index)));
-//		}
 					 
 		IndelPileup pileup = (somatic)? tumourPileup: normalPileup; 				
 		
-//		if(somatic && tumourPileup.getstrongsupportNovelStartReadCount(index) < 4 )
-		//if coverage == 0 
 		if(pileup !=null  && pileup.getstrongsupportNovelStartReadCount(index) < 4)
 			VcfUtils.updateFilter(re,IndelUtils.FILTER_NNS);
 		
@@ -299,9 +282,11 @@ public class IndelPosition {
 		re.appendInfo( String.format( IndelUtils.INFO_NIOC + "=" + ((nn == 0 )? "0" : String.format("%.3f", nn))) );		
 		re.appendInfo( String.format( IndelUtils.INFO_SSOI + "=" + ((ss == 0 )? "0" : String.format("%.3f", ss))) );	
 				
-		re.appendInfo("SVTYPE=" + this.mutationType.name());
-		re.appendInfo("END=" + indelEnd);
-		re.appendInfo(VcfHeaderUtils.INFO_MERGE_IN + "=1");
+//		re.appendInfo("SVTYPE=" + this.mutationType.name());
+//		re.appendInfo("END=" + indelEnd);		
+		re.appendInfo( IndelUtils.INFO_SVTYPE + this.mutationType.name() );
+		re.appendId( IndelUtils.INFO_END + indelEnd );		
+		re.appendInfo( VcfHeaderUtils.INFO_MERGE_IN + "=1" );
 					
 		return re; 	
 	}

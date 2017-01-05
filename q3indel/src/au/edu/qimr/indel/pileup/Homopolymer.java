@@ -14,7 +14,6 @@ import org.qcmg.common.log.QLogger;
 import org.qcmg.common.log.QLoggerFactory;
 import org.qcmg.common.model.ChrRangePosition;
 import org.qcmg.common.util.IndelUtils.SVTYPE;
-import au.edu.qimr.indel.Q3IndelException;
 
 @Deprecated
 public class Homopolymer {

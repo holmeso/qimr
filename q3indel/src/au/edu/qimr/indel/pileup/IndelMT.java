@@ -194,58 +194,6 @@ public class IndelMT {
 				currentPool.addAll(tmp_current_pool);
 		}				
 	}
-			
-	class HomopoPileup implements Runnable {
-		private final AbstractQueue<IndelPosition> qIn;
-		private final AbstractQueue<Homopolymer> qOut;
-		private final Thread mainThread;
-		private final File referenceFile; 
-		private final String contig; 
-		private final byte[] referenceBase;
-		private final int window; 
-		private final int reportWindow; 
-		final CountDownLatch pLatch;
-		
-		HomopoPileup(String contig,   AbstractQueue<IndelPosition> qIn, File reference,  
-				AbstractQueue<Homopolymer> qOut, int window,int reportWindow,  Thread mainThread, CountDownLatch latch) {
-			this.qIn = qIn;
-			this.qOut = qOut;
-			this.mainThread = mainThread;
-			this.referenceFile = reference; 
-			this.window = window;
-			this.pLatch = latch; 
-			this.contig = contig; 
-			this.reportWindow = reportWindow; 
-			
-			IndexedFastaSequenceFile indexedFasta = Homopolymer.getIndexedFastaFile(referenceFile);
-			this.referenceBase = indexedFasta.getSequence(contig).getBases();
- 	
- 		}
-		 
- 
-		@Override
-		public void run() {
-			int size = qIn.size();
-			try {
-  
-				try {
-					IndelPosition pos;					
-					while ((pos = qIn.poll()) != null)  
-						qOut.add(new Homopolymer(pos, referenceBase, window,reportWindow));
-				} finally {					 
-					pLatch.countDown();
-				}
-			}catch(Exception e){
-				logger.error("Exception caught in homopolymer thread", e);
-				mainThread.interrupt();
-
-			} finally {
-				pLatch.countDown();
-				logger.info(size  + " indels had been checked homopolymer from " + contig);
-			}
-		}
-		
-	}
 	
 	Options options; 
 	QLogger logger; 
@@ -274,7 +222,7 @@ public class IndelMT {
 		if(options.getRunMode().equalsIgnoreCase(options.RUNMODE_GATK) ){	
 			//first load control
 			if(options.getControlInputVcf() != null){
-				indelload.LoadIndels(options.getControlInputVcf(),options.getRunMode());	
+				indelload.LoadIndels(options.getControlInputVcf());	
 				if(indelload.getCounts_newIndel() != indelload.getCounts_totalIndel())
 					logger.warn("ERROR: Found " + indelload.getCounts_newIndel() + 
 							" indels from control input, but it is not same to the number of indel inside MAP is " + indelload.getCounts_totalIndel());
@@ -296,7 +244,7 @@ public class IndelMT {
 			}				
 		}else if(options.getRunMode().equalsIgnoreCase("pindel")){	
 			for(int i = 0; i < options.getInputVcfs().size(); i ++)
-				indelload.LoadIndels(options.getInputVcfs().get(i), options.getRunMode());	
+				indelload.LoadIndels(options.getInputVcfs().get(i));	
 		}		
 	}
 	
@@ -485,19 +433,21 @@ public class IndelMT {
 				options.getMinGematicNovelStart(), options.getMinGematicSupportOfInformative());
 
 		header.addInfoLine(VcfHeaderUtils.INFO_SOMATIC, "1", "String", SOMATIC_DESCRIPTION);
-		header.addInfoLine(IndelUtils.INFO_NIOC, "1", "String", IndelUtils.DESCRITPION_INFO_NIOC);
-		header.addInfoLine(IndelUtils.INFO_SSOI, "1", "String", IndelUtils.DESCRITPION_INFO_SSOI);		
-//		header.addInfoLine(IndelUtils.INFO_HOM, "1", "String", IndelUtils.DESCRITPION_INFO_HOM); 
+		header.addInfoLine(IndelUtils.INFO_NIOC, "1", "Float", IndelUtils.DESCRITPION_INFO_NIOC);
+		header.addInfoLine(IndelUtils.INFO_SSOI, "1", "Float", IndelUtils.DESCRITPION_INFO_SSOI);		
 		header.addInfoLine(VcfHeaderUtils.INFO_MERGE_IN, "1", "String",VcfHeaderUtils.DESCRITPION_MERGE_IN); 
+
+		header.addInfoLine(IndelUtils.INFO_SVTYPE , "1", "String", IndelUtils.DESCRITPION_INFO_SVTYPE);		
+		header.addInfoLine(IndelUtils.INFO_END , "1", "Integer", IndelUtils.DESCRITPION_INFO_END);		 
+		
 				
 		header.addFormatLine(VcfHeaderUtils.FORMAT_GENOTYPE_DETAILS, "1","String", "Genotype details: specific alleles");
-		header.addFormatLine(IndelUtils.FORMAT_ACINDEL, "1", "String", IndelUtils.DESCRITPION_FORMAT_ACINDEL);
+//		header.addFormatLine(IndelUtils.FORMAT_ACINDEL, "1", "String", IndelUtils.DESCRITPION_FORMAT_ACINDEL);
+		header.addFormatLine(IndelUtils.FORMAT_ACINDEL, ".", "String", IndelUtils.DESCRITPION_FORMAT_ACINDEL);
 
 		VcfHeaderUtils.addQPGLineToHeader(header, qexec.getToolName().getValue(), qexec.getToolVersion().getValue(), qexec.getCommandLine().getValue() 
 				+  " [runMode: " + options.getRunMode() + "]");        
         		
-//		VcfHeaderUtils.addSampleId(header, VcfHeaderUtils.STANDARD_CONTROL_SAMPLE.replaceAll("#", ""), 1 ); // "qControlSample", 1);
-//		VcfHeaderUtils.addSampleId(header,  VcfHeaderUtils.STANDARD_TEST_SAMPLE.replaceAll("#", ""), 2);//"qTestSample"
 		VcfHeaderUtils.addSampleId(header, controlBamID, 1 ); // "qControlSample", 1);
 		VcfHeaderUtils.addSampleId(header,  testBamID, 2);//"qTestSample"
 		

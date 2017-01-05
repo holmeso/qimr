@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.qcmg.common.log.QLogger;
-import org.qcmg.common.model.ChrPosition;
 import org.qcmg.common.model.ChrRangePosition;
 import org.qcmg.common.util.Constants;
 import org.qcmg.common.util.IndelUtils;
@@ -20,21 +19,19 @@ import org.qcmg.common.vcf.header.VcfHeader;
 import org.qcmg.common.vcf.header.VcfHeaderUtils;
 import org.qcmg.vcf.VCFFileReader;
 
-import au.edu.qimr.indel.Options;
-
 
 public class ReadIndels {
 	static final String FILTER_SOMATIC = "SOMATIC";
 	
 	QLogger logger; 
-	private VcfHeader header; 
+	protected VcfHeader header; 
 	
-	private final int errRecordLimit = 100;	
+	protected final int errRecordLimit = 100;	
 	//counts from each input, {No of new indel, No of overlap indel, No of indels with mult Allel, No of inputs variants, No of input variants with multi Allel}
-	private final int[] counts = {0,0, 0,0,0}; 
+	protected final int[] counts = {0,0, 0,0,0}; 
  
 	//here key will be uniq for indel: chr, start, end, allel 
-	private final  Map<VcfRecord, VcfRecord> positionRecordMap = new  ConcurrentHashMap<VcfRecord, VcfRecord>();	
+	protected final  Map<VcfRecord, VcfRecord> positionRecordMap = new  ConcurrentHashMap<VcfRecord, VcfRecord>();	
 	
 	public ReadIndels( QLogger logger){ this.logger = logger; }
 	
@@ -133,6 +130,9 @@ public class ReadIndels {
 				//merge exiting and second vcf format, the exsitingvcf already inside map	
 				VcfUtils.addAdditionalSampleToFormatField(existingvcf,  secformat) ;				
 			}
+			
+			//??? if format1 == null, I think we should
+			//VcfUtils.addMissingDataToFormatFields(existingvcf, 1);
 			return true; 			
 		}		 
 	}	
@@ -143,7 +143,8 @@ public class ReadIndels {
 	 * @param sampleCode: replace sample code inside the input vcf file 
 	 * @throws IOException
 	 */
-	public void LoadIndels(File f, String runMode) throws IOException{
+//	public void LoadIndels(File f, String runMode) throws IOException{
+	public void LoadIndels(File f ) throws IOException{		
 		int indelNew = 0;
 		int indelOverlap = 0;
 		int indelMultiAltNo = 0;
@@ -163,7 +164,6 @@ public class ReadIndels {
     			if(alleles.length > 1) inMultiAltNo ++; //multi allele input variants
     			
 				for(String alt : alleles){
-//					inVariants ++;
 					SVTYPE type = IndelUtils.getVariantType(re.getRef(), alt);
 	 	        	if(type.equals(SVTYPE.DEL) ||type.equals(SVTYPE.INS) ){	 	        		
 	 	        		VcfRecord vcf1 = re; 	 	        	
@@ -193,10 +193,6 @@ public class ReadIndels {
     	counts[3] = inLines;
     	counts[4] = inMultiAltNo;
     		                
-//		  logger.info(String.format("Find %d indels from %d variants (%d records lines) within file: %s",positionRecordMap.size(), inVariants, inLines, f.getAbsoluteFile()));
-//		  logger.info(String.format("There are %d input record contains multi alleles within file: %s", multiAltNo, f.getAbsoluteFile()));		  
-//		  if(overwriteNo >= errRecordLimit)
-//			  logger.warn("there are big number (" + overwriteNo + ") of same variant but maybe with different annotation are overwrited/removed");		
 	}
 	
 	/**
@@ -220,9 +216,9 @@ public class ReadIndels {
 			else
 				re.setField(1, VcfHeaderUtils.FORMAT_GENOTYPE_DETAILS, gd);
 			
-			//put . since not sure GT value after split
-			if(vcf.getAlt().contains(Constants.COMMA_STRING))
-				re.setField(VcfHeaderUtils.FORMAT_GENOTYPE, Constants.MISSING_DATA_STRING);
+//			//put . since not sure GT value after split
+//			if(vcf.getAlt().contains(Constants.COMMA_STRING))
+//				re.setField(VcfHeaderUtils.FORMAT_GENOTYPE, Constants.MISSING_DATA_STRING);
 			
 			frecords[i-1] = re; 
 		}
@@ -248,32 +244,17 @@ public class ReadIndels {
 	 */
 	public Map<ChrRangePosition, IndelPosition> getIndelMap() throws Exception{	
 	
-	Map<ChrRangePosition,IndelPosition> indelPositionMap = new  ConcurrentHashMap<ChrRangePosition,IndelPosition>();
-	for(VcfRecord vcf : positionRecordMap.values()){			
-		ChrRangePosition indelPos = new ChrRangePosition(vcf.getChrPosition(), vcf.getChrPosition().getEndPosition()); 
-		if(indelPositionMap.containsKey(indelPos)) 
-			indelPositionMap.get(indelPos).addVcf( vcf );
-			  else 
-			indelPositionMap.put(indelPos, new IndelPosition(vcf));
-	}	
-
-	return indelPositionMap;
-}
-//	public Map<ChrPosition, IndelPosition> getIndelMap() throws Exception{	
-//		
-//		Map<ChrPosition,IndelPosition> indelPositionMap = new  ConcurrentHashMap<ChrPosition,IndelPosition>();
-//		for(VcfRecord vcf : positionRecordMap.values()){			
-//			ChrPosition indelPos = vcf.getChrPosition(); 
-//			if(indelPositionMap.containsKey(indelPos)) 
-//				indelPositionMap.get(indelPos).addVcf( vcf );
-// 			  else 
-//				indelPositionMap.put(indelPos, new IndelPosition(vcf));
-//		}	
-//
-//		return indelPositionMap;
-//	}
+		Map<ChrRangePosition,IndelPosition> indelPositionMap = new  ConcurrentHashMap<ChrRangePosition,IndelPosition>();
+		for(VcfRecord vcf : positionRecordMap.values()){			
+			ChrRangePosition indelPos = new ChrRangePosition(vcf.getChrPosition(), vcf.getChrPosition().getEndPosition()); 
+			if(indelPositionMap.containsKey(indelPos)) 
+				indelPositionMap.get(indelPos).addVcf( vcf );
+				  else 
+				indelPositionMap.put(indelPos, new IndelPosition(vcf));
+		}	
 	
-	
+		return indelPositionMap;
+	}
 	
 	public VcfHeader getVcfHeader(){ return header;	}
 	
