@@ -261,6 +261,258 @@ public class MergeUtils {
 	}
 	
 	/**
+	 * Moves any data that we don't like in the filter and info fields into specific fields in the format column.
+	 * Modifies the VcfRecord supplied as an argument in place, and so is not referentially transparent
+	 */
+	public static void moveDataToFormat(VcfRecord r, String combinedAlt) {
+		/*
+		 * for info field, we are just looking for SOMATIC
+		 * If this is present, move to the FORMAT-INF field for all samples (assuming that the format
+		 */
+		List<String> ff = r.getFormatFields();
+		Map<String, String[]> ffMap = VcfUtils.getFormatFieldsAsMap(ff);
+		int sampleCount = ff.size() -1;
+		if (sampleCount > 0) {
+			if (VcfUtils.isRecordSomatic(r)) {
+				/*
+				 * Check to see if we have an INF entry in the map
+				 */
+				String [] infArr = ffMap.computeIfAbsent(VcfHeaderUtils.FORMAT_INFO, k -> new String[sampleCount]);
+				for (int i = 0 ; i < infArr.length ; i++) {
+					String s = infArr[i];
+					if (StringUtils.isNullOrEmptyOrMissingData(s)) {
+						infArr[i] = VcfHeaderUtils.INFO_SOMATIC;
+					} else {
+						infArr[i] += Constants.SEMI_COLON + VcfHeaderUtils.INFO_SOMATIC;
+					}
+				}
+			}
+			
+			/*
+			 * filter field
+			 */
+			String filter = r.getFilter();
+			if ( ! StringUtils.isNullOrEmptyOrMissingData(filter)) {
+				String [] infArr = ffMap.computeIfAbsent(VcfHeaderUtils.FORMAT_FILTER, k -> new String[sampleCount]);
+				for (int i = 0 ; i < infArr.length ; i++) {
+					String s = infArr[i];
+					if (StringUtils.isNullOrEmptyOrMissingData(s)) {
+						infArr[i] = filter;
+					} else {
+						infArr[i] += Constants.SEMI_COLON + filter;
+					}
+				}
+			}
+		}
+		
+		/*
+		 * if the combinedAlts is different from the alt for this record, we may need to update the GT field
+		 */
+		String aa = r.getAlt();
+		if ( ! aa.equals(combinedAlt)) {
+			
+			String[] existingGTs = ffMap.get(VcfHeaderUtils.FORMAT_GENOTYPE);
+			/*
+			 * we could have an updated gts
+			 */
+			for (int z = 0 ; z < existingGTs.length ; z++) {
+				String gt = existingGTs[z];
+				if ( ! gt.equals(Constants.MISSING_DATA_STRING)) {
+					String newGT = getGT(combinedAlt, aa, gt);
+					if ( ! newGT.equals(gt)) {
+						existingGTs[z] = newGT;
+					}
+				}
+			}
+			ffMap.put(VcfHeaderUtils.FORMAT_GENOTYPE, existingGTs);
+		}
+		
+		/*
+		 * update record
+		 */
+		if ( ! ffMap.isEmpty()) {
+			r.setFormatFields(VcfUtils.convertFFMapToList(ffMap));
+		}
+	}
+	
+	/**
+	 * returns true if the supplied string only contains the missing data symbol '.' and the colon delimiter ':'
+	 * eg. .:.:.:.:.:.:.:. would return true, .:.:.:SOMATIC:.:.:. would return false.
+	 * 
+	 * @param f
+	 * @return
+	 */
+	public static boolean isFormatSampleEmpty(String f) {
+		if (StringUtils.isNullOrEmptyOrMissingData(f)) {
+			return true;
+		}
+//		f.chars().forEach(System.out::println);
+		return f.chars().allMatch(i -> i == 46 || i == 58);
+	}
+	
+	/**
+	 * Returns a new VcfRecord that takes the positional information from the suppliued VCfRecord, and uses the supplied alt for the alt...
+	 * @param r
+	 * @param combinedAlt
+	 * @return
+	 */
+	public static VcfRecord getBaseVcfRecordDetails(VcfRecord r, String combinedAlt) {
+		return new VcfRecord.Builder(r.getChrPosition(), r.getRef()).id(r.getId()).allele(combinedAlt).build();
+	}
+	
+	public static VcfRecord mergeRecords(Map<Integer, Map<String, String>> rules, VcfRecord caller1, VcfRecord caller2) {
+		VcfRecord mr = null;
+		
+		
+		if (null == caller1 && null == caller2) {
+			throw new IllegalArgumentException("MergeUtils.mergeRecords called will no records!!!");
+		} else if (null == caller1) {
+			Map<String, String> thisRecordsRules = null != rules ? rules.get(1) : null;
+			/*
+			 * just got caller 2 data
+			 */
+			mr = getBaseVcfRecordDetails(caller2, caller2.getAlt());
+			mr.setInfo(caller2.getInfo());
+			moveDataToFormat(caller2, mr.getAlt());
+			
+			/*
+			 * add format fields from caller2 to mr
+			 */
+			List<String> ff = caller2.getFormatFields();
+			mr.setFormatFields(ff);
+			
+			/*
+			 * add format columns for missing caller 
+			 */
+			int noOfSamples = ff.size() -1;
+			for (int i = 0 ; i < noOfSamples ; i++) {
+				VcfUtils.addMissingDataToFormatFields(mr, 1);
+			}
+			
+		} else if (null == caller2) {
+			Map<String, String> thisRecordsRules = null != rules ? rules.get(0) : null;
+			/*
+			 * just got caller 1 data
+			 */
+			mr = getBaseVcfRecordDetails(caller1, caller1.getAlt());
+			moveDataToFormat(caller2, mr.getAlt());
+			/*
+			 * add format fields from caller1 to mr
+			 */
+			List<String> ff = caller1.getFormatFields();
+			mr.setFormatFields(ff);
+			
+			/*
+			 * add format columns for missing caller 
+			 */
+			int noOfSamples = ff.size() -1;
+			for (int i = 0 ; i < noOfSamples ; i++) {
+				VcfUtils.addMissingDataToFormatFields(mr, noOfSamples);
+			}
+			
+			
+		} else {
+			/*
+			 * got data from both callers
+			 */
+			
+			Optional<String> combinedAlts = getCombinedAlt(caller1, caller2);
+			mr = getBaseVcfRecordDetails(caller1, combinedAlts.get());
+			
+			Map<String, String> caller1Rules = null != rules ? rules.get(0) : null;
+			if (null != caller1Rules && ! caller1Rules.isEmpty()) {
+				
+				/*
+				 * INFO
+				 */
+				for (String s : caller1.getInfo().split(Constants.SEMI_COLON_STRING)) {
+					int equalsIndex = s.indexOf(Constants.EQ);
+					String key = equalsIndex > -1 ? s.substring(0, equalsIndex) : s;
+					String replacementKey = caller1Rules.get(key);
+					if (null == replacementKey) {
+						mr.getInfoRecord().appendField(key, (equalsIndex > -1) ? s.substring(equalsIndex+1) : s);
+					} else {
+						mr.getInfoRecord().addField(replacementKey, (equalsIndex > -1) ? s.substring(equalsIndex+1) : s);
+					}
+				}
+				
+			} else {
+				mr.appendInfo(caller1.getInfo(), false);
+			}
+			Map<String, String> caller2Rules = null != rules ? rules.get(1) : null;
+			if (null != caller2Rules && ! caller2Rules.isEmpty()) {
+				
+				/*
+				 * INFO
+				 */
+				for (String s : caller2.getInfo().split(Constants.SEMI_COLON_STRING)) {
+					int equalsIndex = s.indexOf(Constants.EQ);
+					String key = equalsIndex > -1 ? s.substring(0, equalsIndex) : s;
+					String replacementKey = caller2Rules.get(key);
+					if (null == replacementKey) {
+						mr.getInfoRecord().appendField(key, (equalsIndex > -1) ? s.substring(equalsIndex+1) : s);
+					} else {
+						mr.getInfoRecord().addField(replacementKey, (equalsIndex > -1) ? s.substring(equalsIndex+1) : s);
+					}
+				}
+				
+			} else {
+				mr.appendInfo(caller2.getInfo(), false);
+			}
+			
+			moveDataToFormat(caller1, mr.getAlt());
+			moveDataToFormat(caller2, mr.getAlt());
+			
+			/*
+			 * add format fields from caller1 to mr
+			 */
+			
+			Map<String, String[]> caller1FFMap = VcfUtils.getFormatFieldsAsMap(caller1.getFormatFields());
+			Map<String, String[]> caller2FFMap = VcfUtils.getFormatFieldsAsMap(caller2.getFormatFields());
+			
+			if (null != caller1Rules && ! caller1Rules.isEmpty()) {
+				/*
+				 * update any keys depending on rules
+				 */
+				for (Entry<String, String> entry : caller1Rules.entrySet()) {
+					if (caller1FFMap.containsKey(entry.getKey())) {
+						String [] values = caller1FFMap.remove(entry.getKey());
+						caller1FFMap.put(entry.getValue(), values);
+					}
+				}
+			}
+			if (null != caller2Rules &&  ! caller2Rules.isEmpty()) {
+				/*
+				 * update any keys depending on rules
+				 */
+				for (Entry<String, String> entry : caller2Rules.entrySet()) {
+					if (caller2FFMap.containsKey(entry.getKey())) {
+						String [] values = caller2FFMap.remove(entry.getKey());
+						caller2FFMap.put(entry.getValue(), values);
+					}
+				}
+			}
+			
+			
+			List<String> ff1 = VcfUtils.convertFFMapToList(caller1FFMap);
+			if (ff1.size() > 1) {
+				mr.setFormatFields(ff1);
+			}
+			List<String> ff2 =VcfUtils.convertFFMapToList(caller2FFMap);
+			if (ff2.size() > 1) {
+				VcfUtils.addAdditionalSamplesToFormatField(mr, ff2);
+			}
+			
+			/*
+			 * remove somatic from info field should it be there
+			 */
+			mr.getInfoRecord().removeField(SnpUtils.SOMATIC);
+			
+		}
+		return mr;
+	}
+	
+	/**
 	 * Merge vcf records that have same position, ref, alt and number of samples into a single record
 	 */
 	public static VcfRecord mergeRecords(Map<Integer, Map<String, String>> rules, VcfRecord ... records) {
@@ -334,11 +586,15 @@ public class MergeUtils {
 			/*
 			 * remove SOMATIC from info field, and add to format INF subfield
 			 */
-			List<String> formatInfo = new ArrayList<>(3);
+			List<String> formatInfo = new ArrayList<>(rFF.size());
 			formatInfo.add(VcfHeaderUtils.FORMAT_INFO);
 			boolean isSomatic = VcfUtils.isRecordSomatic(r);
-			formatInfo.add(isSomatic && ! rFF.get(1).startsWith(Constants.MISSING_DATA_STRING) ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
-			formatInfo.add(isSomatic && ! rFF.get(2).startsWith(Constants.MISSING_DATA_STRING)? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
+			
+			for (int j = 1 ; j < rFF.size(); j++) {
+				formatInfo.add(isSomatic && ! rFF.get(j).startsWith(Constants.MISSING_DATA_STRING) ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
+			}
+//			formatInfo.add(isSomatic && ! rFF.get(1).startsWith(Constants.MISSING_DATA_STRING) ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
+//			formatInfo.add(isSomatic && ! rFF.get(2).startsWith(Constants.MISSING_DATA_STRING)? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
 			VcfUtils.addFormatFieldsToVcf(r,formatInfo);
 			if (isSomatic) {
 				r.getInfoRecord().removeField(SnpUtils.SOMATIC);

@@ -59,7 +59,7 @@ public class MergeSameSamples {
 			logger.info("about to load vcf files");
 			loadVcfs();
 			
-			addMissingFormatFields();
+//			addMissingFormatFields();
 			
 			writeOutput();
 		} else {
