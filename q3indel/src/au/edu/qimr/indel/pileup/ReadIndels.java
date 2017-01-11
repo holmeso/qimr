@@ -179,7 +179,7 @@ public class ReadIndels {
      						logger.warn("same variants already exsits, this one will be discard:\n" + positionRecordMap.get(vcf1).toString() );
      						continue; //no overwrite but just warning
      					}
-     					positionRecordMap.put(vcf1, vcf1);  
+     					positionRecordMap.put(vcf1, vcf1);
      					indelNew ++;
    	 	        	}//done for current indel allele
 				}  		 
