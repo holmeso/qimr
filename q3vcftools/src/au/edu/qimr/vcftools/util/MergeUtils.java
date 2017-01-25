@@ -273,20 +273,20 @@ public class MergeUtils {
 		Map<String, String[]> ffMap = VcfUtils.getFormatFieldsAsMap(ff);
 		int sampleCount = ff.size() -1;
 		if (sampleCount > 0) {
-			if (VcfUtils.isRecordSomatic(r)) {
-				/*
-				 * Check to see if we have an INF entry in the map
-				 */
-				String [] infArr = ffMap.computeIfAbsent(VcfHeaderUtils.FORMAT_INFO, k -> new String[sampleCount]);
-				for (int i = 0 ; i < infArr.length ; i++) {
-					String s = infArr[i];
-					if (StringUtils.isNullOrEmptyOrMissingData(s)) {
-						infArr[i] = VcfHeaderUtils.INFO_SOMATIC;
-					} else {
-						infArr[i] += Constants.SEMI_COLON + VcfHeaderUtils.INFO_SOMATIC;
-					}
-				}
-			}
+//			if (VcfUtils.isRecordSomatic(r)) {
+//				/*
+//				 * Check to see if we have an INF entry in the map
+//				 */
+//				String [] infArr = ffMap.computeIfAbsent(VcfHeaderUtils.FORMAT_INFO, k -> new String[sampleCount]);
+//				for (int i = 0 ; i < infArr.length ; i++) {
+//					String s = infArr[i];
+//					if (StringUtils.isNullOrEmptyOrMissingData(s)) {
+//						infArr[i] = VcfHeaderUtils.INFO_SOMATIC;
+//					} else {
+//						infArr[i] += Constants.SEMI_COLON + VcfHeaderUtils.INFO_SOMATIC;
+//					}
+//				}
+//			}
 			
 			/*
 			 * filter field
