@@ -93,28 +93,29 @@ public class MergeSameSamples {
 		int i = 1; 
 		for (String s : vcfFiles) {
 			logger.info("adding header entry for input " + i + " : " + s);
-			mergedHeader.parseHeaderLine(VcfHeaderUtils.BLANK_HEADER_LINE + "INPUT=" + i + ",FILE=" + s);
+			mergedHeader.parseHeaderLine(VcfHeaderUtils.BLANK_HEADER_LINE + i + Constants.COLON + "VCFFileToBeMerged=" + s);
+//			mergedHeader.parseHeaderLine(VcfHeaderUtils.BLANK_HEADER_LINE + "INPUT=" + i + ",FILE=" + s);
 			i++;
 		}
 	}
 	
-	private void addMissingFormatFields() {
-		/*
-		 * for input1 records, add 2 format fields to the end of the record
-		 */
-		for (VcfRecord v : input1.values()) {
-			List<String> ff = v.getFormatFields();
-			VcfUtils.addAdditionalSamplesToFormatField(v, Arrays.asList(ff.get(0), Constants.MISSING_DATA_STRING, Constants.MISSING_DATA_STRING));
-		}
-		
-		/*
-		 * for input2 records, add 2 format fields to beginning of format fields
-		 */
-		for (VcfRecord v : input2) {
-			VcfUtils.addMissingDataToFormatFields(v, 1);
-			VcfUtils.addMissingDataToFormatFields(v, 1);
-		}
-	}
+//	private void addMissingFormatFields() {
+//		/*
+//		 * for input1 records, add 2 format fields to the end of the record
+//		 */
+//		for (VcfRecord v : input1.values()) {
+//			List<String> ff = v.getFormatFields();
+//			VcfUtils.addAdditionalSamplesToFormatField(v, Arrays.asList(ff.get(0), Constants.MISSING_DATA_STRING, Constants.MISSING_DATA_STRING));
+//		}
+//		
+//		/*
+//		 * for input2 records, add 2 format fields to beginning of format fields
+//		 */
+//		for (VcfRecord v : input2) {
+//			VcfUtils.addMissingDataToFormatFields(v, 1);
+//			VcfUtils.addMissingDataToFormatFields(v, 1);
+//		}
+//	}
 	
 	
 	private void writeOutput() throws IOException {
