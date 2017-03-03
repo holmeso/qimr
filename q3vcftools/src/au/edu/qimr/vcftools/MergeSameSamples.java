@@ -21,7 +21,7 @@ import org.qcmg.common.util.LoadReferencedClasses;
 import org.qcmg.common.vcf.VcfRecord;
 import org.qcmg.common.vcf.VcfUtils;
 import org.qcmg.common.vcf.header.VcfHeader;
-import org.qcmg.common.vcf.header.VcfHeader.Record;
+import org.qcmg.common.vcf.header.VcfHeaderRecord;
 import org.qcmg.common.vcf.header.VcfHeaderUtils;
 import org.qcmg.vcf.VCFFileReader;
 import org.qcmg.vcf.VCFFileWriter;
@@ -87,13 +87,14 @@ public class MergeSameSamples {
 		
 		Pair<VcfHeader, Rule> pair = MergeUtils.getMergedHeaderAndRules(headers);
 		mergedHeader = null != pair ? pair.getLeft() : null;
-		mergedHeader.addQPGLine(1, exec);
-		mergedHeader.parseHeaderLine(VcfHeaderUtils.CURRENT_FILE_VERSION);
+//		mergedHeader.addOrReplace(1, exec);
+		VcfHeaderUtils.addQPGLine(mergedHeader, 1, exec);
+		mergedHeader.addOrReplace(VcfHeader.CURRENT_FILE_FORMAT);
 		
 		int i = 1; 
 		for (String s : vcfFiles) {
 			logger.info("adding header entry for input " + i + " : " + s);
-			mergedHeader.parseHeaderLine(VcfHeaderUtils.BLANK_HEADER_LINE + i + Constants.COLON + "VCFFileToBeMerged=" + s);
+			mergedHeader.addOrReplace(VcfHeaderUtils.BLANK_HEADER_LINE + i + Constants.COLON + "VCFFileToBeMerged=" + s);
 //			mergedHeader.parseHeaderLine(VcfHeaderUtils.BLANK_HEADER_LINE + "INPUT=" + i + ",FILE=" + s);
 			i++;
 		}
@@ -126,7 +127,7 @@ public class MergeSameSamples {
 		
 		logger.info("writing output [" + recs.size() + " records]");
 		try (VCFFileWriter writer = new VCFFileWriter(new File(outputFileName))) {
-			Iterator<Record> iter =mergedHeader.iterator(); 
+			Iterator<VcfHeaderRecord> iter =mergedHeader.iterator(); 
 			while (iter.hasNext()) {
 				writer.addHeader(iter.next().toString());
 			}
