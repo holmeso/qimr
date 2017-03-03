@@ -87,6 +87,9 @@ public class MergeSameSamples {
 		
 		Pair<VcfHeader, Rule> pair = MergeUtils.getMergedHeaderAndRules(headers);
 		mergedHeader = null != pair ? pair.getLeft() : null;
+		if (null == mergedHeader) {
+			throw new IllegalArgumentException("Null mergedHeader from MergeUtils.getMergedHeaderAndRules");
+		}
 //		mergedHeader.addOrReplace(1, exec);
 		VcfHeaderUtils.addQPGLine(mergedHeader, 1, exec);
 		mergedHeader.addOrReplace(VcfHeader.CURRENT_FILE_FORMAT);
