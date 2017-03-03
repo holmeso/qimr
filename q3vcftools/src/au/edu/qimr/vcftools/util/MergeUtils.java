@@ -396,7 +396,7 @@ public class MergeUtils {
 			 * just got caller 1 data
 			 */
 			mr = getBaseVcfRecordDetails(caller1, caller1.getAlt());
-			moveDataToFormat(caller2, mr.getAlt());
+			moveDataToFormat(caller1, mr.getAlt());
 			/*
 			 * add format fields from caller1 to mr
 			 */
@@ -587,12 +587,14 @@ public class MergeUtils {
 			/*
 			 * remove SOMATIC from info field, and add to format INF subfield
 			 */
-			List<String> formatInfo = new ArrayList<>(rFF.size());
+			List<String> formatInfo = new ArrayList<>(4);
 			formatInfo.add(VcfHeaderUtils.FORMAT_INFO);
 			boolean isSomatic = VcfUtils.isRecordSomatic(r);
 			
-			for (int j = 1 ; j < rFF.size(); j++) {
-				formatInfo.add(isSomatic && ! rFF.get(j).startsWith(Constants.MISSING_DATA_STRING) ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
+			if (null != rFF) {
+				for (int j = 1 ; j < rFF.size(); j++) {
+					formatInfo.add(isSomatic && ! rFF.get(j).startsWith(Constants.MISSING_DATA_STRING) ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
+				}
 			}
 //			formatInfo.add(isSomatic && ! rFF.get(1).startsWith(Constants.MISSING_DATA_STRING) ? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
 //			formatInfo.add(isSomatic && ! rFF.get(2).startsWith(Constants.MISSING_DATA_STRING)? SnpUtils.SOMATIC : Constants.MISSING_DATA_STRING);
