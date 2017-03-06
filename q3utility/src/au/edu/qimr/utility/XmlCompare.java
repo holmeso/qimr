@@ -137,10 +137,9 @@ public class XmlCompare {
 	    {
 	        if( node1 == null && node2 == null )
 	        {
-	            diffs.add( getPath(node2) + ": not exist in both XML" );
+	            diffs.add("Both node1 and node2 are null, not exist in both XML" );
 	            return true;
 	        }
-
 	        if( node1 == null && node2 != null )
 	        {
 	            diffs.add( getPath(node2) + ": not exists in second XML");
