@@ -2,14 +2,11 @@ package au.edu.qimr.vcftools.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -33,188 +30,135 @@ public class MergeUtils {
 	public static final String FORMAT = "FORMAT";
 	private static final QLogger logger = QLoggerFactory.getLogger(MergeUtils.class);
 
-	public static List<String> mergeOtherHeaderRecords(List<VcfHeaderRecord> ...  loloRecs) {
-		if (null == loloRecs || loloRecs.length == 0) {
-			return Collections.emptyList();
-		}
-		
-		AtomicInteger prefix = new AtomicInteger(1);
-		List<String> mergedRecs = new ArrayList<>();
-		Arrays.stream(loloRecs)
-			.filter(list -> list != null && ! list.isEmpty())
-			.forEach(list -> {
-				mergedRecs.addAll(list.stream()
-						.filter(r -> r != null && r.toString() != null)		// shouldn't get balnk header lines any more...
-//						.filter(r -> r != null && r.toString() != null && ! r.toString().equals(VcfHeaderUtils.BLANK_HEADER_LINE))
-						.map(r -> r.toString().replaceAll(Constants.DOUBLE_HASH, Constants.DOUBLE_HASH + prefix.get() + Constants.COLON))
-						.collect(Collectors.toList()));
-				prefix.incrementAndGet();
-			});
-			
-		return mergedRecs;
-	}
-	
-//	public static Map<Integer, Map<String, String>> getRules(Map<String, FormattedRecord> ...  loMaRecs) {
-//		return getHeaderAndRules(Arrays.asList(loMaRecs)).getRight();
-//	}
 	
 	public static Pair<VcfHeader, Rule> getMergedHeaderAndRules(VcfHeader ... headers) {
 		
-		if (canMergeBePerformed(headers)) {
-			VcfHeader mergedHeader = new VcfHeader();
-			List<Map<String, VcfHeaderRecord>> infoHeaders = new ArrayList<>(headers.length);
-			List<Map<String, VcfHeaderRecord>> filterHeaders = new ArrayList<>(headers.length);
-			List<Map<String, VcfHeaderRecord>> formatHeaders = new ArrayList<>(headers.length);
-			List<List<VcfHeaderRecord>> otherHeaders = new ArrayList<>(headers.length);
-			for (VcfHeader h : headers) {
-				infoHeaders.add(h.getInfoRecords().stream().collect(Collectors.toMap(r -> r.getId(), r -> r)));
-				filterHeaders.add(h.getFilterRecords().stream().collect(Collectors.toMap(r -> r.getId(), r -> r)));
-				formatHeaders.add(h.getFormatRecords().stream().collect(Collectors.toMap(r -> r.getId(), r -> r)));
-//				otherHeaders.add(h.getNonStandardRecords().stream().collect(Collectors.toMap(r -> r.getId(), r -> r)));
-			}
-			
-			Pair<List<VcfHeaderRecord>, Map<Integer, Map<String, String>>> infoPair = getHeaderAndRules(infoHeaders);
-			for (VcfHeaderRecord fr : infoPair.getLeft()) {
-				mergedHeader.addOrReplace(fr);
-			}
-			Pair<List<VcfHeaderRecord>, Map<Integer, Map<String, String>>> filterPair = getHeaderAndRules( filterHeaders);
-			for (VcfHeaderRecord fr : filterPair.getLeft()) {
-				mergedHeader.addOrReplace(fr);
-			}
-			Pair<List<VcfHeaderRecord>, Map<Integer, Map<String, String>>> formatPair = getHeaderAndRules(formatHeaders);
-			for (VcfHeaderRecord fr : formatPair.getLeft()) {
-				mergedHeader.addOrReplace(fr);
-			}
-			List<String> mergedOtherRecords = mergeOtherHeaderRecords(otherHeaders.toArray(new List[]{}));
-			for (String s : mergedOtherRecords) {
-				mergedHeader.addOrReplace(s);
-			}
-			
-			/*
-			 * add IN= to 
-			 */
-			logger.info("checking that no existing info lines start with "+Constants.VCF_MERGE_INFO+"= ");
-			if (infoPair.getLeft().contains(Constants.VCF_MERGE_INFO)) {
-				logger.warn("Can't use "+Constants.VCF_MERGE_INFO+"= to mark records as having come from a particular input file - "+Constants.VCF_MERGE_INFO+"= is already in use!");
-			}
-			
-			mergedHeader.addInfo(Constants.VCF_MERGE_INFO, ".","Integer", VcfHeaderUtils.DESCRITPION_MERGE_IN);
-			mergedHeader.addFormat(VcfHeaderUtils.FORMAT_INFO, ".","String", VcfHeaderUtils.FORMAT_INFO_DESCRIPTION);
-			//		 "Indicates which INput file this vcf record came from. Multiple values are allowed which indicate that the record has been merged from more than 1 input file");
-			
-			/*
-			 * make sure SOMATIC has been added, and add the _n entry
-			 */
-			if ( ! infoPair.getLeft().contains(VcfHeaderUtils.INFO_SOMATIC)) {
-				mergedHeader.addInfo(VcfHeaderUtils.INFO_SOMATIC, "0", "Flag", VcfHeaderUtils.INFO_SOMATIC_DESC);
-			}
-//			for (int i = 1 ; i <= headers.length ; i++) {
-//				mergedHeader.addInfoLine(VcfHeaderUtils.INFO_SOMATIC + "_" + i, "0", "Flag", "Indicates that the nth input file considered this record to be somatic. Multiple values are allowed which indicate that more than 1 input file consider this record to be somatic");
-//			}
-			/*
-			 * Build up new CHROM line with the samples updated with the input number appended to them
-			 */
-			StringBuilder sb = new StringBuilder();
-			String [] firstChrLine = headers[0].getChrom().toString().split(Constants.TAB_STRING);
-			/*
-			 * add the first 9 columns to sb
-			 */
-			for (int i = 0 ; i < 9 ; i++) {
-				StringUtils.updateStringBuilder(sb, firstChrLine[i], Constants.TAB);
-			}
-			for (int i = 0 ; i < headers.length ; i++) {
-				String [] array = headers[i].getChrom().toString().split(Constants.TAB_STRING);
-				/*
-				 * add every column after FORMAT to sb, appending the numeric identifier
-				 */
-				boolean go = false;
-				for (String s : array) {
-					if (go) {
-						StringUtils.updateStringBuilder(sb, s + "_" + (i+1), Constants.TAB);
-					}
-					if (FORMAT.equals(s)) {
-						go = true;
-					}
-				}
-			}
-			mergedHeader.addOrReplace(sb.toString());
-//			mergedHeader.parseHeaderLine(sb.toString());
-//			mergedHeader.parseHeaderLine(headers[0].getChrom().toString());
-			
-			Rule r = new Rule(headers.length);
-			for (int i = 0 ; i < headers.length ; i++) {
-				r.setRules(i, filterPair.getRight().get(i), infoPair.getRight().get(i), formatPair.getRight().get(i));
-			}
-			
-			return Pair.of(mergedHeader,  r);
-			
-		} else {
-			logger.warn("Unable to perform merge - please check that the vcf headers contain the same samples in the same order");
-		}
-		return null;
-		
-		
-	}
-	
-	public static List<VcfHeaderRecord> mergeHeaderRecords(Map<String, VcfHeaderRecord> ...  loMaRecs) {
-		return getHeaderAndRules(Arrays.asList(loMaRecs)).getLeft();
-	}
-	
-	public static Pair<List<VcfHeaderRecord>, Map<Integer, Map<String, String>>> getHeaderAndRules(List<Map<String, VcfHeaderRecord> >  loMaRecs) {
-		if (null == loMaRecs || loMaRecs.isEmpty()) {
-			return Pair.of(Collections.emptyList(), Collections.emptyMap());
+		if(!canMergeBePerformed(headers)){			
+			logger.warn("Unable to perform merge - please check that the vcf headers contain the same samples in the same order");			
+			return null;
 		}
 		
-		Map<Integer,Map<String, String>> replacementIds = new HashMap<>(4);
+		/*
+		 * add in qPG lines
+		 */
+		VcfHeader mergedHeader = new VcfHeader();
+		AtomicInteger prefix = new AtomicInteger(1);
+		for (VcfHeader h : headers) {
+			h.getAllMetaRecords().stream()
+			.filter(r -> r.toString().startsWith("##q"))
+			.map(r -> r.toString().replaceAll(Constants.DOUBLE_HASH, Constants.DOUBLE_HASH + prefix.get() + Constants.COLON))
+			.forEach(r -> mergedHeader.addOrReplace(r));
+			prefix.incrementAndGet();
+		}
 		
-		Map<String, VcfHeaderRecord> mergedRecsMap = loMaRecs.get(0);
-		for (int i = 1 ; i < loMaRecs.size() ; i++) {
-			Map<String, VcfHeaderRecord> map = loMaRecs.get(i);
-			for (Entry<String, VcfHeaderRecord> entry : map.entrySet()) {
-				VcfHeaderRecord mergedRec = mergedRecsMap.get(entry.getKey());
-				if (null == mergedRec) {
-					// add
-					mergedRecsMap.put(entry.getKey(), entry.getValue());
-				} else {
-					if (mergedRec.equals(entry.getValue())) {
-						logger.info("Found identical header entry: " + mergedRec.toString());
-					} else if (mergedRec.toString().substring(mergedRec.toString().indexOf("Description="))
-							.equals(entry.getValue().toString().substring(entry.getValue().toString().indexOf("Description=")))) {
-						/*
-						 * Just match on description - ignore type and number for now (ever??)...
-						 */
-						logger.info("Found identical header entry (apart from type, and number): " + mergedRec.toString());
-					} else if (mergedRec.toString().equals(GENOTYPE) || entry.getValue().toString().equals(GENOTYPE)) {
-						/*
-						 * Just match on description - ignore type and number for now (ever??)...
-						 */
-						logger.info("Found identical header entry (apart from type, and number): " + mergedRec.toString());
-					} else {
-						String newId = entry.getKey() + i;
-						String existingRec = entry.getValue().toString();
-						
-						VcfHeaderRecord updatedRec = existingRec.startsWith(VcfHeaderUtils.HEADER_LINE_INFO) ? new VcfHeaderRecord(entry.getValue().toString().replace(entry.getKey(), newId))
-						: existingRec.startsWith(VcfHeaderUtils.HEADER_LINE_FILTER) ? new VcfHeaderRecord(entry.getValue().toString().replace(entry.getKey(), newId))
-						: existingRec.startsWith(VcfHeaderUtils.HEADER_LINE_FORMAT) ? new VcfHeaderRecord(entry.getValue().toString().replace(entry.getKey(), newId))
-						: null;
-						
-						logger.info("bumping id from " + entry.getKey() + " to " + newId + " and adding to map. orig: " + mergedRec + ", updated: " + updatedRec);
-						mergedRecsMap.put(newId, updatedRec);
-						Map<String, String> replacement = replacementIds.get(i);
-						if (null == replacement) {
-							replacement = new HashMap<>();
-							replacementIds.put(i, replacement);
+		Map<String, String> infoRule = new HashMap<>();
+		Map<String, String> formatRule = new HashMap<>(); 
+		Map<String, String> filterRule = new HashMap<>(); 
+		
+		//get Filter, INFO and FORMAT from first header
+		
+		
+		String[] keys = new String[]{VcfHeaderUtils.HEADER_LINE_FILTER, VcfHeaderUtils.HEADER_LINE_FORMAT, VcfHeaderUtils.HEADER_LINE_INFO};
+		for(String key : keys) {
+			for(VcfHeaderRecord re : headers[0].getRecords(key)) { 
+				mergedHeader.addOrReplace(re);	
+			}
+		}
+		
+		for(int i = 1; i < headers.length; i++){
+			for(String key : keys){ 			 
+				for(VcfHeaderRecord re : headers[i].getRecords(key)){
+					VcfHeaderRecord re0 = mergedHeader.getIDRecord(key, re.getId());
+					if(re0 == null ){
+						mergedHeader.addOrReplace(re);
+					}else if(re0.getSubFieldValue("Description").equals(re.getSubFieldValue("Description"))  
+							||  re0.toString().equals(GENOTYPE ) || re.toString() .equals(GENOTYPE )  ){						 
+						 // Just match on description - ignore type and number for now (ever??)...						 
+						logger.info("Found identical header entry (apart from type, and number): " + re0.toString());					 
+							 
+					}else {		
+						String newId =  re.getId() + i;
+						String newRec = ""; //key+"=<";
+						for(Pair<String, String> p: re.getSubFields()) {
+							if(p.getLeft().equals("ID")) {
+								newRec += "," + p.getLeft() + "=" + newId; 
+							} else {
+								newRec += "," + p.getLeft() + "=" + p.getRight(); 
+							}
 						}
-						replacement.put(entry.getKey(), newId);
-					}
+						if (key.equals(VcfHeaderUtils.HEADER_LINE_FILTER)) {
+							filterRule.put(re.getId(), newId);
+						} else if(key.equals(VcfHeaderUtils.HEADER_LINE_FORMAT)) {
+							formatRule.put(re.getId(), newId);
+						} else if(key.equals(VcfHeaderUtils.HEADER_LINE_INFO)) {
+							formatRule.put(re.getId(),  newId);
+						}
+						
+						//remove leading "," and parse to structured meta info line
+						mergedHeader.addOrReplace(key+"=<" + newRec.substring(1) + ">");;					 				
+						logger.info("bumping id from " + re.getId() + " to " + newId + " and adding to new header!");						 
+					}				
 				}
 			}
 		}
 		
-		List<VcfHeaderRecord> mergedRecs = new ArrayList<>(mergedRecsMap.values());
-		return  Pair.of(mergedRecs, replacementIds);
+			
+		/*
+		 * add IN= to 
+		 */
+		logger.info("checking that no existing info lines start with "+Constants.VCF_MERGE_INFO+"= ");
+		if ( mergedHeader.getInfoRecord(Constants.VCF_MERGE_INFO) != null) {
+			logger.warn("Can't use "+Constants.VCF_MERGE_INFO+"= to mark records as having come from a particular input file - "+Constants.VCF_MERGE_INFO+"= is already in use!");
+		}
+		
+		mergedHeader.addInfo(Constants.VCF_MERGE_INFO, ".","Integer", VcfHeaderUtils.DESCRITPION_MERGE_IN);
+		//		 "Indicates which INput file this vcf record came from. Multiple values are allowed which indicate that the record has been merged from more than 1 input file");
+		
+		/*
+		 * make sure SOMATIC has been added, and add the _n entry
+		 */
+		if ( mergedHeader.getInfoRecord(VcfHeaderUtils.INFO_SOMATIC) == null) {
+			mergedHeader.addInfo(VcfHeaderUtils.INFO_SOMATIC, "0", "Flag", VcfHeaderUtils.INFO_SOMATIC_DESC);
+		}
+		mergedHeader.addInfo(VcfHeaderUtils.INFO_SOMATIC + "_n", "0", "Flag", "Indicates that the nth input file considered this record to be somatic. Multiple values are allowed which indicate that more than 1 input file consider this record to be somatic");
+			
+		/*
+		 * Build up new CHROM line with the samples updated with the input number appended to them
+		 */
+		StringBuilder sb = new StringBuilder();
+		String [] firstChrLine = headers[0].getChrom().toString().split(Constants.TAB_STRING);
+		/*
+		 * add the first 9 columns to sb
+		 */
+		for (int i = 0 ; i < 9 ; i++) {
+			StringUtils.updateStringBuilder(sb, firstChrLine[i], Constants.TAB);
+		}
+		for (int i = 0 ; i < headers.length ; i++) {
+			String [] array = headers[i].getChrom().toString().split(Constants.TAB_STRING);
+			/*
+			 * add every column after FORMAT to sb, appending the numeric identifier
+			 */
+			boolean go = false;
+			for (String s : array) {
+				if (go) {
+					StringUtils.updateStringBuilder(sb, s + "_" + (i+1), Constants.TAB);
+				}
+				if (FORMAT.equals(s)) {
+					go = true;
+				}
+			}
+		}
+		mergedHeader.addOrReplace(sb.toString());
+		
+		Rule r = new Rule(headers.length);
+		for (int i = 0 ; i < headers.length ; i++) {
+			r.setRules(i, filterRule, infoRule, formatRule);
+		}
+		
+		return Pair.of(mergedHeader,  r);
+					
 	}
-	
+
 	public static Optional<String> getCombinedAlt(VcfRecord ... recs) {
 		return Optional.ofNullable ( 
 				Arrays.stream(
@@ -536,8 +480,6 @@ public class MergeUtils {
 									.id(records[0].getId()).allele(combinedAlt.get()).build();
 				
 		
- 
-		
 		/*
 		 * Update id, info, filter, and format fields
 		 */
@@ -679,20 +621,6 @@ public class MergeUtils {
 		return mergedRecord;
 	}
 	
-	/*
-	 * Need to be same ChrPosition, ref and alt
-	 */
-//	public static boolean areRecordsEligibleForMerge(VcfRecord ... records) {
-//		if (null == records || records.length == 0) {
-//			return false;
-//		}
-//	
-//		VcfRecord r1 = records[0];
-//		return Arrays.stream(records)
-//			.allMatch(r -> r.equals(r1));
-//		
-//	}
-	
 	/**
 	 * Same sample merge test
 	 * Need headers to contain the same samples in the same order
@@ -716,7 +644,6 @@ public class MergeUtils {
 		/*
 		 * Get sample ids for each header and check that they are the same for each (number and order)
 		 */
-//		boolean doSampleIdsMatch = 
 		return Arrays.stream(headers)
 			.map(header -> header.getSampleId())
 			.allMatch(array -> {

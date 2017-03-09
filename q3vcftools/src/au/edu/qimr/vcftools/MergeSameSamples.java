@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,7 +38,6 @@ public class MergeSameSamples {
 	private int exitStatus;
 	
 	private final Map<ChrPosition, VcfRecord> input1 = new HashMap<>(1024 * 1024 * 8, 0.95f);
-	private final List<VcfRecord> input2 = new ArrayList<>(1024 * 1024);
 	private final List< VcfRecord> mergedRecords = new ArrayList<>(1024 * 1024);
 	
 	
@@ -90,7 +88,6 @@ public class MergeSameSamples {
 		if (null == mergedHeader) {
 			throw new IllegalArgumentException("Null mergedHeader from MergeUtils.getMergedHeaderAndRules");
 		}
-//		mergedHeader.addOrReplace(1, exec);
 		VcfHeaderUtils.addQPGLine(mergedHeader, 1, exec);
 		mergedHeader.addOrReplace(VcfHeaderUtils.CURRENT_FILE_FORMAT);
 		
@@ -98,7 +95,6 @@ public class MergeSameSamples {
 		for (String s : vcfFiles) {
 			logger.info("adding header entry for input " + i + " : " + s);
 			mergedHeader.addOrReplace(VcfHeaderUtils.BLANK_HEADER_LINE + i + Constants.COLON + "VCFFileToBeMerged=" + s);
-//			mergedHeader.parseHeaderLine(VcfHeaderUtils.BLANK_HEADER_LINE + "INPUT=" + i + ",FILE=" + s);
 			i++;
 		}
 	}
