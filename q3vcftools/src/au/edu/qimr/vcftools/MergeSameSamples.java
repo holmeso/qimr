@@ -92,7 +92,7 @@ public class MergeSameSamples {
 		}
 //		mergedHeader.addOrReplace(1, exec);
 		VcfHeaderUtils.addQPGLine(mergedHeader, 1, exec);
-		mergedHeader.addOrReplace(VcfHeader.CURRENT_FILE_FORMAT);
+		mergedHeader.addOrReplace(VcfHeaderUtils.CURRENT_FILE_FORMAT);
 		
 		int i = 1; 
 		for (String s : vcfFiles) {

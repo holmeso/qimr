@@ -58,12 +58,12 @@ public class MergeUtilsTest {
 		h2.addOrReplace(VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE_INCLUDING_FORMAT + "23456", true);
 		assertEquals(false, MergeUtils.canMergeBePerformed(h1, h2));
 		
-		h1.addOrReplace(VcfHeader.STANDARD_FINAL_HEADER_LINE, true);
-		h2.addOrReplace(VcfHeader.STANDARD_FINAL_HEADER_LINE, true);
+		h1.addOrReplace(VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE, true);
+		h2.addOrReplace(VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE, true);
 		assertEquals(false, MergeUtils.canMergeBePerformed(h1, h2));
 		
-		h1.addOrReplace(VcfHeader.STANDARD_FINAL_HEADER_LINE, true);
-		h2.addOrReplace(VcfHeader.STANDARD_FINAL_HEADER_LINE, true);
+		h1.addOrReplace(VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE, true);
+		h2.addOrReplace(VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE, true);
 		assertEquals(false, MergeUtils.canMergeBePerformed(h1, h2));
 		
 		h1.addOrReplace(VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE_INCLUDING_FORMAT + "123456\t789", true);
@@ -152,12 +152,12 @@ public class MergeUtilsTest {
 			assertEquals(0, mergedOtherRecords.size());
 		}		
 		
-		h1.addOrReplace(VcfHeader.STANDARD_SOURCE_LINE+"=", true);	
+		h1.addOrReplace(VcfHeaderUtils.STANDARD_SOURCE_LINE+"=", true);	
 		h1Recs = h1.getAllMetaRecords();
 		mergedOtherRecords = MergeUtils.mergeOtherHeaderRecords(h1Recs, h2Recs);
 		assertEquals(1, mergedOtherRecords.size());
 		
-		h2.addOrReplace(VcfHeader.STANDARD_SOURCE_LINE+"=", true);
+		h2.addOrReplace(VcfHeaderUtils.STANDARD_SOURCE_LINE+"=", true);
 		h2Recs = h2.getAllMetaRecords();
 		mergedOtherRecords = MergeUtils.mergeOtherHeaderRecords(h1Recs, h2Recs);
 		assertEquals(2, mergedOtherRecords.size());
@@ -194,7 +194,7 @@ public class MergeUtilsTest {
 		}
 
 		
-		h1.addOrReplace(VcfHeader.STANDARD_SOURCE_LINE+"=", true);
+		h1.addOrReplace(VcfHeaderUtils.STANDARD_SOURCE_LINE+"=", true);
 		h1Recs = h1.getAllMetaRecords();
 		mergedOtherRecords = MergeUtils.mergeOtherHeaderRecords(h1Recs);
 		assertEquals(1, mergedOtherRecords.size());
@@ -227,7 +227,7 @@ public class MergeUtilsTest {
 		}
 		
 		
-		h1.addOrReplace(VcfHeader.STANDARD_SOURCE_LINE+"=", true);
+		h1.addOrReplace(VcfHeaderUtils.STANDARD_SOURCE_LINE+"=", true);
 		h1Recs = h1.getAllMetaRecords();
 		mergedOtherRecords = MergeUtils.mergeOtherHeaderRecords(h1Recs, h1Recs, h1Recs);
 		assertEquals(3, mergedOtherRecords.size());
@@ -781,10 +781,10 @@ public class MergeUtilsTest {
 		final VcfHeader header = new VcfHeader();
 		final DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		
-		header.addOrReplace(VcfHeader.CURRENT_FILE_FORMAT);		
-		header.addOrReplace(VcfHeader.STANDARD_FILE_DATE + "=" + df.format(Calendar.getInstance().getTime()));		
-		header.addOrReplace(VcfHeader.STANDARD_UUID_LINE + "=" + QExec.createUUid());		
-		header.addOrReplace(VcfHeader.STANDARD_SOURCE_LINE + "=qSNP v2.0 (882)");		
+		header.addOrReplace(VcfHeaderUtils.CURRENT_FILE_FORMAT);		
+		header.addOrReplace(VcfHeaderUtils.STANDARD_FILE_DATE + "=" + df.format(Calendar.getInstance().getTime()));		
+		header.addOrReplace(VcfHeaderUtils.STANDARD_UUID_LINE + "=" + QExec.createUUid());		
+		header.addOrReplace(VcfHeaderUtils.STANDARD_SOURCE_LINE + "=qSNP v2.0 (882)");		
 		
 		header.addOrReplace(VcfHeaderUtils.STANDARD_DONOR_ID + "=");
 		header.addOrReplace(VcfHeaderUtils.STANDARD_CONTROL_SAMPLE + "=" + controlId);		

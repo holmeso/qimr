@@ -193,9 +193,9 @@ public class MergeUtils {
 						String newId = entry.getKey() + i;
 						String existingRec = entry.getValue().toString();
 						
-						VcfHeaderRecord updatedRec = existingRec.startsWith(VcfHeader.HEADER_LINE_INFO) ? new VcfHeaderRecord(entry.getValue().toString().replace(entry.getKey(), newId))
-						: existingRec.startsWith(VcfHeader.HEADER_LINE_FILTER) ? new VcfHeaderRecord(entry.getValue().toString().replace(entry.getKey(), newId))
-						: existingRec.startsWith(VcfHeader.HEADER_LINE_FORMAT) ? new VcfHeaderRecord(entry.getValue().toString().replace(entry.getKey(), newId))
+						VcfHeaderRecord updatedRec = existingRec.startsWith(VcfHeaderUtils.HEADER_LINE_INFO) ? new VcfHeaderRecord(entry.getValue().toString().replace(entry.getKey(), newId))
+						: existingRec.startsWith(VcfHeaderUtils.HEADER_LINE_FILTER) ? new VcfHeaderRecord(entry.getValue().toString().replace(entry.getKey(), newId))
+						: existingRec.startsWith(VcfHeaderUtils.HEADER_LINE_FORMAT) ? new VcfHeaderRecord(entry.getValue().toString().replace(entry.getKey(), newId))
 						: null;
 						
 						logger.info("bumping id from " + entry.getKey() + " to " + newId + " and adding to map. orig: " + mergedRec + ", updated: " + updatedRec);
