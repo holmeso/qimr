@@ -87,9 +87,9 @@ public class VcfCompare {
 			VcfHeader h1 = reader1.getHeader();	    	   
 			inputUuid = (h1.getUUID() == null)? null: h1.getUUID().getMetaValue();  
 			h1.addOrReplace( VcfHeaderUtils.STANDARD_INPUT_LINE  + "=" + inputUuid + ":" + options.getIO(VcfCompareOptions.primaryInput));
-			h1.addOrReplace(VcfHeaderUtils.STANDARD_FILE_DATE + "=" + fileDate);
-			h1.addOrReplace(VcfHeaderUtils.STANDARD_UUID_LINE + "=" + uuid);
-			h1.addOrReplace(VcfHeaderUtils.STANDARD_SOURCE_LINE + "=" + pg+"-"+version);	
+			h1.addOrReplace(VcfHeader.STANDARD_FILE_DATE + "=" + fileDate);
+			h1.addOrReplace(VcfHeader.STANDARD_UUID_LINE + "=" + uuid);
+			h1.addOrReplace(VcfHeader.STANDARD_SOURCE_LINE + "=" + pg+"-"+version);	
 			
 			header = VcfHeaderUtils.mergeHeaders(reader1.getHeader(), reader2.getHeader(), false);
 		}
