@@ -58,7 +58,7 @@ public class ReadGatkIndelsTest {
 	
 	
 	@Test
-	public void appendIndelsTest(){
+	public void mergeIndelsTest(){
 	 
 		try{
 			File[] fs = new File[]{new File(input1), new File(input2)};
