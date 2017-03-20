@@ -2,25 +2,23 @@ package au.edu.qimr.indel.pileup;
 
 import static org.junit.Assert.*;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.After;
-import org.junit.AfterClass;
+
 import org.junit.Before;
-import org.junit.BeforeClass;
+
 import org.junit.Test;
 import org.qcmg.common.log.QLoggerFactory;
 import org.qcmg.common.model.ChrPosition;
 import org.qcmg.common.model.ChrRangePosition;
 import org.qcmg.common.vcf.VcfFormatFieldRecord;
-import org.qcmg.common.vcf.VcfRecord;
-import org.qcmg.common.vcf.header.VcfHeader;
+import org.qcmg.common.vcf.header.*;
+import org.qcmg.common.vcf.header.VcfHeaderRecord;
+import org.qcmg.common.vcf.header.VcfHeaderUtils;
 
 import au.edu.qimr.indel.Main;
 import au.edu.qimr.indel.Q3IndelException;
@@ -50,23 +48,24 @@ public class ReadIndelsTest {
 		//we only deal with indel which is single base on ref or allel
 		//indel size can't be exceed 200
 		try{
-			ReadIndels indelload = new ReadIndels(QLoggerFactory.getLogger(Main.class, null, null));		
-			indelload.LoadIndels(new File(input3), "");				
+			ReadIndels indelload = new ReadIndels( new File[]{new File(input3)});		
+			//indelload.LoadIndels(new File(input3), "");				
 			Map<ChrRangePosition, IndelPosition> positionRecordMap = indelload.getIndelMap();
 			assertTrue(positionRecordMap.size() == 1);
 			 
 			for( ChrPosition key : positionRecordMap.keySet()){
 				IndelPosition indel = positionRecordMap.get(key);
 				assertTrue(indel.getIndelVcfs().size() == 1);
-				indel.getIndelVcf(0).equals("C");
+				assertEquals("C", indel.getIndelVcf(0).getAlt());
 				
 				//check format GT field
 				List<String> format = indel.getIndelVcfs().get(0).getFormatFields();
+				
 				VcfFormatFieldRecord record = new VcfFormatFieldRecord(format.get(0), format.get(1));
-				assertTrue(record.getField("GT").equals("."));
+				assertTrue(record.getField("GT").equals("1/."));
 				
 				record = new VcfFormatFieldRecord(format.get(0), format.get(2));
-				assertTrue(record.getField("GT").equals("."));
+				assertTrue(record.getField("GT").equals("1/1"));
 			}
 
 		}catch(Exception e){
@@ -74,51 +73,7 @@ public class ReadIndelsTest {
 		}		
 	}
 
-	
-	@Test
-	public void appendIndelsTest(){
-		 
-		try{
-			ReadIndels indelload = new ReadIndels(QLoggerFactory.getLogger(Main.class, null, null));		
-			indelload.LoadIndels(new File(input1),"");	
-			assertTrue(getHeaderLineCounts(indelload.getVcfHeader()) == 7);
-			//in case of GATK, take the second sample column
-			indelload.appendTestIndels(new File(input2));
-			assertTrue(getHeaderLineCounts(indelload.getVcfHeader()) == 7);
-			
-			Map<ChrRangePosition, IndelPosition> positionRecordMap = indelload.getIndelMap();
-			assertTrue(positionRecordMap.size() == 3);		
-			for( ChrPosition key : positionRecordMap.keySet()){
-				IndelPosition indel = positionRecordMap.get(key);
-				if(indel.getStart() == 59033287){
-					//merge only
-					assertTrue(indel.getIndelVcf(0).getFormatFields().get(1).equals("0/0:GT/GT:0:0:0:0,0,0"));
-					assertTrue(indel.getIndelVcf(0).getFormatFields().get(2).equals("0/1:GT/G:131,31:162:99:762,0,4864"));
-					assertTrue(indel.getIndelVcf(0).getInfo().equals("SOMATIC1")); //info column from first file
-						 
-				}else if(indel.getStart() == 59033423){	
-					//merge indels but split alleles
-					assertTrue(indel.getIndelVcf(0).getFormatFields().get(1).equals("0/1:T/TC:7,4:11:99:257,0,348"));
- 					assertTrue(indel.getIndelVcf(0).getFormatFields().get(2).equals(".:T/A:7,5:.:.:."));
-					assertTrue(indel.getIndelVcf(1).getFormatFields().get(1).equals(".:.:." ));
-					assertTrue(indel.getIndelVcf(1).getFormatFields().get(2).equals(".:T/A:7,5"));
-					assertTrue(indel.getIndelVcf(0).getInfo().equals("SOMATIC1" )); //info column from first file  
-					assertTrue(indel.getIndelVcf(1).getInfo().equals("SOMATIC" ));  //info column from second file
-				}else if(indel.getStart() == 59033286){
-					//indels only appear on second file,  
-					assertTrue(indel.getIndelVcf(0).getFormatFields().get(2).equals("0/1:GGT/G:131,31:162:99:762,0,4864" )); 
-					assertTrue(indel.getIndelVcf(0).getFormatFields().get(1).equals(".:.:.:.:.:." ));	
-					assertTrue(indel.getIndelVcf(0).getInfo().equals("SOMATIC" )); //info column from second file  
-				}						 
-			}
-
-		}catch(Exception e){
-			System.err.println(Q3IndelException.getStrackTrace(e));
-			assertFalse(true);
-		}
 		
-	}
-	
 	@Test
 	//test different records with same hascode, but hashCode() can change from Java versions
 	public void LoadIndelsTest2()  {
@@ -128,10 +83,11 @@ public class ReadIndelsTest {
 			
 		Support.createVcf(data, input1);
 		
-		ReadIndels indelload = new ReadIndels(QLoggerFactory.getLogger(Main.class, null, null));				
+						
 		try{
+			ReadIndels indelload = new ReadIndels(new File[]{ new File(input1) } );
 			//load single file
-			indelload.LoadIndels(new File(input1), "");	
+//			indelload.LoadIndels(new File(input1), "");	
 			Map<ChrRangePosition, IndelPosition> positionRecordMap = indelload.getIndelMap();
 			assertTrue(positionRecordMap.size() == 2);		
 			
@@ -162,17 +118,16 @@ public class ReadIndelsTest {
 	//load inputs only in case of pindel
 	public void LoadIndelsTest()  {
 		
-	//	createVcf();
-		ReadIndels indelload = new ReadIndels(QLoggerFactory.getLogger(Main.class, null, null));				
-		try{
+		try{			
 			//load single file
-			indelload.LoadIndels(new File(input1),"");	
+			ReadIndels indelload = new ReadIndels( new File[]{ new File(input1) });	//indelload.LoadIndels(new File(input1),"");	
 			assertTrue(getHeaderLineCounts(indelload.getVcfHeader()) == 7);
+						
+			//load two files eg pindel
+			File[] fs = new File[]{new File(input1), new File(input2)};
+			indelload = new ReadIndels( fs);	
+			assertTrue(getHeaderLineCounts(indelload.getVcfHeader()) == 8);	
 			
-			//load second file, in case of pindel
-			indelload.LoadIndels(new File(input2),"");		
-			assertTrue(getHeaderLineCounts(indelload.getVcfHeader()) == 7);
-
 			Map<ChrRangePosition, IndelPosition> positionRecordMap = indelload.getIndelMap();
 			assertTrue(positionRecordMap.size() == 3);		
 			for( ChrPosition key : positionRecordMap.keySet()){
@@ -181,34 +136,37 @@ public class ReadIndelsTest {
 				if(indel.getStart() == 59033423){					
 					assertTrue( indel.getMotif(0).equals("C"));
 					assertTrue( indel.getMotif(1).equals("CG"));
- 					 					
+					 					
 					//check GT:GD  from existing one,  no long overwrite existing one
 					assertTrue(indel.getIndelVcf(0).getFormatFields().get(0).equals("GT:GD:AD:DP:GQ:PL"));
- 					assertTrue(indel.getIndelVcf(0).getFormatFields().get(1).equals("0/1:T/TC:7,4:11:99:257,0,348"));
- 					assertTrue(indel.getIndelVcf(0).getFormatFields().get(2).equals("0/1:T/TC:17,2:19:72:72,0,702"));										
-					assertTrue(indel.getIndelVcf(1).getFormatFields().get(1).equals(".:T/A:7,5"));
-					assertTrue(indel.getIndelVcf(1).getFormatFields().get(2).equals(".:A/TC:9,9"));					
+					assertTrue(indel.getIndelVcf(0).getFormatFields().get(1).equals("0/1:T/TC:7,4:11:99:257,0,348"));
+					assertTrue(indel.getIndelVcf(0).getFormatFields().get(2).equals("0/1:T/TC:17,2:19:72:72,0,702"));	
+					
+					assertTrue(indel.getIndelVcf(1).getFormatFields().get(1).equals("0/.:T/A:7,5"));
+					assertTrue(indel.getIndelVcf(1).getFormatFields().get(2).equals("./.:A/TC:9,9"));		
+					
 				}			
- 			}
-		 		
-			//change inputs order
-			indelload = new ReadIndels(QLoggerFactory.getLogger(Main.class, null, null));	
-			indelload.LoadIndels(new File(input2),"");			
-			assertTrue(getHeaderLineCounts(indelload.getVcfHeader()) == 7);
-			
-			//load second file, in case of pindel
-			indelload.LoadIndels(new File(input1),"");
-			assertTrue(getHeaderLineCounts(indelload.getVcfHeader()) == 8);		
-			
+	 			 			 		
+				//change inputs order
+				fs = new File[]{new File(input2), new File(input1)};
+				assertTrue(getHeaderLineCounts(indelload.getVcfHeader()) == 8);	
+				
+//				indelload = new ReadIndels( null ,fs  );	
+//				indelload.LoadIndels(new File(input2),"");			
+//				assertTrue(getHeaderLineCounts(indelload.getVcfHeader()) == 7);				
+//				//load second file, in case of pindel
+//				indelload.LoadIndels(new File(input1),"");
+				
+			}
 		}catch(Exception e){
 			System.out.println(Q3IndelException.getStrackTrace(e));
 			assertFalse(true);
 		}
 	}
 	
-	private int getHeaderLineCounts(VcfHeader header){
+	static int getHeaderLineCounts(VcfHeader header){
 		int no = 0; 
-		for(final VcfHeader.Record record: header )  
+		for(final VcfHeaderRecord record: header )  
 			no ++;		
 		return no; 		
 	}
@@ -224,15 +182,15 @@ public class ReadIndelsTest {
 				    
 		List<String> head1 = new ArrayList<String>(head);
 		head1.add("##INFO=<ID=SOMATIC1,Number=0,Type=Flag,Description=\"test1\">");       
-		head1.add("#CHROM	POS	ID      REF     ALT     QUAL	FILTER	INFO	FORMAT	S1	S2"); 		
+		head1.add(VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE + "\tFORMAT\tS1\tS2");
 		List<String> data1 = new ArrayList<String>();
 		data1.add("chrY	59033286	.	GT	G	724.73	PASS	SOMATIC1	GT:AD:DP:GQ:PL	0/0:0:0:0:0,0,0	0/1:80,17:97:99:368,0,3028");
 		data1.add("chrY	59033423	.	T	TC	219.73	PASS	SOMATIC1	GT:AD:DP:GQ:PL	0/1:7,4:11:99:257,0,348	0/1:17,2:19:72:72,0,702"); 
 		Support.createVcf(head1, data1, input1);
 		       
 		head1 = new ArrayList<String>(head);
-		head1.add("##PG:\"creating second file\"");
-		head1.add("#CHROM	POS	ID      REF     ALT     QUAL	FILTER	INFO	FORMAT	S1	S2");        
+		head1.add("##PG=\"creating second file\"");
+		head1.add(VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE + "\tFORMAT\tS1\tS2");      
 		data1.clear();        
 		data1.add("chrY	59033285	.	GGT	G	724.73	PASS	SOMATIC	GT:AD:DP:GQ:PL	0/1:131,31:162:99:762,0,4864	0/1:80,17:97:99:368,0,3028");
 		data1.add("chrY	59033286	.	GT	G	724.73	PASS	SOMATIC	GT:AD:DP:GQ:PL	0/1:131,31:162:99:762,0,4864	0/1:80,17:97:99:368,0,3028");

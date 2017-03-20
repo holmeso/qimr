@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.qcmg.common.model.ChrRangePosition;
+import org.qcmg.common.util.Constants;
 import org.qcmg.common.util.IndelUtils;
 import org.qcmg.common.util.IndelUtils.SVTYPE;
+import org.qcmg.common.vcf.VcfFormatFieldRecord;
 import org.qcmg.common.vcf.VcfRecord;
 import org.qcmg.common.vcf.VcfUtils;
 import org.qcmg.common.vcf.header.VcfHeaderUtils;
@@ -227,8 +229,8 @@ public class IndelPosition {
 
 		//set default filter as PASS
 		re.setFilter(VcfHeaderUtils.FILTER_PASS);
-		String td = ".", nd = ".";		
-		List<String> genotypeField =  re.getFormatFields();
+		String td = ".", nd = ".";	
+		
 		if(tumourPileup != null){ 		
 			if(tumourPileup.getTotalCount() > 0)
 			 td = String.format("%d,%d,%d,%d[%d,%d],%d[%d],%d,%d,%d", tumourPileup.getstrongsupportNovelStartReadCount(index),tumourPileup.getTotalCount(),tumourPileup.getInformativeCount(), 
@@ -241,7 +243,7 @@ public class IndelPosition {
 					(100 * tumourPileup.getparticalReadCount(index) / tumourPileup.getTotalCount()) > 10)
 				VcfUtils.updateFilter(re,IndelUtils.FILTER_TPART);
 			if(somatic && tumourPileup.getsuportReadCount(index) >=3 && tumourPileup.hasStrandBias(index, 0.1))
-				VcfUtils.updateFilter(re,IndelUtils.FILTER_TBIAS);
+				VcfUtils.updateFilter(re,IndelUtils.FILTER_TBIAS);			
 		}	
 		
 		//String nd = "ND=0:0:0:0:0:0:0";
@@ -264,14 +266,23 @@ public class IndelPosition {
 				VcfUtils.updateFilter(re,IndelUtils.FILTER_NBIAS);	
 		}
 					 
-		//future job should check GT column	
-		//control always on first column and then test
+		//check GT	
+		//control always on first column and then test, must have control, test	
+		List<String> genotypeField =  re.getFormatFields();	
+		String normal_gt = (genotypeField.size() > 1)? genotypeField.get(1)+ ":" + nd : nd;
+		String tumour_gt =  (genotypeField.size() > 2)? genotypeField.get(2) + ":" + td: td;	
+		
+		if(normal_gt.startsWith(Constants.MISSING_DATA_STRING + Constants.COLON_STRING))
+			normal_gt =  ( normalPileup != null && normalPileup.getTotalCount() > 2 ) ? normal_gt.replaceFirst(".:", "0/0:") : normal_gt.replaceFirst(".:", "./.:");   			
+		if( tumour_gt.startsWith(Constants.MISSING_DATA_STRING + Constants.COLON_STRING) )			 			
+			tumour_gt = (tumourPileup != null && tumourPileup.getTotalCount() > 2 ) ? tumour_gt.replaceFirst(".:", "0/0:") : tumour_gt.replaceFirst(".:", "./.:");   
+			 							
 		List<String> field = new ArrayList<String>();
 		field.add(0,  (genotypeField.size() > 0)? genotypeField.get(0) + ":" + IndelUtils.FORMAT_ACINDEL : IndelUtils.FORMAT_ACINDEL );
-		field.add(1,  (genotypeField.size() > 1)? genotypeField.get(1) + ":" + nd : nd);
-		field.add(2,  (genotypeField.size() > 2)? genotypeField.get(2) + ":" + td: td);					
-		re.setFormatFields(  field); 
-					 
+		field.add(1, normal_gt );
+		field.add(2, tumour_gt );		
+				
+		re.setFormatFields( field ); 					 
 		IndelPileup pileup = (somatic)? tumourPileup: normalPileup; 				
 		
 		if(pileup !=null  && pileup.getstrongsupportNovelStartReadCount(index) < 4)

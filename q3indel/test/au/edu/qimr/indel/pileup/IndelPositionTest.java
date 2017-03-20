@@ -113,7 +113,7 @@ public class IndelPositionTest {
 		 //NBIAS 100 support reads >=3 and one of strand is 0; 
 		 try (VCFFileReader reader = new VCFFileReader(IniFileTest.output)) {				 
 			 for (VcfRecord re : reader)  											
-				if(re.getChromosome().equals("chrY")){	
+				if(re.getChromosome().equals("chrY")){						
 					assertFalse(re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC));
 					assertTrue(re.getFilter().contains(IndelUtils.FILTER_COVN8));
  					assertTrue(re.getFilter().contains(IndelUtils.FILTER_NBIAS)); //germline, strong support 7>=3 and all in one strand
@@ -242,16 +242,17 @@ public class IndelPositionTest {
 		 try (VCFFileReader reader = new VCFFileReader(IniFileTest.output)) {				 
 			 for (VcfRecord re : reader)  											
 				if(re.getChromosome().equals("chrY")){	
-					assertTrue(re.getInfo().contains(VcfHeaderUtils.INFO_SOMATIC));
-					assertTrue(re.getInfo().contains("GATKINFO")); //make sure GATK INFO column still exists
-					assertTrue(re.getFilter().contains(IndelUtils.FILTER_COVN12)); 
-					assertTrue(re.getFilter().contains(IndelUtils.FILTER_MIN)); 
-					assertTrue(re.getFilter().contains(IndelUtils.FILTER_NNS)); 					
-					assertTrue(re.getSampleFormatRecord(1).getField("ACINDEL").equals("1,11,11,1[1,0],1[1],0,10,1"));
-					assertTrue(re.getSampleFormatRecord(2).getField("ACINDEL").equals("2,12,11,3[1,2],4[3],2,4,4"));
- 					assertTrue(re.getInfoRecord().getField(IndelUtils.INFO_NIOC).equals("0.333"));  // 4/12 == 0.333
- 					assertTrue(re.getInfoRecord().getField(IndelUtils.INFO_SSOI).equals("0.273"));  // 3/11 == 0.273 why not 0.272
+					System.out.println( re.toString() );
 					
+					assertTrue( re.getInfo().contains( VcfHeaderUtils.INFO_SOMATIC) );
+					assertTrue( re.getInfo().contains("GATKINFO") ); //make sure GATK INFO column still exists
+					assertTrue( re.getFilter().contains(IndelUtils.FILTER_COVN12) ); 
+					assertTrue( re.getFilter().contains(IndelUtils.FILTER_MIN) ); 
+					assertTrue( re.getFilter().contains(IndelUtils.FILTER_NNS)); 					
+					assertTrue( re.getSampleFormatRecord(1).getField("ACINDEL").equals("1,11,11,1[1,0],1[1],0,10,1") );
+					assertTrue( re.getSampleFormatRecord(2).getField("ACINDEL").equals("2,12,11,3[1,2],4[3],2,4,4") );
+ 					assertTrue( re.getInfoRecord().getField(IndelUtils.INFO_NIOC).equals("0.333") );  // 4/12 == 0.333
+ 					assertTrue( re.getInfoRecord().getField(IndelUtils.INFO_SSOI).equals("0.273") );  // 3/11 == 0.273 why not 0.272					
 				}
 		}	
 		new File(IniFileTest.output).delete();	

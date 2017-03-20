@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.qcmg.common.log.QLogger;
+import org.qcmg.common.log.QLoggerFactory;
 import org.qcmg.common.string.StringUtils;
 import org.qcmg.common.util.Constants;
 import org.qcmg.common.util.IndelUtils;
@@ -33,8 +34,23 @@ public class ReadGatkIndels extends ReadIndels{
 	static final String GATK_FORMAT_PL = VcfHeaderUtils.FORMAT_POSSIBLE_GENOTYPES; //"PL";
 	static final String GATK_FORMAT_GQ = VcfHeaderUtils.FORMAT_GENOTYPE_QUALITY; //"GQ";
 	
+	QLogger logger =  QLoggerFactory.getLogger(ReadGatkIndels.class);
+	public ReadGatkIndels(File[] files) throws IOException{ 
+		super( null);
+		
+		if(files.length > 2) throw new IOException("can't deal with more than two input vcf files (control and test)");
+		if(files[0] != null ){
+			logger.info("loading control gatk vcf file: " + files[0].getAbsolutePath());
+			readFile(files[0], false);			
+		}
+		
+		if(files[1] != null){
+			logger.info("loading test gatk vcf file: " + files[1].getAbsolutePath());
+			readFile(files[1], true);			
+		}
+		
+	}
 	
-	public ReadGatkIndels(QLogger logger) { super(logger); }
 		
 	/**
 	 * 
@@ -55,9 +71,9 @@ public class ReadGatkIndels extends ReadIndels{
         	header = (!isTest)? reader.getHeader(): VcfHeaderUtils.mergeHeaders(header, reader.getHeader(), false);;	        	
          	//no chr in front of position
 			for (final VcfRecord re : reader) {					
-			   inLines ++;				 
+			   inLines ++;		
 	 	       addGenoDetails(re);	
-	 	       String[] alleles = re.getAlt().split(",");
+	 	       String[] alleles = re.getAlt().split(",") ;
 	 	       if(alleles.length > 1) inMultiAltNo ++; //multi allele input variants
 	 	        
 	 	       //keep the first sample column only
@@ -105,24 +121,24 @@ public class ReadGatkIndels extends ReadIndels{
 		
 		//a somatic vcf
 		if(control == null){			 
-			VcfUtils.addMissingDataToFormatFields(test, 1);			
+			VcfUtils.addMissingDataToFormatFields(test, 1);	
+			test.setFilter(ReadIndels.FILTER_SOMATIC);
 			positionRecordMap.put(test, test);								
 			return ; 
 		}		
 		
-		//merge format, here control vcf have only one sample column			
-		VcfUtils.addAdditionalSampleToFormatField(control, test.getSampleFormatRecord(1).toStringList());
+		//merge format, here control vcf have only one sample column	
+		VcfUtils.addAdditionalSampleToFormatField( control, test.getSampleFormatRecord(1).toStringList() );
 
-		//merge INFO AD 		 
+		//merge INFO AD 
 		VcfInfoFieldRecord infoControl = control.getInfoRecord();					
 		for( String key : new String[]{GATK_INFO_AC, GATK_INFO_AN,GATK_INFO_MLEAC, GATK_INFO_DP } ){
 			String value1 =  infoControl.getField(key);
 			String value2 = test.getInfoRecord().getField(key);			
-			if(value1 == null || value2 == null) continue; //missing sub-field			
-			int join = Integer.getInteger(value1) + Integer.getInteger(value2);				
-			infoControl.addField(key, join+"");			 
-		}
-		
+			if(value1 == null || value2 == null) continue; //missing sub-field	
+			int join = Integer.getInteger(value1) + Integer.getInteger(value2);	
+			infoControl.addField(key, join+"");	
+		}		
 	}	
 	
 	/**
@@ -175,22 +191,22 @@ public class ReadGatkIndels extends ReadIndels{
 						 			 	
 		//only deal with 0/1 1,1 and 1/2
 		if(altOrder == 0){     //alt1
-			sFormat[0].replace("2",".").replace("3", ".");
-			sFormat[2] = ( ads.length > 1)?  ads[0] + "," + ads[1] : ".,.";		//ref and alt1	
-			sFormat[5] = ( pls.length > 2)?  pls[0] + "," + pls[1] + "," + pls[2] : ".,.,."; // 00, 01, 11					
+			sFormat[0] = sFormat[0].replace("2",".").replace("3", ".");
+			sFormat[2] = ( ads.length > 1)?  ads[0] + "," + ads[1] : ".";		//ref and alt1	
+			sFormat[5] = ( pls.length > 2)?  pls[0] + "," + pls[1] + "," + pls[2] : "."; // 00, 01, 11					
 		}else if(altOrder == 1){  //alt2
-			sFormat[0].replace("2","1").replace("3", ".").replace("1", "."); 
-			sFormat[2] =  ( ads.length > 2)? ads[0] + "," + ads[2] : ".,.";		//ref and alt2		
-			sFormat[5] = (pls.length > 5)? pls[0] + "," + pls[3] + "," + pls[5] : ".,.,."; // 00, 01, 11								
+			sFormat[0] = sFormat[0].replace("3", ".").replace("1", ".").replace("2","1"); 
+			sFormat[2] =  ( ads.length > 2)? ads[0] + "," + ads[2] : ".";		//ref and alt2		
+			sFormat[5] = (pls.length > 5)? pls[0] + "," + pls[3] + "," + pls[5] : "."; // 00, 01, 11								
 		}else  if(altOrder == 2){ //alt3
-			sFormat[0].replace("3","1").replace("2", ".").replace("1", ".");
-			sFormat[2] =  (ads.length > 3)? ads[0] + "," + ads[3] : ".,.";		//ref and alt2		
-			sFormat[5] = (pls.length > 9)? pls[0] + "," + pls[6] + "," + pls[9] : ".,.,."; // 00, 01, 11
+			sFormat[0] = sFormat[0].replace("2", ".").replace("1", ".").replace("3","1");
+			sFormat[2] =  (ads.length > 3)? ads[0] + "," + ads[3] : ".";		//ref and alt2		
+			sFormat[5] = (pls.length > 9)? pls[0] + "," + pls[6] + "," + pls[9] : "."; // 00, 01, 11
 																	
 		}else{ //can't deal with alleles more than 3
 			sFormat[0] = (sFormat[0].contains("/") ) ? "./." : ".|."; 
-			sFormat[2] = ".,.";
-			sFormat[5] =  ".,.,.";			
+			sFormat[2] = ".";
+			sFormat[5] =  ".";			
 		}
 		//GT:GD:AD:DP:GQ:PL  original DP for total coverage; original GQ for confidence . for confident unsure 
  		
@@ -201,70 +217,5 @@ public class ReadGatkIndels extends ReadIndels{
 		
 		return re1; 
 	}
-		
-	/**
-	 * 
-	 * @param vcf: add Genotyp Details into sample column.
-	 *  eg. ...A T,C.. GT 0/1 1/2, become ...A T,C.. G:GD 0/1:A/T 1/1:T/C
-	*/
-	private void addGenoDetails ( VcfRecord vcf ){	
-		List<String> format = vcf.getFormatFields();
-		if(format == null || format.size() < 2) return ; 
-				
-		//add GD to second field 
-		List<String> gdFormat = new ArrayList<String>();		 
-		for(int i = 1; i < format.size(); i ++){			
-			VcfFormatFieldRecord re = new  VcfFormatFieldRecord(format.get(0), format.get(i));
-			String gd = IndelUtils.getGenotypeDetails(re, vcf.getRef(), vcf.getAlt() );
-			re.setField(1, VcfHeaderUtils.FORMAT_GENOTYPE_DETAILS, gd);			
-			if(i == 1) gdFormat.add(re.getFormatColumnString());
-			gdFormat.add(re.getSampleColumnString());
-		}
-				
-		vcf.setFormatFields(gdFormat);
-	}
 
-	
-//	public void readFirstFile(File first ) throws IOException{		
-//	int indelNew = 0;
-//	int indelDup = 0;
-//	int indelMultiAltNo = 0;
-//	int inLines = 0;
-//	int inMultiAltNo = 0;
-//
-//    try (VCFFileReader reader = new VCFFileReader(first)) {        	 
-//    	header = reader.getHeader();	
-//     	//no chr in front of position
-//
-//		for (final VcfRecord re : reader) {					
-//		   inLines ++;			
-//		   //format data from control, set default as germline
-// 	       re.setFilter(Constants.MISSING_DATA_STRING);
-// 	       addGenoDetails(re);	 	        
-// 	       String[] alleles = re.getAlt().split(",");
-// 	       if(alleles.length > 1) inMultiAltNo ++; //multi allele input variants
-// 	        
-//				for(int i = 0; i < alleles.length; i++){						 					 
-//				SVTYPE type = IndelUtils.getVariantType(re.getRef(), alleles[i]);
-//				if( !type.equals(SVTYPE.DEL) && !type.equals(SVTYPE.INS)) continue; 
-//				
-//				//retrive this single allele indel or split alleles
-//				VcfRecord  vcf1 = ( alleles.length == 1)? re: decomposeVcf(re, alleles[i], i) ;					
-//					if(positionRecordMap.containsKey(vcf1) && (indelDup ++) < errRecordLimit){						
-//						logger.warn("same variants already exsits, this one will be discard:\n" + positionRecordMap.get(vcf1).toString() );
-//						continue; //no overwrite but just warning
-//					}
-//					positionRecordMap.put(vcf1, vcf1);  
-//					indelNew ++;   	 	        	 
-//			}   
-//		}
-//	      }
-//           
-//	//counts from each input
-//	logger.info(indelNew + " indels are found from first input file: " + first.getCanonicalPath());
-//	logger.info(indelMultiAltNo + " indels are split from multi alleles in first input file.");
-//	logger.info(inLines  + " variants record exsits inside first input file.");
-//	logger.info(inMultiAltNo + " variants record with multi Alleles exsits inside first input file.");							    		                
-//}
-	
 }

@@ -4,7 +4,6 @@
 package au.edu.qimr.indel;
 
 import static java.util.Arrays.asList;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,7 +15,6 @@ import org.qcmg.common.log.QLoggerFactory;
 import org.qcmg.common.meta.QExec;
 import org.qcmg.common.string.StringUtils;
 import org.qcmg.common.util.Constants;
-
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
@@ -42,8 +40,6 @@ public class Options {
 	private String log;
 	private String loglevel;
 	public int nearbyIndelWindow = 3;
-//	public int nearbyHomopolymer = 100;
-//	public int nearbyHomopolymerReport = 10;
 	public int softClipWindow = 13;
 	public int threadNo = 5;
 	
@@ -54,7 +50,7 @@ public class Options {
 	
 	private File testVcf;
 	private File controlVcf;
-	private final List<File> pindelVcfs = new ArrayList<File>(); 
+	private File[] pindelVcfs; 
 	private String runMode; 
 	
 	private String testSampleid ;
@@ -64,23 +60,18 @@ public class Options {
 	private int gematic_nns;
 	private float gematic_soi; 
 	private int max_events;
-//	private boolean exdup;
 				
 	private String filterQuery;
 
 	public Options(final String[] args) throws IOException, Q3IndelException  {
 		parser.acceptsAll(asList("h", "help"), HELP_OPTION);
 		parser.acceptsAll(asList("v", "V", "version"), VERSION_OPTION);	
-
 		parser.accepts("log", Messages.getMessage("OPTION_LOG")).withRequiredArg().ofType(String.class);	
 		parser.accepts("loglevel", Messages.getMessage("OPTION_LOGLEVEL")).withRequiredArg().ofType(String.class);
 		parser.accepts("i", Messages.getMessage("OPTION_INI_FILE")).withRequiredArg().ofType(String.class).describedAs("in file ");
-
 		options = parser.parse(args);
 		
-		if(hasHelpOption() || hasVersionOption()){			
-			return; 
-		}
+		if(hasHelpOption() || hasVersionOption()){	return; }
 			
 		log = (String) options.valueOf("log");
 		loglevel = (String) options.valueOf("loglevel");	
@@ -108,15 +99,12 @@ public class Options {
 			controlVcf = getIOFromIni(iniFile, ini_secIOs, "controlVcf");					 			
 		}else if(runMode.equalsIgnoreCase(RUNMODE_DEFAULT)){
 			String[] inputs = iniFile.get(ini_secIOs).getAll("inputVcf",String[].class);
+			this.pindelVcfs = new File[inputs.length];
 			for(int i = 0; i < inputs.length; i ++)
-				pindelVcfs.add(new File(inputs[i]));
+				pindelVcfs[i] = new File(inputs[i]);
 		}
 		
 		nearbyIndelWindow = Integer.parseInt( iniFile.fetch(ini_secParameter, "window.nearbyIndel"));
-//		nearbyHomopolymer = Integer.parseInt( iniFile.fetch(ini_secParameter, "window.homopolymer"));
-//		String[] windows = iniFile.fetch(ini_secParameter, "window.homopolymer").split(",");
-//		nearbyHomopolymer = Integer.parseInt(windows[0]);
-//		nearbyHomopolymerReport = Integer.parseInt(windows[1]);
 		max_events = Integer.parseInt( iniFile.fetch(ini_secParameter, "strong.event"));
 		softClipWindow = Integer.parseInt( iniFile.fetch(ini_secParameter, "window.softClip"));
 		threadNo = Integer.parseInt( iniFile.fetch(ini_secParameter, "threadNo"));
@@ -131,8 +119,6 @@ public class Options {
 		
 		gematic_nns = Integer.parseInt( iniFile.fetch(ini_secRule, "gematic.nns"));
 		gematic_soi = Float.parseFloat( iniFile.fetch(ini_secRule, "gematic.soi"));
-		
-//		exdup  = Boolean.parseBoolean( iniFile.fetch(ini_secRule, "exclude.Duplicates"));
 				 		
   		detectBadOptions();	  		  		
 	}
@@ -144,8 +130,6 @@ public class Options {
 		String f = ini.fetch(parent, child);
 		if( StringUtils.isNullOrEmpty(f) || f.toLowerCase().equals("null"))
 			return null; 
-//		 if( StringUtils.isNullOrEmpty(f))			 
-//			 throw new Q3IndelException("MISSING_PARAMETER", child);
 		
 		 return  new File(f ) ;		 
 	}
@@ -158,10 +142,7 @@ public class Options {
 	public float getMinGematicSupportOfInformative(){return gematic_soi; }
 	public int getMaxEventofStrongSupport(){return  max_events; }
 	
-
-//	public boolean excludeDuplicates() {
-//		return exdup;
-//	}	
+	
 
 	public String getFilterQuery() {
 		return filterQuery;
@@ -224,12 +205,12 @@ public class Options {
 				throw new Q3IndelException("FILE_EXISTS_ERROR","(control gatk vcf) " + controlVcf.getAbsolutePath());
 			 
 		}else if (RUNMODE_DEFAULT.equalsIgnoreCase(runMode)){ 
-			if(pindelVcfs.size() == 0)
+			if( pindelVcfs == null || pindelVcfs.length == 0 )
 				throw new Q3IndelException("INPUT_OPTION_ERROR","(pindel input vcf) not specified" );
 			
-			for(int i = 0; i < pindelVcfs.size(); i ++)
-			if ( pindelVcfs.get(i) != null && ! pindelVcfs.get(i).exists())  
-				throw new Q3IndelException("FILE_EXISTS_ERROR","(control indel vcf) " + pindelVcfs.get(i).getAbsolutePath());				
+			for(int i = 0; i < pindelVcfs.length; i ++)
+				if ( pindelVcfs[i] != null && ! pindelVcfs[i].exists() )  
+					throw new Q3IndelException("FILE_EXISTS_ERROR","(control indel vcf) " + pindelVcfs[i].getAbsolutePath());				
 		}else
 			throw new Q3IndelException("UNKNOWN_RUNMODE_ERROR", runMode);			
 		 				
@@ -261,7 +242,7 @@ public class Options {
 		return controlBam;
 	}	
 	
-	public List<File> getInputVcfs() {		 
+	public File[] getInputVcfs() {		 
 		return pindelVcfs; 
 	}
 	
