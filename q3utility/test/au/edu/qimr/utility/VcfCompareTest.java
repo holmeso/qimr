@@ -60,7 +60,7 @@ public class VcfCompareTest {
 	        final List<String> data = new ArrayList<String>();
 	        data.add("##fileformat=VCFv4.0");
 	        data.add("##fileDate=20150819");
-	        data.add(VcfHeader.STANDARD_UUID_LINE + "=abcd_12345678_xzy_999666333");	        
+	        data.add(VcfHeaderUtils.STANDARD_UUID_LINE + "=abcd_12345678_xzy_999666333");	        
 	        data.add("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tEXTERN-MELA-20140526-102");    
 	        
 	        try(BufferedWriter out = new BufferedWriter(new FileWriter(inputAdditionalName));) {          
@@ -84,11 +84,11 @@ public class VcfCompareTest {
 			
 		try ( VCFFileReader reader = new VCFFileReader(new File(outputName)) ) {  
 			VcfHeader header = reader.getHeader();		
- 			assertTrue(header.getFileFormat().toString().equals(VcfHeader.STANDARD_FILE_FORMAT + "=VCFv4.0"));		
+ 			assertTrue(header.getFileFormat().toString().equals(VcfHeaderUtils.STANDARD_FILE_FORMAT + "=VCFv4.0"));		
 			String fileDate = new SimpleDateFormat("yyyyMMdd").format(Calendar.getInstance().getTime());
-			assertTrue(header.getFileDate().toString().equals(VcfHeader.STANDARD_FILE_DATE + "=" + fileDate));			
- 			assertFalse(header.getUUID().toString().equals(VcfHeader.STANDARD_UUID_LINE + "=abcd_12345678_xzy_999666333"));
-			assertTrue( header.getIDRecord(VcfHeader.HEADER_LINE_INFO,VcfCompareOptions.Info_From) != null);//  header.getInfoRecords().containsKey(VcfCompareOptions.Info_From));
+			assertTrue(header.getFileDate().toString().equals(VcfHeaderUtils.STANDARD_FILE_DATE + "=" + fileDate));			
+ 			assertFalse(header.getUUID().toString().equals(VcfHeaderUtils.STANDARD_UUID_LINE + "=abcd_12345678_xzy_999666333"));
+			assertTrue( header.getIDRecord(VcfHeaderUtils.HEADER_LINE_INFO,VcfCompareOptions.Info_From) != null);//  header.getInfoRecords().containsKey(VcfCompareOptions.Info_From));
 		}
 		
 		//check counts
@@ -126,9 +126,9 @@ public class VcfCompareTest {
 
 	public static void createVcf(String file) throws IOException{
 		final List<String> data = new ArrayList<String>();
-		data.add(VcfHeader.STANDARD_FILE_FORMAT + "=VCFv4.0");
-		data.add(VcfHeader.STANDARD_FILE_DATE  + "=20150819");
-		data.add(VcfHeader.STANDARD_UUID_LINE + "=abcd_12345678_xzy_999666333");
+		data.add(VcfHeaderUtils.STANDARD_FILE_FORMAT + "=VCFv4.0");
+		data.add(VcfHeaderUtils.STANDARD_FILE_DATE  + "=20150819");
+		data.add(VcfHeaderUtils.STANDARD_UUID_LINE + "=abcd_12345678_xzy_999666333");
 		data.add("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tEXTERN-MELA-20140526-102\tEXTERN-MELA-20140526-07");       
 		data.add("chr1\t248845\trs2000390\tC\tT\t2370.26\tPASS\t.\tGT:AD:NNS\t1/1:0,66:52\t1/1:1,74:61");
 		data.add("chr1\t248945\trs11485825\tG\tA\t1469.90\tPASS\t.\tGT:AD:NNS\t1/1:0,38:36\t1/1:0,60:47");
