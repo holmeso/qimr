@@ -349,6 +349,17 @@ public class MergeUtilsTest {
 	}
 	
 	@Test
+	public void getGT() {
+		assertEquals("0/1", MergeUtils.getGT("A", "A", "0/1"));
+		assertEquals("1/1", MergeUtils.getGT("A", "A", "1/1"));
+		assertEquals("0/0", MergeUtils.getGT("A", "A", "0/0"));
+		assertEquals("./.", MergeUtils.getGT("A", "A", "./."));
+		
+		assertEquals("0/1", MergeUtils.getGT("A,C", "A", "0/1"));
+		assertEquals("0/2", MergeUtils.getGT("A,C", "C", "0/1"));
+	}
+	
+	@Test
 	public void mergeRecordInfo() {
 		VcfRecord r1 = new VcfRecord.Builder("1", 100, "ABC").allele("DEF").build();
 		VcfRecord r2 = new VcfRecord.Builder("1", 100, "ABC").allele("DEF").build();
@@ -631,7 +642,7 @@ public class MergeUtilsTest {
 	@Test
 	public void mergeRealLifeData() {
 		VcfRecord v1 = new VcfRecord(new String[]{"chr1","10250",".","A","C",".","PASS","FLANK=CCTAACCCCTA;IN=1","GT:GD:AC:MR:NNS","0/1:A/C:A38[31.42],32[25],C11[27.64],5[36.6]:16:16","0/1:A/C:A75[31.96],57[29.32],C12[35.25],6[38]:18:16"});
-		VcfRecord v2 = new VcfRecord(new String[]{"chr1","10250",".","A","C","43.77","NCIT","C=1;AF=0.500;AN=2;BaseQRankSum=1.026;ClippingRankSum=0.000;DP=12;IN=2;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=29.55;MQ0=0;MQRankSum=-1.026;QD=3.65;ReadPosRankSum=1.026;SOR=0.693","GT:AD:DP:GQ:PL:GD:AC:MR:NNS","0/1:2,2:4:69:72,0,69:A/C:A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:51:44",".:.:.:.:.:.:A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:162:101"});
+		VcfRecord v2 = new VcfRecord(new String[]{"chr1","10250",".","A","C","43.77","NCIT","C=1;AF=0.500;AN=2;BaseQRankSum=1.026;ClippingRankSum=0.000;DP=12;IN=2;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=29.55;MQ0=0;MQRankSum=-1.026;QD=3.65;ReadPosRankSum=1.026;SOR=0.693","GT:AD:DP:GQ:PL:GD:AC:MR:NNS","0/1:2,2:4:69:72,0,69:A/C:A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:51:44","./.:.:.:.:.:.:A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:162:101"});
 		VcfRecord mr = MergeUtils.mergeRecords(null,  v1, v2);
 		
 		assertEquals("chr1", mr.getChromosome());
@@ -654,7 +665,7 @@ public class MergeUtilsTest {
 		assertEquals("0/1:A75[31.96],57[29.32],C12[35.25],6[38]:.:.:PASS:A/C:.:18:16:.", ff.get(2));
 //		GT:AD:DP:GQ:PL:GD:AC:MR:NNS
 		assertEquals("0/1:A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:2,2:4:NCIT:A/C:69:51:44:72,0,69", ff.get(3));
-		assertEquals(".:A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:.:.:NCIT:.:.:162:101:.", ff.get(4));
+		assertEquals("./.:A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:.:.:NCIT:.:.:162:101:.", ff.get(4));
 //		assertEquals("0/1"+VCF_MERGE_DELIM+"0/1:A/C"+VCF_MERGE_DELIM+"A/C:A38[31.42],32[25],C11[27.64],5[36.6]"+VCF_MERGE_DELIM+"A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:16"+VCF_MERGE_DELIM+"51:16"+VCF_MERGE_DELIM+"44:2,2:4:69:72,0,69", ff.get(1));
 ////		0/1:2,2:4:69:72,0,69:A/C:A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:51:44
 //		assertEquals("0/1"+VCF_MERGE_DELIM+".:A/C"+VCF_MERGE_DELIM+".:A75[31.96],57[29.32],C12[35.25],6[38]"+VCF_MERGE_DELIM+"A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:18"+VCF_MERGE_DELIM+"162:16"+VCF_MERGE_DELIM+"101:.:.:.:.", ff.get(2));

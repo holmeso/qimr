@@ -171,7 +171,7 @@ public class MergeUtils {
 	}
 	
 	public static String getGT(String combinedAlts, String myAlts, String currentGT) {
-		if ("0/0".equals(currentGT)) {
+		if ("0/0".equals(currentGT) || Constants.MISSING_GT.equals(currentGT)) {
 			return currentGT;
 		}
 		if (combinedAlts.equals(myAlts)) {
