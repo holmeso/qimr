@@ -137,10 +137,9 @@ public class XmlCompare {
 	    {
 	        if( node1 == null && node2 == null )
 	        {
-	            diffs.add( getPath(node2) + ": not exist in both XML" );
+	            diffs.add("Both node1 and node2 are null, not exist in both XML" );
 	            return true;
 	        }
-
 	        if( node1 == null && node2 != null )
 	        {
 	            diffs.add( getPath(node2) + ": not exists in second XML");
@@ -228,10 +227,10 @@ public class XmlCompare {
 	    public static void main(final String[] args) throws Exception {
 		//	QLogger logger =  options.getLogger(args);		
 			try{    
-				File flog = new File(args[3]);	
+				File flog = new File(args[2]);	
 				
- 				Document doc1 = createDocumentFromFile(new File(args[1]) );
- 				Document doc2 = createDocumentFromFile(new File(args[2]) );
+ 				Document doc1 = createDocumentFromFile(new File(args[0]) );
+ 				Document doc2 = createDocumentFromFile(new File(args[1]) );
  				List<String> diffs = new ArrayList<String>();
  				XmlCompare compare =new XmlCompare();
  				compare.diff( doc1, doc2, diffs );
