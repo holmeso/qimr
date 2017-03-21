@@ -118,7 +118,7 @@ public class ReadGatkIndels extends ReadIndels{
 	 * @return true if this vcf is first time appear
 	 */
 	private void mergeIndel(  VcfRecord control, VcfRecord test){
-		
+
 		//a somatic vcf
 		if(control == null){			 
 			VcfUtils.addMissingDataToFormatFields(test, 1);	
@@ -129,16 +129,18 @@ public class ReadGatkIndels extends ReadIndels{
 		
 		//merge format, here control vcf have only one sample column	
 		VcfUtils.addAdditionalSampleToFormatField( control, test.getSampleFormatRecord(1).toStringList() );
-
+		
 		//merge INFO AD 
-		VcfInfoFieldRecord infoControl = control.getInfoRecord();					
+		VcfInfoFieldRecord infoControl = new VcfInfoFieldRecord(control.getInfo());  ;						
 		for( String key : new String[]{GATK_INFO_AC, GATK_INFO_AN,GATK_INFO_MLEAC, GATK_INFO_DP } ){
-			String value1 =  infoControl.getField(key);
+			String value1 =   control.getInfoRecord().getField(key);
 			String value2 = test.getInfoRecord().getField(key);			
 			if(value1 == null || value2 == null) continue; //missing sub-field	
-			int join = Integer.getInteger(value1) + Integer.getInteger(value2);	
-			infoControl.addField(key, join+"");	
-		}		
+			int join = Integer.parseInt(value1) + Integer.parseInt(value2);	
+			infoControl.setField(key, join+"");	
+		}	
+		control.setInfo(infoControl.toString());
+				
 	}	
 	
 	/**
@@ -150,14 +152,13 @@ public class ReadGatkIndels extends ReadIndels{
 	 * @return new vcf record conatin only current allele. only restore current allele's AC, AF, MLEAC, MLEAF value, only have first sample column
 	 * GT:GQ:DP:PL:AD are updated as well, add GD value to sample column 
 	 */
-	private VcfRecord decomposeVcf(VcfRecord re, String alt, int altOrder){
+	 VcfRecord decomposeVcf(VcfRecord re, String alt, int altOrder){
 		
 		//set current allele
-		VcfRecord re1 = new VcfRecord.Builder(re.getChrPosition(), re.getRef(), alt)
-				.id(re.getId()).qualString(re.getQualString()).build();
+		VcfRecord re1 = new VcfRecord.Builder( re.getChrPosition(), re.getRef(), alt ).id(re.getId()).qualString(re.getQualString()).build();
 		
-		//reset info column 
-		VcfInfoFieldRecord infoRe = re.getInfoRecord();			
+		//will reset the copied info field but not modify the input vcf  
+		VcfInfoFieldRecord infoRe = new VcfInfoFieldRecord(  re.getInfoRecord().toString());	
 		//replace with splited AC and AF for each allel
 		for(String key : new String[]{GATK_INFO_AC, GATK_INFO_AF,GATK_INFO_MLEAC, GATK_INFO_MLEAF  }){
 			String value =  infoRe.getField(key);
@@ -166,9 +167,10 @@ public class ReadGatkIndels extends ReadIndels{
 			if(altOrder > acs.length)
 				logger.warn(key + " value in INFO sub-field is invalid: " + re.toString());
 			else
-				infoRe.setField(key, acs[altOrder]) ;
+				infoRe.setField(key, acs[altOrder]) ;		
 		}
 		re1.setInfo(infoRe.toString()); 
+		
 		
 		List<String> format = re.getFormatFields();
 		
@@ -179,12 +181,15 @@ public class ReadGatkIndels extends ReadIndels{
 		VcfFormatFieldRecord formatRe = new  VcfFormatFieldRecord(format.get(0), re.getFormatFields().get(1));
 		String[] sFormat = new String[6];
 		String[] sKeys = new String[]{ VcfHeaderUtils.FORMAT_GENOTYPE, VcfHeaderUtils.FORMAT_GENOTYPE_DETAILS , VcfHeaderUtils.FORMAT_ALLELIC_DEPTHS,
-				VcfHeaderUtils.FORMAT_READ_DEPTH, VcfHeaderUtils.FORMAT_POSSIBLE_GENOTYPES, VcfHeaderUtils.FORMAT_GENOTYPE_QUALITY } ;
-				 				
-		for( int i = 0; i < 6; i ++){
+				VcfHeaderUtils.FORMAT_READ_DEPTH, VcfHeaderUtils.FORMAT_GENOTYPE_QUALITY , VcfHeaderUtils.FORMAT_POSSIBLE_GENOTYPES} ;
+		
+		//assign PL to . for splitted vcf
+		sFormat[5]	 =  Constants.MISSING_DATA_STRING; 				
+		for( int i = 0; i < 5; i ++){
 			String ff = formatRe.getField( sKeys[i] );
 			sFormat[i] = (StringUtils.isNullOrEmptyOrMissingData(ff)) ? Constants.MISSING_DATA_STRING : ff; 
 		}
+		
 	 
 		String[] ads = sFormat[2].split(",");
 		String[] pls = sFormat[5].split(",");
