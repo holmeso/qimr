@@ -1,6 +1,5 @@
 package au.edu.qimr.indel.pileup;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,9 +18,6 @@ import org.qcmg.common.vcf.VcfRecord;
 import org.qcmg.common.vcf.header.VcfHeader;
 import org.qcmg.common.vcf.header.VcfHeaderUtils;
 import org.qcmg.vcf.VCFFileReader;
-
-
-
 
 public class ReadIndels {
 	static final String FILTER_SOMATIC = "SOMATIC";

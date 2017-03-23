@@ -35,7 +35,7 @@ public class IndelPositionTest {
 	@BeforeClass
 	public static void createInput() {	
 //		IndelPileupTest.createVcf();
-		Support.createGatkVcf(inputIndel);
+		Support.createGatkTest(inputIndel);
 		File vcf = new File(inputIndel);
 		
 		//dodgy fake reference  and index

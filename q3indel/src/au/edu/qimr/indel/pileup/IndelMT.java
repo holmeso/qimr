@@ -219,7 +219,7 @@ public class IndelMT {
 		if(options.getRunMode().equalsIgnoreCase(options.RUNMODE_GATK) )		 
 			this.indelload = new ReadGatkIndels( new File[]{options.getControlInputVcf(), options.getTestInputVcf()});
 		else
-			this.indelload = new ReadGatkIndels( options.getInputVcfs());
+			this.indelload = new ReadIndels( options.getInputVcfs());
 	}
 	
 	/**

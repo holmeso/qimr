@@ -46,9 +46,13 @@ public class ReadGatkIndels extends ReadIndels{
 		
 		if(files[1] != null){
 			logger.info("loading test gatk vcf file: " + files[1].getAbsolutePath());
-			readFile(files[1], true);			
-		}
-		
+			readFile(files[1], true);
+			//check whether control vcf missing second sample column
+			for(VcfRecord vcf : positionRecordMap.values())
+				if(vcf.getSampleFormatRecord(2) == null)
+					VcfUtils.addMissingDataToFormatFields(vcf, 2);
+			
+		}		
 	}
 	
 		
@@ -96,9 +100,11 @@ public class ReadGatkIndels extends ReadIndels{
 					if(!isTest){
 						if(positionRecordMap.containsKey(vcf1) && (indelDup ++) < errRecordLimit)					
 	     					logger.warn("duplicate variants exsits and only keep last one:" + vcf1.toSimpleString());	     							 
-						else
+						else{
 							positionRecordMap.put(vcf1, vcf1);  
+						}
 					}else
+						//here vcf1 only have one sample column
 						mergeIndel(positionRecordMap.get(vcf1), vcf1) ;
 				}   
     		}
@@ -120,7 +126,8 @@ public class ReadGatkIndels extends ReadIndels{
 	private void mergeIndel(  VcfRecord control, VcfRecord test){
 
 		//a somatic vcf
-		if(control == null){			 
+		if(control == null){
+			//input test vcf only contains single sample column
 			VcfUtils.addMissingDataToFormatFields(test, 1);	
 			test.setFilter(ReadIndels.FILTER_SOMATIC);
 			positionRecordMap.put(test, test);								

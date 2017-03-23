@@ -41,8 +41,10 @@ public class Support {
         data.add("@HD	VN:1.0	SO:coordinate");
         data.add("@RG	ID:20140717025441134	SM:eBeads_20091110_CD	DS:rl=50");
         data.add("@PG	ID:qtest::Test	VN:0.2pre");
-        data.add("@SQ	SN:chrY	LN:249250621");
+        data.add("@SQ	SN:chr1	LN:243199373");       
         data.add("@SQ	SN:chr11	LN:243199373");
+        data.add("@SQ	SN:chrY	LN:249250621");
+
         data.add("@CO	create by qcmg.qbamfilter.filter::TestFile");
         data.addAll(data1);		
         String tmp = "tmp.sam";
@@ -70,22 +72,26 @@ public class Support {
 	 * the file only contain four deletions, three on chr11 and one on chrY
 	 * @param vcf: output vcf name
 	 */
-	public static void createGatkVcf(String vcf){	
-		
+	public static void createGatkControl(String vcf){			
         List<String> data = new ArrayList<String>();
-        data.add("chr11	2672739	.	ATT	A	123.86	.	.	GT	0/1"); 
         data.add("chrY	2672735	.	ATT	A	123.86	.	GATKINFO	GT	0/1"); 
         data.add("chr11	2672739	.	ATTC	A	123.86	.	.	GT	0/1"); 
-        data.add("chr11	2672734	.	ATT	A	123.86	.	.	GT	0/1"); 
-        
+        data.add("chr11	2672734	.	ATT	A	123.86	.	.	GT	0/1");         
         createVcf(data, vcf);       
 	}
-	
+	public static void createGatkTest(String vcf){	
+		
+        List<String> data = new ArrayList<String>();
+        data.add("chr1	2672739	.	ATT	A	123.86	.	.	GT	0/1"); 
+        data.add("chr11	2672739	.	ATTC	A	123.86	.	.	GT	0/1"); 
+        data.add("chr11	2672734	.	ATT	A	123.86	.	.	GT	0/1");         
+        createVcf(data, vcf);       
+	}	
+		
 	public static void createVcf( List<String> data1, String output){	
         List<String> data = new ArrayList<String>();
         data.add("##fileformat=VCFv4.1");
-        data.add("#CHROM	POS	ID      REF     ALT     QUAL	FILTER	INFO	FORMAT	S1"); 
-        
+        data.add("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1");         
         createVcf(data, data1,output);		
 	}
 	
@@ -93,14 +99,11 @@ public class Support {
         List<String> data = new ArrayList<String>(header);
         data.addAll(records);
         try( BufferedWriter out = new BufferedWriter(new FileWriter(output ))) {	
-        	for (String line : data)  
-                out.write(line + "\n");	   
-                   	            
+        	for (String line : data)  out.write(line + "\n");                  	            
          }catch(IOException e){
          	System.err.println( Q3IndelException.getStrackTrace(e));	 	        	 
          	Assert.fail("Should not threw a Exception");
-         }  
-		
+         }  		
 	}	
 	
 	

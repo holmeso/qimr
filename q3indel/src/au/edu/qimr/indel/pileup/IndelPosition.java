@@ -296,7 +296,7 @@ public class IndelPosition {
 //		re.appendInfo("SVTYPE=" + this.mutationType.name());
 //		re.appendInfo("END=" + indelEnd);		
 		re.appendInfo( IndelUtils.INFO_SVTYPE + this.mutationType.name() );
-		re.appendId( IndelUtils.INFO_END + indelEnd );		
+//		re.appendId( IndelUtils.INFO_END + indelEnd );		
 		re.appendInfo( VcfHeaderUtils.INFO_MERGE_IN + "=1" );
 					
 		return re; 	

@@ -22,7 +22,7 @@ import au.edu.qimr.indel.Support;
 public class singleModeTest {
 	@BeforeClass
 	public static void createInput() {
-		Support.createGatkVcf(IndelPositionTest.inputIndel);
+		Support.createGatkTest(IndelPositionTest.inputIndel);
 	 List<String> data = new ArrayList<String>();
 	 data.add("ST" + ":a:102\t99\tchrY\t2672601\t60\t10M2D123M2D10M8S\t=\t2673085\t631\tGTAGTTTATATTTCTGTGGGGTCAGTGGTGATATCCCTTTTATTATTTTTTATTGTGTCTTTTTGATTCTTCTCTCTTTTCTTTTTTATTAATCTACCTAGCAGTCTATCTTATTGGGTGTG\t*\tMD:Z:10^TT123^TT10");
 	 Support.createBam(data, IndelPositionTest.normalBAM);

@@ -51,6 +51,7 @@ public class ReadGatkIndelsTest {
 		List<String> data1 = new ArrayList<String>();
 		data1.add("chrY	59033286	.	GT	G	724.73	PASS	SOMATIC1	GT:AD:DP:GQ:PL	0/1:80,17:97:99:368,0,3028");
 		data1.add("chrY	59033423	.	T	TC	219.73	PASS	AC=1;AF=1;AN=1	GT:AD:DP:GQ:PL	0/1:7,4:11:99:257,0,348"); 
+		data1.add("chrY	59033425	.	T	TC	219.73	PASS	AC=1;AF=1;AN=1	GT:AD:DP:GQ:PL	0/1:7,4:11:99:257,0,348");
 		Support.createVcf(head1, data1, input1);
 		       
 		head1 = new ArrayList<String>(head);
@@ -114,7 +115,7 @@ public class ReadGatkIndelsTest {
 			assertTrue(ReadIndelsTest.getHeaderLineCounts(indelload.getVcfHeader()) == 7);				
 						
 			Map<ChrRangePosition, IndelPosition> positionRecordMap = indelload.getIndelMap();
-			assertTrue(positionRecordMap.size() == 3);		
+			assertTrue(positionRecordMap.size() == 4);		
 			for( ChrPosition key : positionRecordMap.keySet()){
 				IndelPosition indel = positionRecordMap.get(key);
 				if(indel.getStart() == 59033286){	//chrY	59033285	.	GGT	G
@@ -137,7 +138,14 @@ public class ReadGatkIndelsTest {
 					assertTrue( indel.getIndelVcf(1).getFormatFields().get(2).equals("./1:TC/TCG:1,5:.:.:."));
 					assertTrue( indel.getIndelVcf(1).getAlt().equals("TCG"));
 					assertTrue( indel.getIndelVcf(1).getInfo().equals("AN=2;AC=1;AF=0.600" ) );  //info column from second file
-				}									
+				}else if(indel.getStart() == 59033425){	
+					//merge indels but split alleles					
+					assertTrue( indel.getIndelVcf(0).getFormatFields().get(1).equals("0/1:T/TC:7,4:11:99:257,0,348"));
+ 					assertTrue( indel.getIndelVcf(0).getFormatFields().get(2).equals(".:.:.:.:.:."));
+ 					assertTrue( indel.getIndelVcf(0).getAlt().equals("TC"));
+ 					assertTrue( indel.getIndelVcf(0).getInfo().equals("AC=1;AF=1;AN=1") ); //info column from first file  
+				}
+				
 			}
 		}catch(Exception e){
 			System.err.println(Q3IndelException.getStrackTrace(e));
