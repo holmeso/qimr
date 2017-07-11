@@ -137,8 +137,6 @@ public class MergeUtilsTest {
 				.map(r -> r.toString().replaceAll("##", "##2:"))
 				.collect(Collectors.toList());
 		
-		
-		
 		assertEquals(true, qRecs.containsAll(qsnpQpgLines));
 		assertEquals(true, gRecs.containsAll(gatkQpgLines));
 	}
@@ -435,54 +433,10 @@ public class MergeUtilsTest {
 		mergedR = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 
-		
 		r1 =  new VcfRecord.Builder("1", 100, "ABC").allele("DEF").id("rs123").build();
 		r2 = new VcfRecord.Builder("1", 100, "ABC").allele("DEF").id("rs456").build();
 		mergedR =  new VcfRecord.Builder("1", 100, "ABC").allele("DEF").id("rs123,rs456").build();
 		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
-		
-		
-//		VcfRecord r1 = VcfUtils.createVcfRecord("1", 0);			 
-//		VcfRecord r2 = VcfUtils.createVcfRecord("1", 0);				 
-//		VcfRecord mergedR = VcfUtils.createVcfRecord("1", 0);			 
-//				
-//		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
-//		
-//		r1 = new VcfRecord.Builder("1", 100, ".").build();
-//		r2 = new VcfRecord.Builder("1", 100, ".").build();
-//		mergedR = new VcfRecord.Builder("1", 100, ".").build();
-//		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
-//		
-//		r1 =new VcfRecord.Builder("1", 100, "ABC").build();
-//		r2 = new VcfRecord.Builder("1", 100, "ABC").build();
-//		mergedR = new VcfRecord.Builder("1", 100, "ABC").build();
-//		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
-//		
-//		r1 = new VcfRecord( new String[] {"1", "100", null, "ABC", "DEF"});
-//		r2 = new VcfRecord( new String[] {"1", "100", null, "ABC", "DEF"});
-//		mergedR = new VcfRecord( new String[] {"1", "100", null, "ABC", "DEF"});
-//		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
-//		
-//		r1 = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
-//		r2 = new VcfRecord( new String[] {"1", "100", null, "ABC", "DEF"});
-//		mergedR = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
-//		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
-//		
-//		r1 = new VcfRecord( new String[] {"1", "100", null, "ABC", "DEF"});
-//		r2 = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
-//		mergedR = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
-//		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
-//		
-//		r1 = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
-//		r2 = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
-//		mergedR = new VcfRecord( new String[] {"1", "100", "rs123", "ABC", "DEF"});
-//		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
-//
-//		
-//		r1 =  new VcfRecord.Builder("1", 100, "ABC").allele("DEF").id("rs123").build();
-//		r2 = new VcfRecord.Builder("1", 100, "ABC").allele("DEF").id("rs456").build();
-//		mergedR =  new VcfRecord.Builder("1", 100, "ABC").allele("DEF").id("rs123,rs456").build();
-//		assertEquals(mergedR, MergeUtils.mergeRecords(null, r1, r2));
 	}
 	
 	@Test
@@ -538,7 +492,6 @@ public class MergeUtilsTest {
 		r2.setFilter("F2");
 		mergedR = MergeUtils.mergeRecords(null, r1, r2);
 		assertEquals(null, mergedR.getFilter());
-//		assertEquals("F1_1;F2_2", mergedR.getFilter());
 	}
 	
 	// TODO should we do anything special when dealing with FILTER? PASS value for example?
@@ -597,20 +550,57 @@ public class MergeUtilsTest {
 		r2.setFormatFields(Arrays.asList("EF:GH:IJ:KL", "3:4:5:6"));
 		mergedR = MergeUtils.mergeRecords(idRules, r1, r2);
 		assertEquals("AB:CD:EF:EF1:GH:IJ:KL\t1:2:3:.:X:.:.\t.:.:.:3:4:5:6", mergedR.getFormatFieldStrings());
-		
 	}
 	
+	@Test
+	public void keepGQandQualFromGATK() {
+		VcfRecord v1 = new VcfRecord(new String[] {"chr1","4985568",".",	"A","C",	".",	"PASS",	"FLANK=ACGTTCCTGCA","GT:GD:OABS:MR:NNS","0/1:A/C:A8[33.75],11[38.82],C3[42],5[40]:8:8","1/1:C/C:A1[37],0[0],C23[38.96],19[41.21]:42:38"});
+		VcfRecord v2 = new VcfRecord(new String[] {"chr1","4985568","rs10753395","A","C","245.77","PASS",".","GT:AD:DP:GQ:PL:GD:OABS:MR:NNS:QL","0/1:18,8:26:99:274,0,686:A/C:A9[33.56],11[38.82],C3[42],5[40],G0[0],1[22],T1[11],0[0]:8:8:235.77","1/1:1,44:45:94:1826,94,0:C/C:A1[37],0[0],C24[38.88],23[40.26]:47:42:245.77"});
+		VcfRecord mr = MergeUtils.mergeRecords(null,  v1, v2);
+		List<String> ff = mr.getFormatFields();
+		Map<String, String[]> ffMap = VcfUtils.getFormatFieldsAsMap(ff);
+		
+		assertEquals(11, ffMap.size());	// 10 in constituent records plus INF
+		assertEquals(true, ffMap.containsKey("QL"));
+		assertEquals(true, ffMap.containsKey("GQ"));
+	}
 	
 	@Test
-	public void whatsHappeningToNNSFormatEntry() {
-		VcfRecord v1 = new VcfRecord(new String[] {"chr1","4985568",".",	"A",	",C",	".",	"PASS",	"FLANK=ACGTTCCTGCA","GT:GD:AC:MR:NNS	0/1:A/C:A8[33.75],11[38.82],C3[42],5[40]:8:8","1/1:C/C:A1[37],0[0],C23[38.96],19[41.21]:42:38"});
-		VcfRecord v2 = new VcfRecord(new String[] {"chr1","4985568","rs10753395","A","C","245.77","PASS","AC=1;AF=0.500;AN=2;BaseQRankSum=0.972;ClippingRankSum=1.139;DB;DP=26;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=60.00;MQ0=0;MQRankSum=-0.472;QD=9.45;ReadPosRankSum=-0.194;SOR=0.693","GT:AD:DP:GQ:PL:GD:AC:MR:NNS","0/1:18,8:26:99:274,0,686:A/C:A9[33.56],11[38.82],C3[42],5[40],G0[0],1[22],T1[11],0[0]:8:8","1/1:1,44:45:94:1826,94,0:C/C:A1[37],0[0],C24[38.88],23[40.26]:47:42"});
+	public void updateAD() {
+		VcfRecord v1 = new VcfRecord(new String[] {"chr1","100",".",	"A","C",	".",	"PASS",	"FLANK=ACGTTCCTGCA","GT:AD:OABS:MR:NNS","0/1:19,8:A8[33.75]11[38.82];C3[42]5[40]:8:8","1/1:1,42:A1[37]0[0];C23[38.96]19[41.21]:42:38"});
+		VcfRecord v2 = new VcfRecord(new String[] {"chr1","100",".","A","C,T","245.77","PASS",".","GT:AD:DP:GQ:PL:OABS:MR:NNS:QL","0/1:18,8,0:26:99:274,0,686:A9[33.56]11[38.82];C3[42]5[40];G0[0]1[22];T1[11]0[0]:8:8:235.77","1/2:1,44,10:45:94:1826,94,0:A1[37]0[0];C24[38.88]23[40.26];T5[]5[]:47:42:245.77"});
 		VcfRecord mr = MergeUtils.mergeRecords(null,  v1, v2);
+		assertEquals("C,T", mr.getAlt());
+		List<String> ff = mr.getFormatFields();
+		Map<String, String[]> ffMap = VcfUtils.getFormatFieldsAsMap(ff);
+		
+		assertEquals(10, ffMap.size());	// 9 in constituent records plus INF
+		assertEquals(true, ffMap.containsKey("QL"));
+		assertEquals(true, ffMap.containsKey("GQ"));
+		assertArrayEquals(new String[]{"0/1","1/1","0/1","1/2"}, ffMap.get("GT"));
+		assertArrayEquals(new String[]{"19,8,0","1,42,0","18,8,0","1,44,10"}, ffMap.get("AD"));
+		
+		/*
+		 * this time, update alt in first record so that GT and AD will need to be changed
+		 */
+		v1 = new VcfRecord(new String[] {"chr1","100",".",	"A","T",	".",	"PASS",	"FLANK=ACGTTCCTGCA","GT:AD:OABS:MR:NNS","0/1:19,8:A8[33.75]11[38.82];T3[42]5[40]:8:8","1/1:1,42:A1[37]0[0];T23[38.96]19[41.21]:42:38"});
+		v2 = new VcfRecord(new String[] {"chr1","100",".","A","C,T","245.77","PASS",".","GT:AD:DP:GQ:PL:OABS:MR:NNS:QL","0/1:18,8:26:99:274,0,686:A9[33.56]11[38.82];C3[42]5[40];G0[0]1[22];T1[11]0[0]:8:8:235.77","1/2:1,44,10:45:94:1826,94,0:A1[37]0[0];C24[38.88]23[40.26];T5[]5[]:47:42:245.77"});
+		mr = MergeUtils.mergeRecords(null,  v1, v2);
+		assertEquals("C,T", mr.getAlt());
+		ff = mr.getFormatFields();
+		ffMap = VcfUtils.getFormatFieldsAsMap(ff);
+			
+		assertEquals(10, ffMap.size());	// 9 in constituent records plus INF
+		assertEquals(true, ffMap.containsKey("QL"));
+		assertEquals(true, ffMap.containsKey("GQ"));
+		String [] gtArray = ffMap.get("GT");
+		assertArrayEquals(new String[]{"0/2","2/2","0/1","1/2"}, gtArray);
+		assertArrayEquals(new String[]{"19,0,8","1,0,42","18,8","1,44,10"}, ffMap.get("AD"));
 	}
 	
 	@Test
 	public void multipleSomatics() {
-		VcfRecord v1 = new VcfRecord(new String[] {"chr1","4985568",".",	"A",	",C",	".",	"PASS",	"FLANK=ACGTTCCTGCA","GT:GD:AC:MR:NNS:INF","0/1:A/C:A8[33.75],11[38.82],C3[42],5[40]:8:8:.","1/1:C/C:A1[37],0[0],C23[38.96],19[41.21]:42:38:SOMATIC"});
+		VcfRecord v1 = new VcfRecord(new String[] {"chr1","4985568",".",	"A",	"C",	".",	"PASS",	"FLANK=ACGTTCCTGCA","GT:GD:AC:MR:NNS:INF","0/1:A/C:A8[33.75],11[38.82],C3[42],5[40]:8:8:.","1/1:C/C:A1[37],0[0],C23[38.96],19[41.21]:42:38:SOMATIC"});
 		VcfRecord v2 = new VcfRecord(new String[] {"chr1","4985568","rs10753395","A","C","245.77","PASS","AC=1;AF=0.500;AN=2;BaseQRankSum=0.972;ClippingRankSum=1.139;DB;DP=26;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=60.00;MQ0=0;MQRankSum=-0.472;QD=9.45;ReadPosRankSum=-0.194;SOR=0.693","GT:AD:DP:GQ:PL:GD:AC:MR:NNS","0/1:18,8:26:99:274,0,686:A/C:A9[33.56],11[38.82],C3[42],5[40],G0[0],1[22],T1[11],0[0]:8:8","1/1:1,44:45:94:1826,94,0:C/C:A1[37],0[0],C24[38.88],23[40.26]:47:42"});
 		VcfRecord mr = MergeUtils.mergeRecords(null,  v1, v2);
 		assertEquals("FLANK=ACGTTCCTGCA;AC=1;AF=0.500;AN=2;BaseQRankSum=0.972;ClippingRankSum=1.139;DB;DP=26;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=60.00;MQ0=0;MQRankSum=-0.472;QD=9.45;ReadPosRankSum=-0.194;SOR=0.693", mr.getInfo());
@@ -650,7 +640,6 @@ public class MergeUtilsTest {
 		assertEquals("A", mr.getRef());
 		assertEquals("C", mr.getAlt());
 		assertEquals(null, mr.getFilter());
-//		assertEquals("PASS_1;NCIT_2", mr.getFilter());
 		Stream.of("FLANK=CCTAACCCCTA","IN=1,2","C=1","AF=0.500","AN=2","BaseQRankSum=1.026","ClippingRankSum=0.000","DP=12","FS=0.000","MLEAC=1","MLEAF=0.500","MQ=29.55","MQ0=0","MQRankSum=-1.026","QD=3.65","ReadPosRankSum=1.026","SOR=0.693")
 			.forEach(s -> assertEquals(true, mr.getInfo().contains(s)));
 		
@@ -660,58 +649,14 @@ public class MergeUtilsTest {
 		 * alphabetisized
 		 */
 		assertEquals("GT:AC:AD:DP:FT:GD:GQ:MR:NNS:PL", ff.get(0));
-//		assertEquals("GT:GD:AC:MR:NNS:INF:AD:DP:GQ:PL", ff.get(0));
 		assertEquals("0/1:A38[31.42],32[25],C11[27.64],5[36.6]:.:.:PASS:A/C:.:16:16:.", ff.get(1));
 		assertEquals("0/1:A75[31.96],57[29.32],C12[35.25],6[38]:.:.:PASS:A/C:.:18:16:.", ff.get(2));
-//		GT:AD:DP:GQ:PL:GD:AC:MR:NNS
 		assertEquals("0/1:A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:2,2:4:NCIT:A/C:69:51:44:72,0,69", ff.get(3));
 		assertEquals("./.:A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:.:.:NCIT:.:.:162:101:.", ff.get(4));
-//		assertEquals("0/1"+VCF_MERGE_DELIM+"0/1:A/C"+VCF_MERGE_DELIM+"A/C:A38[31.42],32[25],C11[27.64],5[36.6]"+VCF_MERGE_DELIM+"A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:16"+VCF_MERGE_DELIM+"51:16"+VCF_MERGE_DELIM+"44:2,2:4:69:72,0,69", ff.get(1));
-////		0/1:2,2:4:69:72,0,69:A/C:A101[29.56],51[27.63],C30[30.83],21[37.29],G1[12],0[0]:51:44
-//		assertEquals("0/1"+VCF_MERGE_DELIM+".:A/C"+VCF_MERGE_DELIM+".:A75[31.96],57[29.32],C12[35.25],6[38]"+VCF_MERGE_DELIM+"A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:18"+VCF_MERGE_DELIM+"162:16"+VCF_MERGE_DELIM+"101:.:.:.:.", ff.get(2));
-//		//.:.:.:.:.:.:A191[31.2],147[27.37],C70[30.29],92[37.47],T0[0],1[37]:162:101
 	}
 	
 	// TODO should we do anything special when dealing with FILTER? PASS value for example? 
 	
-//	@Test
-//	public void recordsEligibleForMergingCPOnly() {
-//		VcfRecord r1 = new VcfRecord("1", 0);
-//		VcfRecord r2 = new VcfRecord("1", 0);
-//		assertEquals(true, MergeUtils.areRecordsEligibleForMerge(r1, r2));
-//		
-//		r1 = new VcfRecord("1", 0);
-//		r2 = new VcfRecord("2", 0);
-//		assertEquals(false, MergeUtils.areRecordsEligibleForMerge(r1, r2));
-//		
-//		r1 = new VcfRecord("2", 1);
-//		r2 = new VcfRecord("2", 0);
-//		assertEquals(false, MergeUtils.areRecordsEligibleForMerge(r1, r2));
-//		
-//		r1 = new VcfRecord("2", 1);
-//		r2 = new VcfRecord("2", 1);
-//		assertEquals(true, MergeUtils.areRecordsEligibleForMerge(r1, r2));
-//	}
-//	@Test
-//	public void recordsEligibleForMerging() {
-//		VcfRecord r1 = new VcfRecord("1", 0);
-//		VcfRecord r2 = new VcfRecord("1", 0);
-//		assertEquals(true, MergeUtils.areRecordsEligibleForMerge(r1, r2));
-//		
-//		r1 = new VcfRecord("1", 0);
-//		r2 = new VcfRecord("2", 0);
-//		assertEquals(false, MergeUtils.areRecordsEligibleForMerge(r1, r2));
-//		
-//		r1 = new VcfRecord("2", 1);
-//		r2 = new VcfRecord("2", 0);
-//		assertEquals(false, MergeUtils.areRecordsEligibleForMerge(r1, r2));
-//		
-//		r1 = new VcfRecord("2", 1);
-//		r2 = new VcfRecord("2", 1);
-//		assertEquals(true, MergeUtils.areRecordsEligibleForMerge(r1, r2));
-//	}
-	
-
 	public List<String> getQsnpGATKVcfHeader() {
 		
 		return Arrays.asList("##fileformat=VCFv4.2",

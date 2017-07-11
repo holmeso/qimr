@@ -167,6 +167,7 @@ public class MergeUtils {
 					.collect(Collectors.joining(Constants.COMMA_STRING))
 				.split(Constants.COMMA_STRING))
 				.distinct()
+				.sorted()
 				.collect(Collectors.joining(Constants.COMMA_STRING)));
 	}
 	
@@ -209,7 +210,7 @@ public class MergeUtils {
 	 * Moves any data that we don't like in the filter and info fields into specific fields in the format column.
 	 * Modifies the VcfRecord supplied as an argument in place, and so is not referentially transparent
 	 */
-	public static void moveDataToFormat(VcfRecord r, String combinedAlt) {
+	public static void moveDataToFormat(VcfRecord r, String combinedAlt, boolean updateAD) {
 		/*
 		 * for info field, we are just looking for SOMATIC
 		 * If this is present, move to the FORMAT-INF field for all samples (assuming that the format
@@ -218,20 +219,6 @@ public class MergeUtils {
 		Map<String, String[]> ffMap = VcfUtils.getFormatFieldsAsMap(ff);
 		int sampleCount = ff.size() -1;
 		if (sampleCount > 0) {
-//			if (VcfUtils.isRecordSomatic(r)) {
-//				/*
-//				 * Check to see if we have an INF entry in the map
-//				 */
-//				String [] infArr = ffMap.computeIfAbsent(VcfHeaderUtils.FORMAT_INFO, k -> new String[sampleCount]);
-//				for (int i = 0 ; i < infArr.length ; i++) {
-//					String s = infArr[i];
-//					if (StringUtils.isNullOrEmptyOrMissingData(s)) {
-//						infArr[i] = VcfHeaderUtils.INFO_SOMATIC;
-//					} else {
-//						infArr[i] += Constants.SEMI_COLON + VcfHeaderUtils.INFO_SOMATIC;
-//					}
-//				}
-//			}
 			
 			/*
 			 * filter field
@@ -251,7 +238,7 @@ public class MergeUtils {
 		}
 		
 		/*
-		 * if the combinedAlts is different from the alt for this record, we may need to update the GT field
+		 * if the combinedAlts is different from the alt for this record, we may need to update the GT field and the AD field
 		 */
 		String aa = r.getAlt();
 		if ( ! aa.equals(combinedAlt)) {
@@ -268,6 +255,23 @@ public class MergeUtils {
 						existingGTs[z] = newGT;
 					}
 				}
+			}
+			
+			if (updateAD) {
+				String[] existingADs = ffMap.get(VcfHeaderUtils.FORMAT_ALLELIC_DEPTHS);
+				String[] oabss = ffMap.get(VcfHeaderUtils.FORMAT_OBSERVED_ALLELES_BY_STRAND);
+				for (int z = 0 ; z < existingADs.length ; z++) {
+					
+					String ad = existingADs[z];
+					if ( ! ad.equals(Constants.MISSING_DATA_STRING)) {
+						String newAD = VcfUtils.getAD(r.getRef(), combinedAlt,oabss[z]);
+						if ( ! newAD.equals(ad)) {
+							existingADs[z] = newAD;
+						}
+					}
+				}
+				
+				ffMap.put(VcfHeaderUtils.FORMAT_GENOTYPE, existingADs);
 			}
 			ffMap.put(VcfHeaderUtils.FORMAT_GENOTYPE, existingGTs);
 		}
@@ -318,7 +322,7 @@ public class MergeUtils {
 			 */
 			mr = getBaseVcfRecordDetails(caller2, caller2.getAlt());
 			mr.setInfo(caller2.getInfo());
-			moveDataToFormat(caller2, mr.getAlt());
+			moveDataToFormat(caller2, mr.getAlt(), false);
 			
 			/*
 			 * add format fields from caller2 to mr
@@ -340,7 +344,7 @@ public class MergeUtils {
 			 * just got caller 1 data
 			 */
 			mr = getBaseVcfRecordDetails(caller1, caller1.getAlt());
-			moveDataToFormat(caller1, mr.getAlt());
+			moveDataToFormat(caller1, mr.getAlt(), true);
 			/*
 			 * add format fields from caller1 to mr
 			 */
@@ -405,8 +409,8 @@ public class MergeUtils {
 				mr.appendInfo(caller2.getInfo(), false);
 			}
 			
-			moveDataToFormat(caller1, mr.getAlt());
-			moveDataToFormat(caller2, mr.getAlt());
+			moveDataToFormat(caller1, mr.getAlt(), true);
+			moveDataToFormat(caller2, mr.getAlt(), false);
 			
 			/*
 			 * add format fields from caller1 to mr
