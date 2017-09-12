@@ -8,6 +8,7 @@ repositories {
 	//jcenter()
 	
 		flatDir {
+			dirs '/Users/oliverh/development/sf/branch/vcf_filter_to_format/adamajava/qcommon/build/lib'
 			dirs '/Users/oliverh/development/sf/trunk/adamajava/lib'
 			dirs '/Users/oliverh/development/sf/trunk/adamajava/qcommon/build/lib'
 			dirs '/Users/oliverh/development/sf/trunk/adamajava/qio/build/lib'
