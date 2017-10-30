@@ -1,4 +1,4 @@
-version = '0.1'
+version = '0.1.1'
 
 def mainclass = 'au.edu.qimr.vcftools.Merge'
 def scriptname = 'q3vcftools'

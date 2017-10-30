@@ -17,6 +17,8 @@ import org.qcmg.common.model.ChrPosition;
 import org.qcmg.common.util.Constants;
 import org.qcmg.common.util.FileUtils;
 import org.qcmg.common.util.LoadReferencedClasses;
+import org.qcmg.common.vcf.ContentType;
+import org.qcmg.common.vcf.VcfFileMeta;
 import org.qcmg.common.vcf.VcfRecord;
 import org.qcmg.common.vcf.VcfUtils;
 import org.qcmg.common.vcf.header.VcfHeader;
@@ -42,6 +44,7 @@ public class MergeSameSamples {
 	
 	
 	private VcfHeader [] headers;
+	private ContentType [] contentTypes;
 	private VcfHeader mergedHeader;
 	
 	protected int engage() throws IOException {
@@ -69,16 +72,26 @@ public class MergeSameSamples {
 	
 	private boolean canHeadersBeMerged() throws IOException {
 		headers = new VcfHeader[vcfFiles.length];
+		contentTypes = new ContentType[vcfFiles.length];
 		try (VCFFileReader reader = new VCFFileReader(new File(vcfFiles[0]))) {
 			headers[0] = reader.getHeader();
+			VcfFileMeta meta = new VcfFileMeta(headers[0]);
+			contentTypes[0] = meta.getType();
 		}
 		try (VCFFileReader reader = new VCFFileReader(new File(vcfFiles[1]))) {
 			headers[1] = reader.getHeader();
+			VcfFileMeta meta = new VcfFileMeta(headers[1]);
+			contentTypes[1] = meta.getType();
 		}
 		boolean canHeadersBeMerged = MergeUtils.canMergeBePerformed(headers);
+		if (canHeadersBeMerged) {
+			/*
+			 * check to see if we have the same content type across the board
+			 */
+			canHeadersBeMerged = (contentTypes[0] == contentTypes[1]);
+		}
 		logger.info("canHeadersBeMerged: " + canHeadersBeMerged);
 		return canHeadersBeMerged;
-		
 	}
 
 	private void loadVcfHeaders() throws IOException {
@@ -176,8 +189,8 @@ public class MergeSameSamples {
 					/*
 					 * add missing format columns to rec
 					 */
-					VcfUtils.addMissingDataToFormatFields(rec, 1);
-					VcfUtils.addMissingDataToFormatFields(rec, 1);
+					VcfUtils.addMissingDataToFormatFields(rec, 1, ContentType.multipleSamples(contentTypes[0]) ? 2 : 1);
+//					VcfUtils.addMissingDataToFormatFields(rec, 1);
 					mergedRecords.add(MergeUtils.mergeRecords(null, rec));
 				}
 			}
@@ -188,8 +201,8 @@ public class MergeSameSamples {
 			 */
 //			List<String> ff = rec.getFormatFields();
 //			VcfUtils.addAdditionalSamplesToFormatField(rec, Arrays.asList(ff.get(0), Constants.MISSING_DATA_STRING, Constants.MISSING_DATA_STRING));
-			VcfUtils.addMissingDataToFormatFields(rec, 3);
-			VcfUtils.addMissingDataToFormatFields(rec, 3);
+			int position = ContentType.multipleSamples(contentTypes[0]) ? 3 : 2;
+			VcfUtils.addMissingDataToFormatFields(rec, position, ContentType.multipleSamples(contentTypes[0]) ? 2 : 1);
 			mergedRecords.add(MergeUtils.mergeRecords(null, rec));
 		}
 		logger.info("input2 has " + i + " entries");

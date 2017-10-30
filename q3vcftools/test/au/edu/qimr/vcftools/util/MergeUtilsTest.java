@@ -661,7 +661,6 @@ public class MergeUtilsTest {
 		
 		return Arrays.asList("##fileformat=VCFv4.2",
 "##fileDate=20151211",
-"##",
 "##qUUID=fe8cd25c-2ef2-45c3-aec3-d7b6f08c73c9",
 "##qSource=qSNP v2.0 (882)",
 "##qDonorId=OESO-0138",
@@ -679,7 +678,6 @@ public class MergeUtilsTest {
 "##qTestVcfUUID=null",
 "##qTestVcfGATKVersion=3.3-0-g37228af",
 "##qPG=<ID=1,Tool=qsnp,Version=2.0 (882),Date=2015-12-11 03:16:18,CL=\"qsnp -i /mnt/genomeinfo_projects/analysis/8/0/80bd9224-abf8-4265-858e-007b67bb2c42/80bd9224-abf8-4265-858e-007b67bb2c42.ini -log /mnt/genomeinfo_projects/analysis/8/0/80bd9224-abf8-4265-858e-007b67bb2c42/80bd9224-abf8-4265-858e-007b67bb2c42.log [runMode: vcf]\">",
-"##",
 "##INFO=<ID=AC,Number=A,Type=Integer,Description=\"Allele count in genotypes, for each ALT allele, in the same order as listed\">",
 "##INFO=<ID=MQRankSum,Number=1,Type=Float,Description=\"Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities\">",
 "##INFO=<ID=MQ,Number=1,Type=Float,Description=\"RMS Mapping Quality\">",
@@ -732,7 +730,6 @@ public class MergeUtilsTest {
 	public List<String> getQsnpVcfHeader() {
 		return Arrays.asList("##fileformat=VCFv4.2",
 "##fileDate=20151209",
-"##",
 "##qUUID=48867781-d540-467c-9cd9-45049488b90b",
 "##qSource=qSNP v2.0 (882)",
 "##qDonorId=OESO-0132",
@@ -744,7 +741,6 @@ public class MergeUtilsTest {
 "##qTestBamUUID=null",
 "##qAnalysisId=cebce2b6-dc2d-4be6-9bcb-ae097ddc221f",
 "##qPG=<ID=1,Tool=qsnp,Version=2.0 (882),Date=2015-12-09 11:36:25,CL=\"qsnp -i /mnt/genomeinfo_projects/analysis/c/e/cebce2b6-dc2d-4be6-9bcb-ae097ddc221f/cebce2b6-dc2d-4be6-9bcb-ae097ddc221f.ini -log /mnt/genomeinfo_projects/analysis/c/e/cebce2b6-dc2d-4be6-9bcb-ae097ddc221f/cebce2b6-dc2d-4be6-9bcb-ae097ddc221f.log [runMode: standard]\">",
-"##",
 "##INFO=<ID=FLANK,Number=1,Type=String,Description=\"Flanking sequence either side of variant\">",
 "##FILTER=<ID=COVN8,Description=\"Less than 8 reads coverage in normal\">",
 "##FILTER=<ID=NCIT,Description=\"No call in test\">",
