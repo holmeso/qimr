@@ -5,9 +5,11 @@ def scriptname = 'genomiqatools'
 def isExecutable = true
 
 repositories {
+	flatDir {
 			dirs '/home/genomelocal/devel/adamajava/adamajava/adama/build/lib'
 			dirs '/home/genomelocal/devel/adamajava/adamajava/lib'
 			dirs '../lib'
+			}
 }
 
 dependencies {
@@ -19,7 +21,7 @@ dependencies {
 
 jar.doFirst {
 
-  def classpath = configurations.runtime.collect { it.name }.join(' ')
+   def classpath = configurations.runtime.collect { it.name }.join(' ')
   jar {
      manifest {
         attributes 'Implementation-Title': project.name,
