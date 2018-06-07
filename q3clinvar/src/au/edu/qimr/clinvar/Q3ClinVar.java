@@ -63,9 +63,7 @@ import org.qcmg.common.util.Pair;
 import org.qcmg.common.util.TabTokenizer;
 import org.qcmg.common.vcf.VcfRecord;
 import org.qcmg.common.vcf.VcfUtils;
-import org.qcmg.common.vcf.header.VcfHeader;
-import org.qcmg.common.vcf.header.VcfHeader.Record;
-import org.qcmg.common.vcf.header.VcfHeaderUtils;
+import org.qcmg.common.vcf.header.*;
 import org.qcmg.tab.TabbedFileReader;
 import org.qcmg.tab.TabbedHeader;
 import org.qcmg.tab.TabbedRecord;
@@ -85,7 +83,8 @@ public class Q3ClinVar {
 	
 	
 	private static final int TILE_SIZE = 13;
-	private static String[] fastqFiles;
+	private static List<String> fastqR1Files;
+	private static List<String> fastqR2Files;
 	private static String version;
 	private QExec qexec;
 	private String logFile;
@@ -360,10 +359,11 @@ public class Q3ClinVar {
 	private void readFastqFiles() {
 		int fastqCount = 0;
 		// read in a fastq file and lets see if we get some matches
-		int noOFFastqFiles = fastqFiles.length;
-		for (int i = 0 ; i < noOFFastqFiles / 2 ; i++) {
-			try (FastqReader reader1 = new FastqReader(new File(fastqFiles[i * 2]));
-					FastqReader reader2 = new FastqReader(new File(fastqFiles[(i * 2) + 1]));) {
+		for (int i = 0 ; i < fastqR1Files.size() ; i++) {
+			String r1 = fastqR1Files.get(i);
+			String r2 = fastqR2Files.get(i);
+			try (FastqReader reader1 = new FastqReader(new File(r1));
+					FastqReader reader2 = new FastqReader(new File(r2));) {
 				
 				for (FastqRecord rec : reader1) {
 					FastqRecord rec2 = reader2.next();
@@ -894,8 +894,12 @@ public class Q3ClinVar {
 		
 		try (FileWriter writer = new FileWriter(new File(outputFileNameBase + "amplicon_performance.csv" ))) {
 			writer.write("#amplicon manifest file: " + xmlFile + Constants.NEW_LINE);
-			writer.write("#fastq r1 file: " + fastqFiles[0] + Constants.NEW_LINE);
-			writer.write("#fastq r2 file: " + fastqFiles[1] + Constants.NEW_LINE);
+			for (int i = 0 ; i < fastqR1Files.size() ; i++) {
+				String r1 = fastqR1Files.get(i);
+				String r2 = fastqR2Files.get(i);
+				writer.write("#fastq r1 file: " + r1 + Constants.NEW_LINE);
+				writer.write("#fastq r2 file: " + r2 + Constants.NEW_LINE);
+			}
 			writer.write("#Number of fastq records: " + fastqRecordCount + Constants.NEW_LINE);
 			writer.write("#Number of amplicons: " + probeSet.size() + Constants.NEW_LINE);
 			writer.write("#\n");
@@ -1200,31 +1204,6 @@ public class Q3ClinVar {
 		List<VcfRecord> sortedPositions = new ArrayList<>(mutations.keySet());
 		Collections.sort(sortedPositions);
 		
-//		String outputFileName = filter ?  outputDir+".mutations.filtered.csv" : outputDir+".mutations.csv";
-//		try (FileWriter writer = new FileWriter(new File(outputFileName))) {
-//			writer.write("chr,position,ref,alt,probe_id,probe_total_reads,probe_total_frags,bin_id,bin_record_count" );
-//			writer.write("\n");
-//			
-//			
-//			for (VcfRecord vcf : sortedPositions) {
-//				List<Pair<Probe, Bin>> list = mutations.get(vcf);
-//				for (Pair<Probe, Bin> pair : list) {
-//					Probe p = pair.getLeft();
-//					Bin b = pair.getRight();
-//					// get some probe stats
-//					
-//					//loop through fmps and for this probe, get number that have frags, and number that don't
-//					IntPair ip = probeReadCountMap.get(p);
-//					int totalReads = ip.getInt1();
-//					int totalFrags = ip.getInt2();
-//					writer.write(vcf.getChromosome() + "," + vcf.getPosition() + "," + vcf.getRef() + "," + vcf.getAlt() + "," + p.getId() + "," + totalReads + "," + totalFrags + "," + b.getId() + "," + b.getRecordCount());
-//					writer.write("\n");
-//				}
-//			}
-//			writer.flush();
-//		}
-		
-		
 		logger.info("pre-rollup no of mutations: " + mutations.size());
 		
 		rollupMutations();
@@ -1235,25 +1214,29 @@ public class Q3ClinVar {
 		Collections.sort(sortedPositions);
 		logger.info("no of vcf positions for vcf file: " + sortedPositions.size());
 		
+		final VcfHeader header = new VcfHeader();	
+		final DateFormat df = new SimpleDateFormat("yyyyMMdd");
+		header.addOrReplace( VcfHeaderUtils.CURRENT_FILE_FORMAT);
+		header.addOrReplace( VcfHeaderUtils.STANDARD_FILE_DATE + "=" + df.format(Calendar.getInstance().getTime()));	
+		header.addOrReplace( VcfHeaderUtils.STANDARD_UUID_LINE + "=" + QExec.createUUid());
+		header.addOrReplace( VcfHeaderUtils.STANDARD_SOURCE_LINE + "=q3ClinVar");		 	
+		header.addFormat("BB", ".","String","Breakdown of Bins containing more than 1 read at this position in the following format: Base,NumberOfReadsSupportingBase,NumberOfAmplicons/NumberOfBins.... "
+				+ "NOTE that only bins with number of reads greater than " + minBinSize + " will be shown here");
+		header.addOrReplace( VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE_INCLUDING_FORMAT);
+		
+		
+		
+		//make a new header
+		
+		
 		String outputFileName = filter ?  outputFileNameBase+"vcf" : outputFileNameBase+"diag.unfiltered.vcf";
 		try (VCFFileWriter writer = new VCFFileWriter(new File(outputFileName))) {
 			
 			/*
 			 * Setup the VcfHeader
-			 */
-			final DateFormat df = new SimpleDateFormat("yyyyMMdd");
-			VcfHeader header = new VcfHeader();
-			header.parseHeaderLine(VcfHeaderUtils.CURRENT_FILE_VERSION);		
-			header.parseHeaderLine(VcfHeaderUtils.STANDARD_FILE_DATE + "=" + df.format(Calendar.getInstance().getTime()));		
-			header.parseHeaderLine(VcfHeaderUtils.STANDARD_UUID_LINE + "=" + QExec.createUUid());		
-			header.parseHeaderLine(VcfHeaderUtils.STANDARD_SOURCE_LINE + "=q3ClinVar");		
-			header.addFormatLine("BB", ".","String","Breakdown of Bins containing more than 1 read at this position in the following format: Base,NumberOfReadsSupportingBase,NumberOfAmplicons/NumberOfBins.... "
-					+ "NOTE that only bins with number of reads greater than " + minBinSize + " will be shown here");
-			header.parseHeaderLine(VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE_INCLUDING_FORMAT);
-			
-			Iterator<Record> iter = header.iterator();
-			while (iter.hasNext()) {
-				writer.addHeader(iter.next().toString() );
+			 */			
+			for(VcfHeaderRecord re : header){
+				writer.addHeader(re.toString() );
 			}
 			
 			for (VcfRecord vcf : sortedPositions) {
@@ -1274,27 +1257,17 @@ public class Q3ClinVar {
 				writer.add(vcf);
 			}
 		}
-		
+
 		outputFileName = filter ?  outputFileNameBase+"diag.detailed.vcf" : outputFileNameBase+"diag.unfiltered_detailed.vcf";
 		try (VCFFileWriter writer = new VCFFileWriter(new File(outputFileName))) {
 			
 			/*
 			 * Setup the VcfHeader
 			 */
-			final DateFormat df = new SimpleDateFormat("yyyyMMdd");
-			VcfHeader header = new VcfHeader();
-			header.parseHeaderLine(VcfHeaderUtils.CURRENT_FILE_VERSION);		
-			header.parseHeaderLine(VcfHeaderUtils.STANDARD_FILE_DATE + "=" + df.format(Calendar.getInstance().getTime()));		
-			header.parseHeaderLine(VcfHeaderUtils.STANDARD_UUID_LINE + "=" + QExec.createUUid());		
-			header.parseHeaderLine(VcfHeaderUtils.STANDARD_SOURCE_LINE + "=q3ClinVar");		
-			header.addFormatLine("BB", ".","String","Breakdown of Bins containing more than 1 read at this position in the following format: Base,NumberOfReadsSupportingBase,AmpliconID/BinID(# of reads in bin),AmpliconID/BinID(# of reads in bin).... "
-					+ "NOTE that only bins with number of reads greater than " + minBinSize + " will be shown here");
-			header.parseHeaderLine(VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE_INCLUDING_FORMAT);
-			
-			Iterator<Record> iter = header.iterator();
-			while (iter.hasNext()) {
-				writer.addHeader(iter.next().toString() );
+			for(VcfHeaderRecord re : header){
+				writer.addHeader(re.toString() );
 			}
+						
 			
 			for (VcfRecord vcf : sortedPositions) {
 				/*
@@ -1440,8 +1413,12 @@ public class Q3ClinVar {
 		// logging and writing to file
 		Element amplicons = new Element("Amplicons");
 		amplicons.addAttribute(new Attribute("amplicon_file", xmlFile));
-		amplicons.addAttribute(new Attribute("fastq_file_1", fastqFiles[0]));
-		amplicons.addAttribute(new Attribute("fastq_file_2", fastqFiles[1]));
+		for (int i = 0 ; i < fastqR1Files.size() ; i++) {
+			String r1 = fastqR1Files.get(i);
+			String r2 = fastqR2Files.get(i);
+			amplicons.addAttribute(new Attribute("fastq_1", r1));
+			amplicons.addAttribute(new Attribute("fastq_2", r2));
+		}
 		
 		for (Probe p : probeSet) {
 			
@@ -1677,8 +1654,12 @@ public class Q3ClinVar {
 		// logging and writing to file
 		Element amplicons = new Element("Amplicons");
 		amplicons.addAttribute(new Attribute("amplicon_file", xmlFile));
-		amplicons.addAttribute(new Attribute("fastq_file_1", fastqFiles[0]));
-		amplicons.addAttribute(new Attribute("fastq_file_2", fastqFiles[1]));
+		for (int i = 0 ; i < fastqR1Files.size() ; i++) {
+			String r1 = fastqR1Files.get(i);
+			String r2 = fastqR2Files.get(i);
+			amplicons.addAttribute(new Attribute("fastq_file_1", r1));
+			amplicons.addAttribute(new Attribute("fastq_file_2", r2));
+		}
 		
 		for (Probe p : probeSet) {
 			Element fragments = createAmpliconElement(amplicons, p);
@@ -1796,7 +1777,7 @@ public class Q3ClinVar {
 		} else if (options.hasVersionOption()) {
 			System.err.println(Messages.getVersionMessage());
 			returnStatus = 0;
-		} else if (options.getFastqs().length < 1) {
+		} else if (options.getFastqsR1().isEmpty()) {
 			System.err.println(Messages.USAGE);
 		} else {
 			// configure logging
@@ -1806,14 +1787,15 @@ public class Q3ClinVar {
 			qexec = logger.logInitialExecutionStats("q3clinvar", version, args, options.getUUID().orElse(null));
 			
 			// get list of file names
-			fastqFiles = options.getFastqs();
-			if (fastqFiles.length < 1) {
+			fastqR1Files = options.getFastqsR1();
+			fastqR2Files = options.getFastqsR2();
+			if (fastqR1Files.isEmpty() || fastqR1Files.size() != fastqR2Files.size()) {
 				throw new Exception("INSUFFICIENT_ARGUMENTS");
 			} else {
 				// loop through supplied files - check they can be read
-				for (int i = 0 ; i < fastqFiles.length ; i++ ) {
-					if ( ! FileUtils.canFileBeRead(fastqFiles[i])) {
-						throw new Exception("INPUT_FILE_ERROR: "  +  fastqFiles[i]);
+				for (String f : fastqR1Files) {
+					if ( ! FileUtils.canFileBeRead(f)) {
+						throw new Exception("INPUT_FILE_ERROR: "  +  f);
 					}
 				}
 			}
