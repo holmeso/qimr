@@ -14,6 +14,7 @@ import java.util.List;
 
 import junit.framework.Assert;
 
+import org.qcmg.common.vcf.header.VcfHeaderUtils;
 import org.qcmg.picard.SAMFileReaderFactory;
 import org.qcmg.picard.SAMOrBAMWriterFactory;
 
@@ -23,16 +24,21 @@ public class Support {
 	
 	 
 	public static void clear() throws IOException {
-		File dir = new java.io.File( "." ).getCanonicalFile();		
-		for(File f: dir.listFiles())
-		    if(  f.getName().endsWith(".ini")  || f.getName().endsWith(".vcf")  ||  f.getName().endsWith(".bam") ||
-		    		f.getName().endsWith(".sam") ||  f.getName().endsWith(".bai")  || f.getName().endsWith(".fai") )
-		        f.delete();	
+		File dir = new java.io.File( "." ).getCanonicalFile();
+		File[] files =dir.listFiles();
+		if (null != files) {
+			for(File f : files) {
+			    if(  f.getName().endsWith(".ini")  || f.getName().endsWith(".vcf")  ||  f.getName().endsWith(".bam") ||
+			    		f.getName().endsWith(".sam") ||  f.getName().endsWith(".bai")  || f.getName().endsWith(".fai") ) {
+			        f.delete();	
+			    }
+			}
+		}
 		
 	}
 	
 	public static void createBam( List<String> data1, String output) {
-        List<String> data = new ArrayList<String>();
+        List<String> data = new ArrayList<>();
         data.add("@HD	VN:1.0	SO:coordinate");
         data.add("@RG	ID:20140717025441134	SM:eBeads_20091110_CD	DS:rl=50");
         data.add("@PG	ID:qtest::Test	VN:0.2pre");
@@ -68,6 +74,7 @@ public class Support {
 	public static void createGatkVcf(String vcf){	
 		
         List<String> data = new ArrayList<String>();
+        data.add(VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE_INCLUDING_FORMAT+"s1");
         data.add("chr11	2672739	.	ATT	A	123.86	.	.	GT	0/1"); 
         data.add("chrY	2672735	.	ATT	A	123.86	.	GATKINFO	GT	0/1"); 
         data.add("chr11	2672739	.	ATTC	A	123.86	.	.	GT	0/1"); 
@@ -77,20 +84,19 @@ public class Support {
 	}
 	
 	public static void createVcf( List<String> data1, String output){	
-        List<String> data = new ArrayList<String>();
+        List<String> data = new ArrayList<>();
         data.add("##fileformat=VCFv4.1");
-        data.add("#CHROM	POS	ID      REF     ALT     QUAL	FILTER	INFO	FORMAT	S1"); 
+        data.add(VcfHeaderUtils.STANDARD_FINAL_HEADER_LINE_INCLUDING_FORMAT+"S1"); 
         
         createVcf(data, data1,output);		
 	}
 	
 	public static void createVcf( List<String> header, List<String> records, String output){	
-        List<String> data = new ArrayList<String>(header);
+        List<String> data = new ArrayList<>(header);
         data.addAll(records);
-        try( BufferedWriter out = new BufferedWriter(new FileWriter(output ))) {	
+        try( BufferedWriter out = new BufferedWriter(new FileWriter(output ))) {
         	for (String line : data)  
-                out.write(line + "\n");	   
-                   	            
+                out.write(line + "\n");                   	            
          }catch(IOException e){
          	System.err.println( Q3IndelException.getStrackTrace(e));	 	        	 
          	Assert.fail("Should not threw a Exception");

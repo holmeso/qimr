@@ -1,22 +1,18 @@
 package au.edu.qimr.indel;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import junit.framework.Assert;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.qcmg.common.util.Constants;
  
 
 public class IniFileTest {
@@ -26,16 +22,16 @@ public class IniFileTest {
 	
 	
 	@After
-	public void after() throws IOException{	
+	public void after() {	
 		fini.delete();
 	}
 	@Test
-	public void testquery() throws Exception {
+	public void testquery() {
 		 		
 		//ini file not exist
 		String[] args = {"-i", ini};
 		try {
-			Options options = new Options(args);
+			new Options(args);
 			Assert.fail("Should have thrown a SnpException");
 		} catch (Exception e) {}
 		
@@ -58,7 +54,7 @@ public class IniFileTest {
 		}
 	}	
 	@Test
-	public final void testIni() throws Exception {
+	public final void testIni() {
 		
 		// create ini file with  query 
 		String str = "and (flag_ReadUnmapped != true, flag_DuplicatedRead != true)";
@@ -72,6 +68,7 @@ public class IniFileTest {
 			assertTrue(options.getTestBam().getAbsolutePath().equals(fini.getAbsolutePath()));
 			assertTrue(options.getControlInputVcf().getAbsolutePath().equals(fini.getAbsolutePath()));
 			assertTrue(options.getTestInputVcf().getAbsolutePath().equals(fini.getAbsolutePath()));
+			assertEquals("OESO-5007", options.getDonorId());
 			
 			assertTrue(options.getControlSample().equals("Normalcontrol(othersite):a6b558da-ab2d-4e92-a029-6544fb98653b"));					
 			assertTrue(options.getTestSample().equals("Primarytumour:4ca050b3-d15b-436b-b035-d6c1925b59fb"));
@@ -96,17 +93,12 @@ public class IniFileTest {
         List<String> data = new ArrayList<String>();
         data.add("[IOs]");
         data.add( "ref=");
-//        data.add("testBam=" + testbam.getAbsolutePath());
-//        data.add("controlBam="  + controlbam.getAbsolutePath());
-//        data.add("testVcf="  + testvcf.getAbsolutePath());
-//        data.add("controlVcf="  + testvcf.getAbsolutePath());
         
         data.add("testBam=" + (testbam == null? "":testbam.getAbsolutePath()));
         data.add("controlBam="  + (controlbam == null? "":controlbam.getAbsolutePath()));
         data.add("testVcf="  + (testvcf == null? "":testvcf.getAbsolutePath()));
         data.add("controlVcf="  + (controlvcf == null? "":controlvcf.getAbsolutePath()));
-         
-        
+                
         data.add("output=" + output );
         data.add("");
         data.add("[ids]");
@@ -129,14 +121,13 @@ public class IniFileTest {
         data.add("exclude.Duplicates=true");
         data.add("gematic.nns=2");
         data.add("gematic.soi=0.15");  
-
-        	      	     	    
+       	      	     	    
         try( BufferedWriter out = new BufferedWriter(new FileWriter(ini))) {	           
            for (String line : data)  
                    out.write(line + "\n");	           	            
         }catch(IOException e){
-        	System.err.println( Q3IndelException.getStrackTrace(e));	 	        	 
-        	assertTrue(false);
+	        	System.err.println( Q3IndelException.getStrackTrace(e));	 	        	 
+	        	assertTrue(false);
         }	
 	}
 
