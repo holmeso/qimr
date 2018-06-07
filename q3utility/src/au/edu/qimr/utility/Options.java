@@ -47,7 +47,7 @@ public abstract class Options {
 	protected QLogger logger = null;
 	public abstract boolean commandCheck() throws Exception;
     
-    public void parseArgs(final String[] args, Class myclass) throws Exception{ 
+    public <T> void parseArgs(final String[] args, Class<T> myclass) { 
 
        	parser.allowsUnrecognizedOptions(); 
         parser.acceptsAll( asList("h", "help"), HELP_DESCRIPTION);
@@ -146,17 +146,17 @@ public abstract class Options {
         String errMessage = null;
         
         for(int i = 0; i < inputs.length; i ++){
-        	final File in = new File(inputs[i] );
-	        if(!in.exists()) 
+        		final File in = new File(inputs[i] );
+	        if ( ! in.exists()) { 
 	            errMessage = Messages.getMessage("NONEXIST_INPUT_FILE", in.getPath());
-	        else if(!in.isFile())       
+	        } else if ( ! in.isFile()) {       
 	            errMessage = Messages.getMessage("FILE_NOT_DIRECTORY", in.getPath());
-	         else if(!in.canRead())
-	        	errMessage = Messages.getMessage("UNREAD_INPUT_FILE",in.getPath());     
-	           
-	        if(errMessage != null){
-	        	System.err.println(errMessage);
-	        	 return false;
+	        } else if ( ! in.canRead()) {
+	        		errMessage = Messages.getMessage("UNREAD_INPUT_FILE",in.getPath());     
+	        }
+	        if (errMessage != null){
+		        	System.err.println(errMessage);
+		        	 return false;
 	        }
 	       }  	
 	        	
@@ -212,13 +212,11 @@ public abstract class Options {
      * @return true if input file readable and output file writable
      */
     protected boolean checkIO(String input, String output ){   	
-    	final File in = new File(input );
-        final File out = new File(output  );
-               
-		if(! in.getAbsolutePath().equals(out.getAbsoluteFile())){
-			System.err.println(Messages.getMessage("SAME_FILES", input, output));		
-			return false; 
-		}
+    	
+    		if (input.equals(output)) {
+    			System.err.println(Messages.getMessage("SAME_FILES", input, output));		
+    			return false; 
+    		}
                 
         return   checkInputs(new String[] {input})  && checkOutputs(new String[] {input});        
     }

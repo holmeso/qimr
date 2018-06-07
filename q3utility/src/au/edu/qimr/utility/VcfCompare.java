@@ -80,16 +80,16 @@ public class VcfCompare {
 				VCFFileReader reader2 = new VCFFileReader(options.getIO(VcfCompareOptions.additionalInput))) {
 		   
 			VcfHeader h2 = reader2.getHeader();
-			String inputUuid = (h2.getUUID() == null)? null: new VcfHeaderUtils.SplitMetaRecord(h2.getUUID()).getValue();   
+			String inputUuid = (h2.getUUID() == null)? null: h2.getUUID().getMetaValue();   
 		//	h2.replace("##" + Options.additionalInput + "=" + inputUuid + ":" + options.getIO(Options.additionalInput));
-			h2.replace( VcfHeaderUtils.STANDARD_INPUT_LINE  + "=" + inputUuid + ":" + options.getIO(VcfCompareOptions.additionalInput));
+			h2.addOrReplace( VcfHeaderUtils.STANDARD_INPUT_LINE  + "=" + inputUuid + ":" + options.getIO(VcfCompareOptions.additionalInput));
 			
 			VcfHeader h1 = reader1.getHeader();	    	   
-			inputUuid = (h1.getUUID() == null)? null: new VcfHeaderUtils.SplitMetaRecord(h1.getUUID()).getValue();  
-			h1.replace( VcfHeaderUtils.STANDARD_INPUT_LINE  + "=" + inputUuid + ":" + options.getIO(VcfCompareOptions.primaryInput));
-			h1.parseHeaderLine(VcfHeaderUtils.STANDARD_FILE_DATE + "=" + fileDate);
-			h1.parseHeaderLine(VcfHeaderUtils.STANDARD_UUID_LINE + "=" + uuid);
-			h1.parseHeaderLine(VcfHeaderUtils.STANDARD_SOURCE_LINE + "=" + pg+"-"+version);	
+			inputUuid = (h1.getUUID() == null)? null: h1.getUUID().getMetaValue();  
+			h1.addOrReplace( VcfHeaderUtils.STANDARD_INPUT_LINE  + "=" + inputUuid + ":" + options.getIO(VcfCompareOptions.primaryInput));
+			h1.addOrReplace(VcfHeaderUtils.STANDARD_FILE_DATE + "=" + fileDate);
+			h1.addOrReplace(VcfHeaderUtils.STANDARD_UUID_LINE + "=" + uuid);
+			h1.addOrReplace(VcfHeaderUtils.STANDARD_SOURCE_LINE + "=" + pg+"-"+version);	
 			
 			header = VcfHeaderUtils.mergeHeaders(reader1.getHeader(), reader2.getHeader(), false);
 		}
@@ -98,7 +98,7 @@ public class VcfCompare {
 	    if(pg == null ) pg = Constants.NULL_STRING_UPPER_CASE;
 	    if(cmd == null) cmd = Constants.NULL_STRING_UPPER_CASE;
 		VcfHeaderUtils.addQPGLineToHeader(header, pg, version, cmd);
-		header.addInfoLine(VcfCompareOptions.Info_From, "1", "Integer", VcfCompareOptions.Info_From_Description);
+		header.addInfo(VcfCompareOptions.Info_From, "1", "Integer", VcfCompareOptions.Info_From_Description);
 	
 	}
 	
@@ -107,7 +107,7 @@ public class VcfCompare {
 		Collections.sort(orderedList);
 		
 		try(VCFFileWriter writer = new VCFFileWriter( output)) {			
-			for(final VcfHeader.Record record: header)  {
+			for(final VcfHeaderRecord record: header)  {
 				writer.addHeader(record.toString());
 			}
 		
