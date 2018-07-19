@@ -6,9 +6,9 @@ def isExecutable = true
 
 repositories {
 	flatDir {
-			dirs '/home/genomelocal/devel/adamajava/adamajava/adama/build/lib'
-			dirs '/home/genomelocal/devel/adamajava/adamajava/lib'
 			dirs '../lib'
+			dirs '../../adamajava/adama/build/lib/'
+			dirs '../../adamajava/lib/'
 			}
 }
 

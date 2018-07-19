@@ -13,9 +13,9 @@ repositories {
 			dirs '/Users/christix/Documents/Eclipse/sourceForge/trunk/adamajava/qmaftools/build/lib'
 			dirs '/Users/christix/Documents/Eclipse/sourceForge/trunk/adamajava/qpicard/build/lib'
 			dirs '/Users/christix/Documents/Eclipse/sourceForge/trunk/adamajava/qio/build/lib'
-			dirs '/home/genomelocal/devel/adamajava/adamajava/adama/build/lib'
-			dirs '/home/genomelocal/devel/adamajava/adamajava/lib'
 			dirs '../lib'
+			dirs '../../adamajava/adama/build/lib/'
+			dirs '../../adamajava/lib/'
 		}
 }
 
