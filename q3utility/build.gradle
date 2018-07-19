@@ -7,14 +7,14 @@ def isExecutable = true
 repositories {
 	flatDir {
 			dirs '/Users/christix/Documents/Eclipse/sourceForge/trunk/adamajava/lib'
-			dirs '/Users/christix/Documents/Eclipse/sourceForge/trunk/adamajava/qlib/build/lib'
 			dirs '/Users/christix/Documents/Eclipse/sourceForge/trunk/adamajava/qcommon/build/lib'
 			dirs '/Users/christix/Documents/Eclipse/sourceForge/trunk/adamajava/qmule/build/lib'
-			dirs '/Users/christix/Documents/Eclipse/sourceForge/trunk/adamajava/qmaftools/build/lib'
 			dirs '/Users/christix/Documents/Eclipse/sourceForge/trunk/adamajava/qpicard/build/lib'
 			dirs '/Users/christix/Documents/Eclipse/sourceForge/trunk/adamajava/qio/build/lib'
 			dirs '../lib'
-			dirs '../../adamajava/adama/build/lib/'
+			dirs '../../adamajava/qcommon/adama/build/lib/'
+			dirs '../../adamajava/qmule/adama/build/lib/'
+			dirs '../../adamajava/qio/adama/build/lib/'
 			dirs '../../adamajava/lib/'
 		}
 }

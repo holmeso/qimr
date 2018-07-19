@@ -7,7 +7,7 @@ def isExecutable = true
 repositories {
 	flatDir {
 			dirs '../lib'
-			dirs '../../adamajava/adama/build/lib/'
+			dirs '../../adamajava/qcommon/adama/build/lib/'
 			dirs '../../adamajava/lib/'
 			}
 }
