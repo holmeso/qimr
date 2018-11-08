@@ -4,7 +4,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
+
 
 public class ISizeClusterTest {
 	
