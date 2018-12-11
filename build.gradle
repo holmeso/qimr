@@ -1,3 +1,6 @@
+plugins {
+  id 'checkstyle'
+}
 defaultTasks "build"
 allprojects {
    apply plugin: 'java'
@@ -29,12 +32,17 @@ version = 1.0
 subprojects {
    //apply plugin: 'java'
    apply plugin: 'eclipse'
-   //apply plugin: 'code-quality'
+   apply plugin: 'checkstyle'
 
    sourceCompatibility = 1.8
 
    defaultTasks "build"
    libsDirName = "lib"
+
+  checkstyle {
+    configFile = file('../config/google_check.xml')
+    toolVersion = '8.15'
+  }
 
    //checkstyleConfigFileName = '../conf/checkstyle.xml'
    //checkstyleMain.onlyIf {project.hasProperty('checkstyle')}
