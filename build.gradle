@@ -47,15 +47,14 @@ subprojects {
     checkstyleTest.enabled=false
   }
   findbugs {
-    //reportsDir = file("$project.buildDir/findbugsReports")
-    effort = "max"
-    reportLevel = "low"
+    //effort = "max"
+    //reportLevel = "low"
     ignoreFailures = true
     findbugsTest.enabled=false
   }
  tasks.withType(FindBugs) {
     reports {
-        xml.enabled = false
+        xml.enabled = true
         html.enabled = true
     }
 }
