@@ -1,24 +1,14 @@
 package com.genomiqa.tools;
 
-
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-//import org.apache.commons.math3.fitting.PolynomialCurveFitter;
-//import org.apache.commons.math3.fitting.WeightedObservedPoints;
-//import org.apache.commons.math3.ml.clustering.Cluster;
-//import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
-//import org.apache.commons.math3.ml.clustering.DoublePoint;
-import org.qcmg.common.model.ChrPosition;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -30,10 +20,6 @@ public class ISizeCluster {
 	public static final double MIN_PERCENTAGE = 99.5d;
 	
 	String [] qpXmlFiles;
-	String geneModelFile;
-	long genomeLength;
-	List<ChrPosition> regions = new ArrayList<>();
-	Map<String, ChrPosition> geneCPMap;
 	
 	private void engage() throws IOException {
 		try {
@@ -46,6 +32,7 @@ public class ISizeCluster {
 		}
 	}
 	
+	
 	private void loadISizes(String qpXmlFile) throws IOException, ParserConfigurationException, SAXException {
 		
 		File file = new File(qpXmlFile);
@@ -56,17 +43,12 @@ public class ISizeCluster {
          
         document.getDocumentElement().normalize();
          
-//        System.out.println("Root element :" + document.getDocumentElement().getNodeName());
         NodeList nodeList = document.getElementsByTagName("ISIZE");
-//        System.out.println("nodeList length: " + nodeList.getLength());
         Node isizeNode = nodeList.item(0);
         NodeList iSizeReadGroups = isizeNode.getChildNodes();
-//        System.out.println("iSizeReadGroups length: " + iSizeReadGroups.getLength());
         for (int i = 0 ; i < iSizeReadGroups.getLength() ; i++) {
         		Node rgNode = iSizeReadGroups.item(i);
-//        		System.out.println("rgNode :" + rgNode.getNodeName());
         		if ("ReadGroup".equals(rgNode.getNodeName()) || "RG".equals(rgNode.getNodeName())) {
-//        			System.out.println(rgNode.getAttributes().getNamedItem("id"));
         			String readGroupName = getReadGroupName(rgNode);
         			if ( ! "overall".equals(readGroupName)) {
         				System.out.println("rgName: " + readGroupName);
@@ -102,7 +84,6 @@ public class ISizeCluster {
 		/*
 		 * get the maximum lowerBound and the minimum upperBound
 		 */
-//		int lb = Math.max(multiplePointValues[0], Math.max(singlePointValues[0], percentageMethodValues[0]));
 		int lb = singlePointValues[0];
 		if (lb != 18) {
 			/*
@@ -117,15 +98,9 @@ public class ISizeCluster {
 		System.out.println("drawTheLineMethod: " + lb + "," + drawTheLineUpperBound);
 		
 		
-//		int ub = Math.min(drawTheLineUpperBound, Math.min(multiplePointValues[1], Math.min(singlePointValues[1], percentageMethodValues[1])));
 		/*
 		 *if the drawTheLine method is larger than the multiplePoint method, then use that, otherwise use min of the other methods
 		 */
-//		int ub =  Math.min(multiplePointValues[1], Math.min(singlePointValues[1], percentageMethodValues[1]));
-//		if (drawTheLineUpperBound > ub) {
-//			ub = drawTheLineUpperBound;
-//		}
-		
 		int ub = drawTheLineUpperBound;
 		
 		
@@ -254,13 +229,12 @@ public class ISizeCluster {
 		 * once lower bound has been calculated, we go forward until a certain percentage has been reached
 		 */
 		int upperBound = getUpperBoundBasedOnPercentage(aia, lowerBound, percentage);
-//		System.out.println("percentage method: RG=" + rgName + " lowerBound=" + lowerBound + " upperBound=" + upperBound);
-//		System.out.println("RG=" + rgName + " lowerBound=" + lowerBound + " upperBound=" + upperBound);
 		return new int[] {lowerBound, upperBound};
 	}
 	
 	public static double[] getStdDevAndMean(double [] array) {
-		double sum = 0.0, stdDev = 0.0;
+		double sum = 0.0;
+		double stdDev = 0.0;
         int length = array.length;
 
         for (double num : array) {
@@ -286,7 +260,7 @@ public class ISizeCluster {
 		 */
 		int [] iSizeWindowCountsLB = new int[ modal];
 		double [] percentageDiffsLB = new double[modal];
-		for (int iSize = modal -1 ; (iSize - windowSize) > 0 ; iSize --) {
+		for (int iSize = modal - 1 ; (iSize - windowSize) > 0 ; iSize --) {
 			/*
 			 * sum the next windowSize counts and put into array
 			 */
@@ -297,17 +271,16 @@ public class ISizeCluster {
 			iSizeWindowCountsLB[iSize] = tally;
 		}
 		
-		int previousTally = iSizeWindowCountsLB[iSizeWindowCountsLB.length -1];
+		int previousTally = iSizeWindowCountsLB[iSizeWindowCountsLB.length - 1];
 		int lowerBound = 0;
 		for (int i = iSizeWindowCountsLB.length - 1 ; i >= 0 ; i--) {
 			double diff = (100d * iSizeWindowCountsLB[i]) / previousTally;
 			if (i <  (iSizeWindowCountsLB.length - 10)) {
-				double [] meanAndStdDev = getStdDevAndMean(Arrays.copyOfRange(percentageDiffsLB, i, modal -1));
+				double [] meanAndStdDev = getStdDevAndMean(Arrays.copyOfRange(percentageDiffsLB, i, modal - 1));
 				double mean = meanAndStdDev[0];
 				double stdDev = meanAndStdDev[1];
 				double lowerLimit = mean - (stdDevMultiplier * stdDev);
 				if (diff < lowerLimit) {
-//					if (diff < lowerLimit || diff > upperLimit) {
 					lowerBound = i - (windowSize / 2);
 					
 					System.out.println("diff at position " + (i + modal + (windowSize / 2)) + ": " + diff + " is more than " + stdDevMultiplier + "*stdDevs from the mean! mean: " + mean + ", stdDev: " + stdDev);
@@ -399,11 +372,6 @@ public class ISizeCluster {
 			  */
 			 double diff = (double) thisCount / prevCount;
 			 diffValues[iSize] = diff;
-//			 if (diff <= 0.70) {
-//				 lowerBound = iSize;
-//				 System.out.println("we've got one!!!! isize: " + iSize + ", diff: " + diff + ", thisCount: " + thisCount + ", prevCount: " + prevCount);
-//				 break;
-//			 }
 			 
 			 /*
 			  * set prevCount to thisCount
@@ -416,7 +384,7 @@ public class ISizeCluster {
 		  */
 		 double minValue = Double.MAX_VALUE;
 		 int minValueISize = modal;
-		 for (int i = diffValues.length -1 ; i > 0  ; i--) {
+		 for (int i = diffValues.length - 1 ; i > 0  ; i--) {
 			 double d = diffValues[i];
 			 if (d > 0.0 && d < minValue) {
 				 minValue = d;
@@ -429,7 +397,6 @@ public class ISizeCluster {
 		 /*
 		  * now for the other slope
 		  */
-//		 diffValues = new double[aia.length() - modal];
 		 prevCount = aia.get(modal);
 		 boolean ignoreNextISize = false;
 		 for (int iSize = modal + 1 ; iSize < aia.length() ; iSize ++ ) {
@@ -441,15 +408,12 @@ public class ISizeCluster {
 			  */
 			 if (ignoreNextISize) {
 				 ignoreNextISize = false;
-			 }
-			 else if (diff > 1.1) {
-//				 System.out.println("got a spike! at iSize: " + iSize);
+			 } else if (diff > 1.1) {
 				 ignoreNextISize = true;
-			 }
-			 /*
-			  * get difference between thisCount and prevCount as a percentage
-			  */
-			 else if (diff <= 0.85) {
+			 } else if (diff <= 0.85) {
+				 /*
+				  * get difference between thisCount and prevCount as a percentage
+				  */
 				 
 				 /*
 				  * is the count of this iSize less that that of the lower bound?
@@ -473,7 +437,6 @@ public class ISizeCluster {
 				 }
 			 }
 			 
-//			 diffValues[iSize - modal] = diff;
 			 
 			 /*
 			  * set prevCount to thisCount
@@ -539,8 +502,9 @@ public class ISizeCluster {
 			 }
 			 totalTally += aia.get(i);
 		 }
-		 return ((100d*withinISizeTally) / totalTally);
+		 return ((100d * withinISizeTally) / totalTally);
 	}
+	
 	public static int getUpperBoundBasedOnPercentage(AtomicIntegerArray aia, int start, double percentage) {
 		int withinISizeTally = 0;
 		int totalTally = 0;
@@ -549,7 +513,7 @@ public class ISizeCluster {
 		}
 		for (int i = start ; i < aia.length() ; i++) {
 			withinISizeTally += aia.get(i);
-			if ((100d*withinISizeTally) / totalTally >= percentage) {
+			if ((100d * withinISizeTally) / totalTally >= percentage) {
 				/*
 				 * we have found our upper bound
 				 */
@@ -562,7 +526,6 @@ public class ISizeCluster {
 	public static void main(String[] args) {
 		ISizeCluster crs = new ISizeCluster();
 		crs.qpXmlFiles = args;
-//		crs.geneModelFile = args[1];
 		try {
 			crs.engage();
 		} catch (IOException e) {

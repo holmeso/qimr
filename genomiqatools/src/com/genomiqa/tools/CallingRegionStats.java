@@ -19,7 +19,6 @@ public class CallingRegionStats {
 	
 	String regionsFile;
 	String geneModelFile;
-	long genomeLength;
 	List<ChrPosition> regions = new ArrayList<>();
 	Map<String, ChrPosition> geneCPMap;
 	
@@ -107,31 +106,38 @@ public class CallingRegionStats {
 			}
 			
 			numbers.sort(null);
-//			System.out.println("gene " + entry.getKey() + " is in " + contig + " with min start " + numbers.get(0) + " and max " + numbers.get(numbers.size()-1));
+			// System.out.println("gene " + entry.getKey() + " is in " + contig + " with min start " + numbers.get(0) + " and max " + numbers.get(numbers.size()-1));
 			if ( ! contig.startsWith("chr")) {
 				contig = "chr" + contig;
 			}
 			
-			geneCPMap.put(entry.getKey().toString(), new ChrRangePosition(contig, numbers.get(0), numbers.get(numbers.size()-1)));
+			geneCPMap.put(entry.getKey().toString(), new ChrRangePosition(contig, numbers.get(0), numbers.get(numbers.size() - 1)));
 		}
 		
 		
 	}
 	
 	private void loadRegionsFile() throws IOException {
-		long l = 0;
 		List<String> lines = Files.readAllLines(Paths.get(regionsFile));
 		
 		/*
 		 * go through the headers, adding the contig lengths on the way, and get list of ChrPosition for regions
 		 */
-		l = lines.stream().filter(s -> s.startsWith("@SQ")).mapToLong(s -> Long.parseLong(s.substring(s.indexOf("LN:") + 3, s.indexOf("\t", s.indexOf("LN:"))))).sum();
-		regions = lines.stream().filter(s -> ! s.startsWith("@")).map(s -> {String[]array = TabTokenizer.tokenize(s);return new ChrRangePosition(array[0], Integer.parseInt(array[1]), Integer.parseInt(array[2]));}).collect(Collectors.toList());
+		long l = lines.stream()
+				.filter(s -> s.startsWith("@SQ")).mapToLong(s -> Long.parseLong(s.substring(s.indexOf("LN:") + 3, s.indexOf("\t", s.indexOf("LN:")))))
+				.sum();
+		regions = lines.stream()
+				.filter(s -> ! s.startsWith("@"))
+				.map(s -> {
+					String[]array = TabTokenizer.tokenize(s);
+					return new ChrRangePosition(array[0], Integer.parseInt(array[1]), Integer.parseInt(array[2]));
+					})
+				.collect(Collectors.toList());
 		
 		System.out.println("genome length: " + l);
 		System.out.println("number of regions: " + regions.size());
 		long regionsLength = regions.stream().mapToLong(cp -> cp.getLength()).sum();
-		System.out.println("number of bases covered by regions: " + regionsLength + " which is " + ((regionsLength * 100)/ l) + "%");
+		System.out.println("number of bases covered by regions: " + regionsLength + " which is " + ((regionsLength * 100) / l) + "%");
 	}
 	
 	
