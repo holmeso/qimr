@@ -47,17 +47,16 @@ public class ISizeCluster {
         Node isizeNode = nodeList.item(0);
         NodeList iSizeReadGroups = isizeNode.getChildNodes();
         for (int i = 0 ; i < iSizeReadGroups.getLength() ; i++) {
-        		Node rgNode = iSizeReadGroups.item(i);
-        		if ("ReadGroup".equals(rgNode.getNodeName()) || "RG".equals(rgNode.getNodeName())) {
-        			String readGroupName = getReadGroupName(rgNode);
-        			if ( ! "overall".equals(readGroupName)) {
-        				System.out.println("rgName: " + readGroupName);
-        			
-	        			AtomicIntegerArray aia =  getAIAFromNode(rgNode);
-	        			getLowerAndUpperBounds(aia, readGroupName);
-        			}
-        			
-        		}
+    		Node rgNode = iSizeReadGroups.item(i);
+    		if ("ReadGroup".equals(rgNode.getNodeName()) || "RG".equals(rgNode.getNodeName())) {
+    			String readGroupName = getReadGroupName(rgNode);
+    			if ( ! "overall".equals(readGroupName)) {
+    				System.out.println("rgName: " + readGroupName);
+    			
+        			AtomicIntegerArray aia =  getAIAFromNode(rgNode);
+        			getLowerAndUpperBounds(aia, readGroupName);
+    			}
+    		}
         }
 	}
 	
