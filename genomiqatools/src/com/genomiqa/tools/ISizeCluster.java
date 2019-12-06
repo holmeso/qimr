@@ -2,7 +2,9 @@ package com.genomiqa.tools;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -60,56 +62,93 @@ public class ISizeCluster {
         }
 	}
 	
+	public static int[] findArrayClosestToMagicNumber(int magicNumber, int[] ...rg) {
+		int [] arrayToKeep = null;
+		if (null != rg) {
+			for (int[] array : rg) {
+				if (array.length > 0 && array[0] == magicNumber) {
+					return array;
+				}
+			}
+			
+			int diff = Integer.MAX_VALUE;
+			for (int[] array : rg) {
+				
+				if (array.length > 0 && Math.abs(magicNumber - array[0]) < diff) {
+					diff = Math.abs(magicNumber - array[0]);
+					arrayToKeep = array;
+				}
+			}
+		}
+		return arrayToKeep;
+	}
+	
 	public static int[] getLowerAndUpperBounds(AtomicIntegerArray aia, String rg) {
 		
-		if ("d1194f81-e28c-41d0-9d12-92c7b53002a8".equals(rg)) {
-			StringBuilder sb = new StringBuilder();
-			int modal = getModalValue(aia);
-			for (int j = 0 ; j < aia.length() ; j++) {
-				if (j > modal && aia.get(j) == 0) {
-					break;
-				}
-				sb.append(aia.get(j)).append(",");
-			}
-			System.out.println(sb.toString());
-		}
+		/*
+		 * This section is used to print output to put into a unit test
+		 */
+//		if ("13fbd3ce-9667-49b4-8936-1b7a02648bf0".equals(rg)) {
+//			StringBuilder sb = new StringBuilder();
+//			int modal = getModalValue(aia);
+//			for (int j = 0 ; j < aia.length() ; j++) {
+//				if (j > modal && aia.get(j) == 0) {
+//					break;
+//				}
+//				sb.append(aia.get(j)).append(",");
+//			}
+//			System.out.println(sb.toString());
+//		}
 				
 		int [] singlePointValues = singlePointDifferenceMethod(aia, rg);
 		int [] percentageMethodValues = percentageMethod(aia, rg, 99.9);
 		int [] multiplePointValues = multiplePointDifferenceMethod(aia, rg, 10, 9);
+		int [] drawLineMethod = drawLineMethod(aia);
 		System.out.println("singlePointValues: " + singlePointValues[0] + "," + singlePointValues[1]);
 		System.out.println("percentageMethodValues: " + percentageMethodValues[0] + "," + percentageMethodValues[1]);
 		System.out.println("multiplePointValues: " + multiplePointValues[0] + "," + multiplePointValues[1]);
+		System.out.println("drawLineMethod: " + drawLineMethod[0] + "," + drawLineMethod[1]);
 		/*
 		 * get the maximum lowerBound and the minimum upperBound
 		 */
-		int lb = singlePointValues[0];
-		if (lb != 18) {
+		
+		
+		/*
+		 * find the array that has the lower bound that is closest to 18, the magic number...
+		 * If any method other that the drawLineMethod is chosen, use the drawLine method to get the upper bound
+		 */
+		int [] chosenArray = findArrayClosestToMagicNumber(18, singlePointValues, percentageMethodValues, multiplePointValues, drawLineMethod);
+		int lb = chosenArray[0];
+		int drawTheLineUpperBound = chosenArray[1];
+		if ( ! chosenArray.equals(drawLineMethod)) {
 			/*
-			 * check to see if we have 18 from the percentageValues method
+			 * get lowerBound
 			 */
-			if (18 == percentageMethodValues[0]) {
-				lb = 18;
-			}
-			
+			drawTheLineUpperBound = drawTheLineMethod(aia, lb);
 		}
-		int drawTheLineUpperBound = drawTheLineMethod(aia, lb);
+		
 		System.out.println("drawTheLineMethod: " + lb + "," + drawTheLineUpperBound);
-		
-		
 		/*
 		 *if the drawTheLine method is larger than the multiplePoint method, then use that, otherwise use min of the other methods
 		 */
 		int ub = drawTheLineUpperBound;
 		
-		
 		double percent = getAreaUndeCurve(aia, lb, ub);
+		if (percent < MIN_PERCENTAGE) {
+			/*
+			 * lets try the draw the line technique
+			 */
+			lb = drawLineMethod[0];
+			ub = drawLineMethod[1];
+			percent = getAreaUndeCurve(aia, lb, ub);
+		}
+		
 		System.out.println("LB: " + lb + ", UB: " + ub + ", percent: " + percent);
 		System.out.println("RG=" + rg + " LB=" + lb + " UB=" + ub);
 		return new int[] {lb, ub};
 	}
 	
-	public static int drawTheLineMethod(AtomicIntegerArray aia, int lowerBound) {
+	public static int drawTheLineMethod(AtomicIntegerArray aia, int lowerBound, double percentage) {
 		
 		int countAtLower = aia.get(lowerBound);
 		int modal = getModalValue(aia);
@@ -117,15 +156,23 @@ public class ISizeCluster {
 			int count = aia.get(i);
 			if (count <= countAtLower) {
 				/*
-				 * check that we have met the percentage requirement
+				 * check that we have met the percentage requirement, assuming that percentage is set
 				 */
-				if (getAreaUndeCurve(aia, lowerBound, i) >= MIN_PERCENTAGE) {
+				if (percentage == 0.0 || getAreaUndeCurve(aia, lowerBound, i) >= percentage) {
 					return i;
 				}
 			}
 		}
-		
 		return -1;
+	}
+	
+	public static int drawTheLineMethod(AtomicIntegerArray aia, int lowerBound) {
+		return drawTheLineMethod(aia, lowerBound, MIN_PERCENTAGE);
+	}
+	
+	public static boolean doesDrawingTheLinePassPercentage(AtomicIntegerArray aia, int lowerBound, double percentage) {
+		int upperBound = drawTheLineMethod(aia, lowerBound);
+		return upperBound > -1;
 	}
 	
 	public static String getReadGroupName(Node n) {
@@ -429,67 +476,58 @@ public class ISizeCluster {
 						 System.out.println("we've got one!!!! isize: " + iSize + ", diff: " + diff + ", thisCount: " + thisCount + ", prevCount: " + prevCount);
 						 break;
 					 } else {
-						 System.out.println("Min coverage level not yet reached: " + perc);
+//						 System.out.println("Min coverage level not yet reached: " + perc);
 					 }
 				 } else {
-					 System.out.println("lower bound count not yet reached: " + thisCount + ", lowerBound count: " +  aia.get(lowerBound));
+//					 System.out.println("lower bound count not yet reached: " + thisCount + ", lowerBound count: " +  aia.get(lowerBound));
 				 }
 			 }
-			 
 			 
 			 /*
 			  * set prevCount to thisCount
 			  */
 			 prevCount = thisCount;
 		 }
-		 
-//		 /*
-//		  * loop through diffValues, and the one with the lowest value wins!
-//		  */
-//		 minValue = Double.MAX_VALUE;
-//		 minValueISize = modal;
-//		 for (int i = 0 ; i <  diffValues.length ; i++) {
-//			 double d = diffValues[i];
-//			 if (d > 0.0 && d < minValue) {
-//				 minValue = d;
-//				 minValueISize = i;
-//			 }
-//		 }
-//		 upperBound = minValueISize;
-		 
-		 
-		 
-		 /*
-		  * Perform some checks
-		  *  - area under the curve must be > 99.5%
-		  *  - lower bound must be > 1
-		  *  - upper bound count must be less than lower bound count
-		  */
-//		 double percentageCutoff = 99.5;
-//		 double percentage = getAreaUndeCurve(aia, lowerBound, upperBound);
-//		 if (percentage >= 99.5) {
-//			 System.out.println("PASSED percentage check (" + percentage +" is >= " + percentageCutoff + ")");
-//		 } else {
-//			 System.out.println("FAILED percentage check (" + percentage +" is NOT >= " + percentageCutoff + ")");
-//			 
-//		 }
-//		 if (lowerBound > 1) {
-//			 System.out.println("PASSED lower bound check (" + lowerBound +" is > 1)");
-// 		 } else {
-// 			 System.out.println("FAILED lower bound check (" + lowerBound +" is NOT > 1)");
-// 		 }
-//		 int lowerBC = aia.get(lowerBound);
-//		 int upperBC = aia.get(upperBound);
-//		 if (lowerBC > upperBC) {
-//			 System.out.println("PASSED lower bound count must be greater than upper bound count check (" + lowerBC +" is > " + upperBC + ")");
-//		 } else {
-//			 System.out.println("FAILED lower bound count must be greater than upper bound count check (" + lowerBC +" is NOT > " + upperBC + ")");
-//		 }
-		 
-//		 System.out.println("single difference method:" + rgName + " lowerBound=" + lowerBound + " upperBound=" + upperBound);
-//		 System.out.println("RG=" + rgName + " lowerBound=" + lowerBound + " upperBound=" + upperBound);
 		 return new int[]{lowerBound, upperBound};
+	}
+	
+	public static int[] drawLineMethod(AtomicIntegerArray aia) {
+		/*
+		 * find modal
+		 */
+		int modal = getModalValue(aia);
+		List<int[]> candidates = new ArrayList<>();
 		 
+		for (int i = modal - 1 ; i > 0  ; i--) {
+			/*
+			 * check to see if this gives us a suitable percentage value if using the "draw the line" technique 
+			 */
+			int tempUpperBound = drawTheLineMethod(aia, i, 0d);
+			candidates.add(new int[]{i, tempUpperBound});
+		}
+		int [] bounds = getOptimalBounds(candidates, aia);
+		return bounds;
+	}
+	
+	
+	public static int[] getOptimalBounds(List<int[]> candidates, AtomicIntegerArray aia) {
+		double maxValue = 0;
+		int[] maxArray = null;
+		
+		for (int[] iArray : candidates) {
+			double area = getAreaUndeCurve(aia, iArray[0], iArray[1]);
+			
+			double combinedScore = (2000 * area)  - ( (iArray[1] - iArray[0]));
+//			double combinedScore = area + (4 * score);
+			if (area > 99.0 && combinedScore > maxValue) {
+				maxValue = combinedScore;
+				maxArray = iArray;
+			}
+//			System.out.println("iArray[0]: " + iArray[0] + ", iArray[1]: " + iArray[1] + ", area: " + area + ", score: " + score + ", combined score: " + combinedScore);
+		}
+		
+		System.out.println("Winning bounds: " + maxArray[0] + " - " + maxArray[1]);
+		return maxArray;
 	}
 	
 	public static double getAreaUndeCurve(AtomicIntegerArray aia, int start, int end) {
